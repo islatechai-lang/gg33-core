@@ -8,6 +8,7 @@ import { parsedCues, totalCuesCount, type ParsedCue } from "./cuesData";
 import { Resend } from 'resend';
 import { parseUTCDate } from '../shared/dateUtils';
 import { reduceToSingleDigit, getLifePath, getVedicNakshatra, pythagorean } from './exploreUtils';
+import { sendDailyEnergyResetNotifications, sendDailyEnergyReminders } from "./notifications";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -2973,6 +2974,30 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error getting membership status:", error);
       res.status(500).json({ error: "Failed to get membership status" });
+    }
+  });
+
+  app.get("/api/cron/notifications", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+    
+    try {
+      if (utcHour >= 0 && utcHour < 10) {
+        await sendDailyEnergyResetNotifications();
+        return res.json({ success: true, type: "reset" });
+      } else if (utcHour >= 10) {
+        await sendDailyEnergyReminders();
+        return res.json({ success: true, type: "reminder" });
+      }
+      res.json({ success: true, skipped: true });
+    } catch (error: any) {
+      console.error("Cron notifications trigger failed:", error);
+      res.status(500).json({ error: error?.message || "Cron failed" });
     }
   });
 

@@ -1,4 +1,5 @@
-import { connectDB, UserModel, DailyEnergyModel, PersonalityInsightModel, type DBUser, type DBDailyEnergy, type DBPersonalityInsight } from "./db";
+import { connectDB, db, type DBUser, type DBDailyEnergy, type DBPersonalityInsight } from "./db";
+import { Timestamp } from "firebase-admin/firestore";
 import crypto from "crypto";
 
 export interface LessonProgress {
@@ -40,9 +41,57 @@ function generateOdisId(): string {
 
 export { generateOdisId };
 
-export class MongoStorage implements IStorage {
+function toDate(val: any): Date {
+  if (!val) return new Date();
+  if (val instanceof Timestamp) {
+    return val.toDate();
+  }
+  if (val && typeof val.toDate === "function") {
+    return val.toDate();
+  }
+  if (val instanceof Date) {
+    return val;
+  }
+  if (typeof val === "string" || typeof val === "number") {
+    return new Date(val);
+  }
+  return new Date();
+}
+
+function mapUserDoc(docId: string, data: any): DBUser {
+  const isProOverridden = (data.odisId === 'odis_e4ef0aac-e27c-498d-a6be-ea5a248fd1b6' ||
+    data.odisId === 'odis_600d1bd4-bd60-46ed-8d43-d463218128b1' ||
+    data.odisId === 'odis_2827b3cb-26b7-4ac6-9100-2ffcf0dcdb63' ||
+    data.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
+    data.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671' ||
+    data.whopUserId === 'user_gPT4lCtHrnQZj' ||
+    data.whopUserId === 'user_Ax0gbiirHXs1G' ||
+    data.whopUserId === 'user_2MuiDqjP6bDzN' ||
+    data.whopUserId === 'user_fXle2wr73Jt2t' ||
+    data.whopUserId === 'user_LQYeqBENW8rFs');
+
+  return {
+    id: docId,
+    odisId: data.odisId || docId,
+    whopUserId: data.whopUserId || null,
+    firebaseUid: data.firebaseUid || null,
+    email: data.email || null,
+    whopUsername: data.whopUsername || null,
+    whopProfilePictureUrl: data.whopProfilePictureUrl || null,
+    whopAccessLevel: data.whopAccessLevel || null,
+    fullName: data.fullName || "",
+    birthDate: toDate(data.birthDate),
+    birthTime: data.birthTime || null,
+    birthLocation: data.birthLocation || null,
+    isPro: isProOverridden ? true : (data.isPro ?? false),
+    proPaymentReceiptId: data.proPaymentReceiptId || null,
+    createdAt: toDate(data.createdAt),
+    updatedAt: toDate(data.updatedAt),
+  };
+}
+
+export class FirestoreStorage implements IStorage {
   private initialized = false;
-  // In-memory progress storage: Map<courseId, Set<completedLessonIds>>
   private progressStore: Map<string, Set<string>> = new Map();
 
   private async ensureConnected(): Promise<boolean> {
@@ -54,41 +103,12 @@ export class MongoStorage implements IStorage {
 
   // User operations
   async getUserByOdisId(odisId: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOne({ odisId });
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: (user.odisId === 'odis_e4ef0aac-e27c-498d-a6be-ea5a248fd1b6' ||
-          user.odisId === 'odis_600d1bd4-bd60-46ed-8d43-d463218128b1' ||
-          user.odisId === 'odis_2827b3cb-26b7-4ac6-9100-2ffcf0dcdb63' ||
-          user.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
-          user.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671' ||
-          user.whopUserId === 'user_gPT4lCtHrnQZj' ||
-          user.whopUserId === 'user_Ax0gbiirHXs1G' ||
-          user.whopUserId === 'user_2MuiDqjP6bDzN' ||
-          user.whopUserId === 'user_fXle2wr73Jt2t' ||
-          user.whopUserId === 'user_LQYeqBENW8rFs') ? true : (user.isPro ?? false),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const docRef = db.collection("users").doc(odisId);
+      const snapshot = await docRef.get();
+      if (!snapshot.exists) return null;
+      return mapUserDoc(snapshot.id, snapshot.data());
     } catch (error) {
       console.error("Error getting user by odisId:", error);
       return null;
@@ -96,41 +116,12 @@ export class MongoStorage implements IStorage {
   }
 
   async getUserByWhopId(whopUserId: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOne({ whopUserId });
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: (user.odisId === 'odis_e4ef0aac-e27c-498d-a6be-ea5a248fd1b6' ||
-          user.odisId === 'odis_600d1bd4-bd60-46ed-8d43-d463218128b1' ||
-          user.odisId === 'odis_2827b3cb-26b7-4ac6-9100-2ffcf0dcdb63' ||
-          user.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
-          user.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671' ||
-          user.whopUserId === 'user_gPT4lCtHrnQZj' ||
-          user.whopUserId === 'user_Ax0gbiirHXs1G' ||
-          user.whopUserId === 'user_2MuiDqjP6bDzN' ||
-          user.whopUserId === 'user_fXle2wr73Jt2t' ||
-          user.whopUserId === 'user_LQYeqBENW8rFs') ? true : (user.isPro ?? false),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const snapshot = await db.collection("users").where("whopUserId", "==", whopUserId).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      return mapUserDoc(doc.id, doc.data());
     } catch (error) {
       console.error("Error getting user by Whop ID:", error);
       return null;
@@ -138,41 +129,12 @@ export class MongoStorage implements IStorage {
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOne({ firebaseUid });
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: (user.odisId === 'odis_e4ef0aac-e27c-498d-a6be-ea5a248fd1b6' ||
-          user.odisId === 'odis_600d1bd4-bd60-46ed-8d43-d463218128b1' ||
-          user.odisId === 'odis_2827b3cb-26b7-4ac6-9100-2ffcf0dcdb63' ||
-          user.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
-          user.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671' ||
-          user.whopUserId === 'user_gPT4lCtHrnQZj' ||
-          user.whopUserId === 'user_Ax0gbiirHXs1G' ||
-          user.whopUserId === 'user_2MuiDqjP6bDzN' ||
-          user.whopUserId === 'user_fXle2wr73Jt2t' ||
-          user.whopUserId === 'user_LQYeqBENW8rFs') ? true : (user.isPro ?? false),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const snapshot = await db.collection("users").where("firebaseUid", "==", firebaseUid).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      return mapUserDoc(doc.id, doc.data());
     } catch (error) {
       console.error("Error getting user by Firebase UID:", error);
       return null;
@@ -180,41 +142,12 @@ export class MongoStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOne({ email });
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: (user.odisId === 'odis_e4ef0aac-e27c-498d-a6be-ea5a248fd1b6' ||
-          user.odisId === 'odis_600d1bd4-bd60-46ed-8d43-d463218128b1' ||
-          user.odisId === 'odis_2827b3cb-26b7-4ac6-9100-2ffcf0dcdb63' ||
-          user.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
-          user.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671' ||
-          user.whopUserId === 'user_gPT4lCtHrnQZj' ||
-          user.whopUserId === 'user_Ax0gbiirHXs1G' ||
-          user.whopUserId === 'user_2MuiDqjP6bDzN' ||
-          user.whopUserId === 'user_fXle2wr73Jt2t' ||
-          user.whopUserId === 'user_LQYeqBENW8rFs') ? true : (user.isPro ?? false),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const snapshot = await db.collection("users").where("email", "==", email).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      return mapUserDoc(doc.id, doc.data());
     } catch (error) {
       console.error("Error getting user by email:", error);
       return null;
@@ -222,44 +155,27 @@ export class MongoStorage implements IStorage {
   }
 
   async createUser(data: { odisId: string; fullName: string; birthDate: Date; birthTime?: string; birthLocation?: string; whopUserId?: string; firebaseUid?: string; email?: string; whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access'; isPro?: boolean }): Promise<DBUser> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.create({
+      const docRef = db.collection("users").doc(data.odisId);
+      const userPayload = {
         odisId: data.odisId,
-        whopUserId: data.whopUserId,
-        firebaseUid: data.firebaseUid,
-        email: data.email,
-        whopUsername: data.whopUsername,
-        whopProfilePictureUrl: data.whopProfilePictureUrl,
-        whopAccessLevel: data.whopAccessLevel,
+        whopUserId: data.whopUserId || null,
+        firebaseUid: data.firebaseUid || null,
+        email: data.email || null,
+        whopUsername: data.whopUsername || null,
+        whopProfilePictureUrl: data.whopProfilePictureUrl || null,
+        whopAccessLevel: data.whopAccessLevel || null,
         fullName: data.fullName,
         birthDate: data.birthDate,
-        birthTime: data.birthTime,
-        birthLocation: data.birthLocation,
+        birthTime: data.birthTime || null,
+        birthLocation: data.birthLocation || null,
         isPro: data.isPro ?? false,
-      });
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
+      await docRef.set(userPayload);
+      return mapUserDoc(data.odisId, userPayload);
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;
@@ -267,41 +183,17 @@ export class MongoStorage implements IStorage {
   }
 
   async updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string }): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
+      const docRef = db.collection("users").doc(odisId);
+      const snapshot = await docRef.get();
+      if (!snapshot.exists) return null;
+
       const updateFields: any = { ...data, updatedAt: new Date() };
-      // Ensure birthTime is explicitly handled if provided
-      if (data.birthTime !== undefined) {
-        updateFields.birthTime = data.birthTime;
-      }
+      await docRef.update(updateFields);
 
-      const user = await UserModel.findOneAndUpdate(
-        { odisId },
-        { $set: updateFields },
-        { new: true }
-      );
-
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const updatedSnapshot = await docRef.get();
+      return mapUserDoc(updatedSnapshot.id, updatedSnapshot.data());
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;
@@ -309,41 +201,21 @@ export class MongoStorage implements IStorage {
   }
 
   async updateWhopProfile(whopUserId: string, data: { whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access' }): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
-      // Filter out undefined values to prevent overwriting existing data
+      const snapshot = await db.collection("users").where("whopUserId", "==", whopUserId).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      const docRef = db.collection("users").doc(doc.id);
+
       const updateData: Record<string, unknown> = { updatedAt: new Date() };
       if (data.whopUsername !== undefined) updateData.whopUsername = data.whopUsername;
       if (data.whopProfilePictureUrl !== undefined) updateData.whopProfilePictureUrl = data.whopProfilePictureUrl;
       if (data.whopAccessLevel !== undefined) updateData.whopAccessLevel = data.whopAccessLevel;
 
-      const user = await UserModel.findOneAndUpdate(
-        { whopUserId },
-        { $set: updateData },
-        { new: true }
-      );
-
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      await docRef.update(updateData);
+      const updatedSnapshot = await docRef.get();
+      return mapUserDoc(updatedSnapshot.id, updatedSnapshot.data());
     } catch (error) {
       console.error("Error updating Whop profile:", error);
       throw error;
@@ -351,37 +223,20 @@ export class MongoStorage implements IStorage {
   }
 
   async upgradeUserToPro(odisId: string, receiptId: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOneAndUpdate(
-        { odisId },
-        { $set: { isPro: true, proPaymentReceiptId: receiptId, updatedAt: new Date() } },
-        { new: true }
-      );
+      const docRef = db.collection("users").doc(odisId);
+      const snapshot = await docRef.get();
+      if (!snapshot.exists) return null;
 
-      if (!user) return null;
+      await docRef.update({
+        isPro: true,
+        proPaymentReceiptId: receiptId,
+        updatedAt: new Date()
+      });
 
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        firebaseUid: user.firebaseUid,
-        email: user.email,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const updatedSnapshot = await docRef.get();
+      return mapUserDoc(updatedSnapshot.id, updatedSnapshot.data());
     } catch (error) {
       console.error("Error upgrading user to Pro:", error);
       throw error;
@@ -389,46 +244,26 @@ export class MongoStorage implements IStorage {
   }
 
   async syncProStatus(whopUserId: string, isPro: boolean, membershipId?: string | null): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
+      const snapshot = await db.collection("users").where("whopUserId", "==", whopUserId).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      const docRef = db.collection("users").doc(doc.id);
+
       const updateData: any = {
         isPro,
         updatedAt: new Date()
       };
-
       if (membershipId !== undefined) {
         updateData.proPaymentReceiptId = membershipId;
       }
 
-      const user = await UserModel.findOneAndUpdate(
-        { whopUserId },
-        { $set: updateData },
-        { new: true }
-      );
-
-      if (!user) return null;
-
+      await docRef.update(updateData);
       console.log(`[Storage] Synced Pro status for user ${whopUserId}: isPro=${isPro}, membershipId=${membershipId || 'none'}`);
 
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const updatedSnapshot = await docRef.get();
+      return mapUserDoc(updatedSnapshot.id, updatedSnapshot.data());
     } catch (error) {
       console.error("Error syncing Pro status:", error);
       throw error;
@@ -436,30 +271,12 @@ export class MongoStorage implements IStorage {
   }
 
   async getUserByPaymentReceipt(receiptId: string): Promise<DBUser | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const user = await UserModel.findOne({ proPaymentReceiptId: receiptId });
-      if (!user) return null;
-
-      return {
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const snapshot = await db.collection("users").where("proPaymentReceiptId", "==", receiptId).limit(1).get();
+      if (snapshot.empty) return null;
+      const doc = snapshot.docs[0];
+      return mapUserDoc(doc.id, doc.data());
     } catch (error) {
       console.error("Error getting user by payment receipt:", error);
       return null;
@@ -468,29 +285,28 @@ export class MongoStorage implements IStorage {
 
   // Daily Energy operations
   async getDailyEnergy(odisId: string, date: string): Promise<DBDailyEnergy | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const energy = await DailyEnergyModel.findOne({ odisId, date });
-      if (!energy) return null;
+      const docId = `${odisId}_${date}`;
+      const docRef = db.collection("dailyEnergy").doc(docId);
+      const snapshot = await docRef.get();
+      if (!snapshot.exists) return null;
 
+      const data = snapshot.data()!;
       return {
-        id: energy._id.toString(),
-        odisId: energy.odisId,
-        date: energy.date,
-        personalDayNumber: energy.personalDayNumber,
-        universalDayNumber: energy.universalDayNumber,
-        energyScore: energy.energyScore,
-        theme: energy.theme,
-        description: energy.description,
-        dos: energy.dos,
-        donts: energy.donts,
-        focusArea: energy.focusArea,
-        affirmation: energy.affirmation,
-        createdAt: energy.createdAt,
+        id: snapshot.id,
+        odisId: data.odisId,
+        date: data.date,
+        personalDayNumber: data.personalDayNumber,
+        universalDayNumber: data.universalDayNumber,
+        energyScore: data.energyScore,
+        theme: data.theme,
+        description: data.description,
+        dos: data.dos || [],
+        donts: data.donts || [],
+        focusArea: data.focusArea,
+        affirmation: data.affirmation,
+        createdAt: toDate(data.createdAt),
       };
     } catch (error) {
       console.error("Error getting daily energy:", error);
@@ -499,32 +315,20 @@ export class MongoStorage implements IStorage {
   }
 
   async saveDailyEnergy(data: Omit<DBDailyEnergy, 'id' | 'createdAt'>): Promise<DBDailyEnergy> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
-      const energy = await DailyEnergyModel.findOneAndUpdate(
-        { odisId: data.odisId, date: data.date },
-        { $set: data },
-        { upsert: true, new: true }
-      );
+      const docId = `${data.odisId}_${data.date}`;
+      const docRef = db.collection("dailyEnergy").doc(docId);
+
+      const payload = {
+        ...data,
+        createdAt: new Date(),
+      };
+      await docRef.set(payload);
 
       return {
-        id: energy._id.toString(),
-        odisId: energy.odisId,
-        date: energy.date,
-        personalDayNumber: energy.personalDayNumber,
-        universalDayNumber: energy.universalDayNumber,
-        energyScore: energy.energyScore,
-        theme: energy.theme,
-        description: energy.description,
-        dos: energy.dos,
-        donts: energy.donts,
-        focusArea: energy.focusArea,
-        affirmation: energy.affirmation,
-        createdAt: energy.createdAt,
+        id: docId,
+        ...payload,
       };
     } catch (error) {
       console.error("Error saving daily energy:", error);
@@ -533,45 +337,28 @@ export class MongoStorage implements IStorage {
   }
 
   async getUsersMissingDailyEnergy(date: string): Promise<DBUser[]> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return [];
-    }
-
+    await this.ensureConnected();
     try {
-      // Get all users that have a whopUserId (so we can send them notifications)
-      const allWhopUsers = await UserModel.find({ whopUserId: { $exists: true, $ne: null } });
+      // Get all users
+      const usersSnapshot = await db.collection("users").get();
+      const allWhopUsers = usersSnapshot.docs
+        .map(doc => mapUserDoc(doc.id, doc.data()))
+        .filter(user => !!user.whopUserId);
 
       // Get all daily energy entries for this date
-      const existingEnergies = await DailyEnergyModel.find({ date });
-      const usersWithEnergy = new Set(existingEnergies.map(e => e.odisId));
+      const energySnapshot = await db.collection("dailyEnergy").where("date", "==", date).get();
+      const usersWithEnergy = new Set(energySnapshot.docs.map(doc => doc.data().odisId));
 
       // Filter to users who don't have a reading yet
       const missingUsers = allWhopUsers.filter(user => !usersWithEnergy.has(user.odisId));
 
-      // Deduplicate by whopUserId to prevent multiple notifications per user
+      // Deduplicate by whopUserId
       const seenWhopIds = new Set<string>();
-      const uniqueUsers = missingUsers.filter(user => {
+      return missingUsers.filter(user => {
         if (!user.whopUserId || seenWhopIds.has(user.whopUserId)) return false;
         seenWhopIds.add(user.whopUserId);
         return true;
       });
-
-      return uniqueUsers.map(user => ({
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
     } catch (error) {
       console.error("Error getting users missing daily energy:", error);
       return [];
@@ -579,37 +366,18 @@ export class MongoStorage implements IStorage {
   }
 
   async getAllUsersWithWhopId(): Promise<DBUser[]> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return [];
-    }
-
+    await this.ensureConnected();
     try {
-      const users = await UserModel.find({ whopUserId: { $exists: true, $ne: null } });
+      const usersSnapshot = await db.collection("users").get();
+      const users = usersSnapshot.docs.map(doc => mapUserDoc(doc.id, doc.data()));
 
-      // Deduplicate by whopUserId to prevent multiple notifications per user
+      // Filter and deduplicate by whopUserId
       const seenWhopIds = new Set<string>();
-      const uniqueUsers = users.filter(user => {
+      return users.filter(user => {
         if (!user.whopUserId || seenWhopIds.has(user.whopUserId)) return false;
         seenWhopIds.add(user.whopUserId);
         return true;
       });
-
-      return uniqueUsers.map(user => ({
-        id: user._id.toString(),
-        odisId: user.odisId,
-        whopUserId: user.whopUserId,
-        whopUsername: user.whopUsername,
-        whopProfilePictureUrl: user.whopProfilePictureUrl,
-        whopAccessLevel: user.whopAccessLevel,
-        fullName: user.fullName,
-        birthDate: user.birthDate,
-        birthTime: user.birthTime,
-        birthLocation: user.birthLocation,
-        isPro: user.isPro ?? false,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
     } catch (error) {
       console.error("Error getting all users with Whop ID:", error);
       return [];
@@ -618,28 +386,26 @@ export class MongoStorage implements IStorage {
 
   // Personality Insight operations
   async getPersonalityInsight(odisId: string): Promise<DBPersonalityInsight | null> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      return null;
-    }
-
+    await this.ensureConnected();
     try {
-      const insight = await PersonalityInsightModel.findOne({ odisId }).sort({ createdAt: -1 });
-      if (!insight) return null;
+      const docRef = db.collection("personalityInsights").doc(odisId);
+      const snapshot = await docRef.get();
+      if (!snapshot.exists) return null;
 
+      const data = snapshot.data()!;
       return {
-        id: insight._id.toString(),
-        odisId: insight.odisId,
-        overview: insight.overview,
-        strengths: insight.strengths,
-        challenges: insight.challenges,
-        lifeLesson: insight.lifeLesson,
-        careerPaths: insight.careerPaths,
-        relationshipStyle: insight.relationshipStyle,
-        spiritualGifts: insight.spiritualGifts,
-        profileSnapshot: insight.profileSnapshot || {},
-        createdAt: insight.createdAt,
-        updatedAt: insight.updatedAt,
+        id: snapshot.id,
+        odisId: data.odisId || odisId,
+        overview: data.overview || "",
+        strengths: data.strengths || [],
+        challenges: data.challenges || [],
+        lifeLesson: data.lifeLesson || "",
+        careerPaths: data.careerPaths || [],
+        relationshipStyle: data.relationshipStyle || "",
+        spiritualGifts: data.spiritualGifts || [],
+        profileSnapshot: data.profileSnapshot || {},
+        createdAt: toDate(data.createdAt),
+        updatedAt: toDate(data.updatedAt),
       };
     } catch (error) {
       console.error("Error getting personality insight:", error);
@@ -648,31 +414,19 @@ export class MongoStorage implements IStorage {
   }
 
   async savePersonalityInsight(data: Omit<DBPersonalityInsight, 'id' | 'createdAt' | 'updatedAt'>): Promise<DBPersonalityInsight> {
-    const connected = await this.ensureConnected();
-    if (!connected) {
-      throw new Error("Database not connected");
-    }
-
+    await this.ensureConnected();
     try {
-      const insight = await PersonalityInsightModel.findOneAndUpdate(
-        { odisId: data.odisId },
-        { $set: { ...data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
-        { upsert: true, new: true }
-      );
+      const docRef = db.collection("personalityInsights").doc(data.odisId);
+      const payload = {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await docRef.set(payload);
 
       return {
-        id: insight._id.toString(),
-        odisId: insight.odisId,
-        overview: insight.overview,
-        strengths: insight.strengths,
-        challenges: insight.challenges,
-        lifeLesson: insight.lifeLesson,
-        careerPaths: insight.careerPaths,
-        relationshipStyle: insight.relationshipStyle,
-        spiritualGifts: insight.spiritualGifts,
-        profileSnapshot: insight.profileSnapshot || {},
-        createdAt: insight.createdAt,
-        updatedAt: insight.updatedAt,
+        id: data.odisId,
+        ...payload,
       };
     } catch (error) {
       console.error("Error saving personality insight:", error);
@@ -700,4 +454,4 @@ export class MongoStorage implements IStorage {
   }
 }
 
-export const storage = new MongoStorage();
+export const storage = new FirestoreStorage();

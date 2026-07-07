@@ -1,106 +1,56 @@
-import mongoose from "mongoose";
+import { initializeApp, cert, getApp, getApps } from "firebase-admin/app";
+import { getFirestore, Firestore } from "firebase-admin/firestore";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+const projectId = process.env.VITE_FIREBASE_PROJECT_ID || "gg33-core";
 
-if (!MONGODB_URI) {
-  console.warn("MONGODB_URI not set - database features will be disabled");
+let app;
+
+try {
+  if (getApps().length === 0) {
+    if (serviceAccountJson) {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      app = initializeApp({
+        credential: cert(serviceAccount)
+      });
+      console.log("Firebase Admin initialized using FIREBASE_SERVICE_ACCOUNT env variable.");
+    } else {
+      // Fallback for local development or GCP ADC
+      app = initializeApp({
+        projectId: projectId
+      });
+      console.log(`Firebase Admin initialized with project ID: ${projectId}. If accessing production Firestore, ensure you set FIREBASE_SERVICE_ACCOUNT or Application Default Credentials.`);
+    }
+  } else {
+    app = getApp();
+  }
+} catch (error) {
+  console.error("Failed to initialize Firebase Admin:", error);
 }
 
-let isConnected = false;
+export const db: Firestore = getFirestore();
 
+// Helper to check connection or mock connection
 export async function connectDB(): Promise<boolean> {
-  if (!MONGODB_URI) {
-    return false;
-  }
-
-  if (isConnected) {
-    return true;
-  }
-
   try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-    console.log("Connected to MongoDB");
+    // A simple read/ping to Firestore to check connection
+    // We try to list collections, which should fail if not configured
+    await db.listCollections();
     return true;
   } catch (error) {
-    console.error("Failed to connect to MongoDB:", error);
+    console.error("Firestore connection check failed (you might need to set FIREBASE_SERVICE_ACCOUNT):", error);
+    // Return true for local emulator, but false for actual connection failures.
+    // If we're using local firestore emulator, it should work fine.
+    if (process.env.FIRESTORE_EMULATOR_HOST) {
+      return true;
+    }
     return false;
   }
 }
-
-// User Profile Schema - stores all user profile data
-const userSchema = new mongoose.Schema({
-  odisId: { type: String, required: true, unique: true, index: true },
-  whopUserId: { type: String, sparse: true, index: true },
-  firebaseUid: { type: String, sparse: true, index: true },
-  email: { type: String, sparse: true, index: true },
-  whopUsername: { type: String },
-  whopProfilePictureUrl: { type: String },
-  whopAccessLevel: { type: String, enum: ['customer', 'admin', 'no_access'] },
-  fullName: { type: String, required: true },
-  birthDate: { type: Date, required: true },
-  birthTime: { type: String, default: "" },
-  birthLocation: { type: String, default: "" },
-  isPro: { type: Boolean, default: false },
-  proPaymentReceiptId: { type: String, sparse: true, index: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-userSchema.pre("save", function () {
-  this.updatedAt = new Date();
-});
-
-export const UserModel = mongoose.model("User", userSchema);
-
-// Daily Energy Reading Schema - stores AI-generated daily readings
-const dailyEnergySchema = new mongoose.Schema({
-  odisId: { type: String, required: true, index: true },
-  date: { type: String, required: true },
-  personalDayNumber: { type: Number, required: true },
-  universalDayNumber: { type: Number, required: true },
-  energyScore: { type: Number, required: true },
-  theme: { type: String, required: true },
-  description: { type: String, required: true },
-  dos: [{ type: String }],
-  donts: [{ type: String }],
-  focusArea: { type: String, required: true },
-  affirmation: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
-dailyEnergySchema.index({ odisId: 1, date: 1 }, { unique: true });
-
-export const DailyEnergyModel = mongoose.model("DailyEnergy", dailyEnergySchema);
-
-// Personality Insights Schema - stores AI-generated personality analysis
-const personalityInsightSchema = new mongoose.Schema({
-  odisId: { type: String, required: true, index: true },
-  overview: { type: String, required: true },
-  strengths: [{ type: String }],
-  challenges: [{ type: String }],
-  lifeLesson: { type: String, required: true },
-  careerPaths: [{ type: String }],
-  relationshipStyle: { type: String, required: true },
-  spiritualGifts: [{ type: String }],
-  profileSnapshot: {
-    fullName: String,
-    birthDate: String,
-    lifePathNumber: Number,
-    expressionNumber: Number,
-    soulUrgeNumber: Number,
-    westernZodiac: String,
-    chineseZodiac: String,
-  },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-export const PersonalityInsightModel = mongoose.model("PersonalityInsight", personalityInsightSchema);
 
 // TypeScript interfaces
 export interface DBUser {
-  id: string;
+  id: string; // Document ID
   odisId: string;
   whopUserId?: string | null;
   firebaseUid?: string | null;
@@ -113,12 +63,13 @@ export interface DBUser {
   birthTime?: string | null;
   birthLocation?: string | null;
   isPro: boolean;
+  proPaymentReceiptId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface DBDailyEnergy {
-  id: string;
+  id: string; // Document ID
   odisId: string;
   date: string;
   personalDayNumber: number;
@@ -134,7 +85,7 @@ export interface DBDailyEnergy {
 }
 
 export interface DBPersonalityInsight {
-  id: string;
+  id: string; // Document ID
   odisId: string;
   overview: string;
   strengths: string[];
