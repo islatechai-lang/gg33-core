@@ -1,0 +1,38 @@
+[Whop] User user_gPT4lCtHrnQZj authenticated for GET /api/whop/debug
+[Whop Debug] Starting diagnostics...
+[Whop Debug] Fetching app: app_c3h6KfmEbV1ATb
+[Whop Debug] App fetch error: 401 {"error":{"type":"unauthorized","message":"Authentication failed"}}
+[Whop Debug] Results: {
+  "apiKeyPresent": true,
+  "apiKeyLength": 105,
+  "apiKeyPrefix": "WHOP_API_K...",
+  "appId": "app_c3h6KfmEbV1ATb",
+  "viteAppId": "app_lAJMD4kwGy33Q8",
+  "sdkInitialized": true,
+  "userId": "user_gPT4lCtHrnQZj",
+  "appError": "401 {\"error\":{\"type\":\"unauthorized\",\"message\":\"Authentication failed\"}}"
+}
+7:27:42 AM [express] GET /api/whop/debug 200 in 846ms :: {"apiKeyPresent":true,"apiKeyLength":105,"apiKeyPrefix":"WHOP_API_K...","appId":"app_c3h6KfmEbV1ATb","viteAppId":"app_lAJMD4kwGy33Q8","sdkInitialized":true,"userId":"user_gPT4lCtHrnQZj","appError":"401 {\"error\":{\"type\":\"unauthorized\",\"message\":\"Authentication failed\"}}"}
+[Whop] User user_gPT4lCtHrnQZj authenticated for POST /api/checkout/create
+[Whop Checkout] Starting checkout creation for user: user_gPT4lCtHrnQZj
+[Whop Checkout] Creating checkout configuration for plan: plan_M2ZsE7J94b3b7
+[Whop Checkout] API Key present: true
+[Whop Checkout] API Key length: 105
+[Whop Checkout] App ID: app_c3h6KfmEbV1ATb
+[Whop Checkout] Error creating checkout configuration:
+[Whop Checkout] Error type: AuthenticationError
+[Whop Checkout] Error status: 401
+[Whop Checkout] Error message: 401 {"error":{"type":"unauthorized","message":"Authentication failed"}}
+[Whop Checkout] Error details: {
+  "error": {
+    "type": "unauthorized",
+    "message": "Authentication failed"
+  }
+}
+[Whop Checkout] 401 Unauthorized - Check that your WHOP_API_KEY:
+  1. Is valid and not expired
+  2. Has 'checkout_configuration:create' permission
+  3. Belongs to the same company that owns the plan
+7:27:42 AM [express] POST /api/checkout/create 401 in 212ms :: {"error":"Failed to create checkout configuration","details":"401 {\"error\":{\"type\":\"unauthorized\",\"message\":\"Authentication failed\"}}"}
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for GET /api/profile/odis_870ce4a9-7718-4c54-b98b-5b7bd8585eec
+7:27:43 AM [express] GET /api/profile/odis_870ce4a9-7718-4c54-b98b-5b7bd8585eec 304 in 97ms :: {"user":{"id":"6934fcf1042eb49927aca5d9","odisId":"odis_870ce4a9-7718-4c54-b98b-5b7bd8585eec","whopUserId":"user_z9RDYAlNQ8ZGg","whopUsername":"frailagenda","whopProfilePictureUrl":"https://img-v2-prod.whop.com/H_n2l2_rtaymn4jxbUDugvSZeiqn2kmzYySRs3teaI4/resize:fill/width:80/height:80/enlarge:true/dpr:2/plain/https://content.whop.com/default_avatars/football.png","fullName":"Jackie Chan","birthDate":"2002-02-11T00:00:00.000Z","birthTime":"12:00","birthLocation":"Unknown","isPro":false,"createdAt":"2025-12-07T04:05:05.803Z","updatedAt":"2025-12-07T04:05:05.806Z"}}

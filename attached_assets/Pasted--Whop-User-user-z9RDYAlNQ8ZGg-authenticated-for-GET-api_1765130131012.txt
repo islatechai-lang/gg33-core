@@ -1,0 +1,39 @@
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for GET /api/whop/debug
+[Whop Debug] Starting diagnostics...
+[Whop Debug] Fetching app: app_c3h6KfmEbV1ATb
+[Whop Debug] App company_id: undefined
+[Whop Debug] Results: {
+  "apiKeyPresent": true,
+  "apiKeyLength": 92,
+  "apiKeyPrefix": "apik_nDfes...",
+  "appId": "app_c3h6KfmEbV1ATb",
+  "viteAppId": "app_c3h6KfmEbV1ATb",
+  "sdkInitialized": true,
+  "userId": "user_z9RDYAlNQ8ZGg",
+  "app": {
+    "id": "app_c3h6KfmEbV1ATb",
+    "name": "GG33 Cue"
+  }
+}
+5:53:43 PM [express] GET /api/whop/debug 304 in 1018ms :: {"apiKeyPresent":true,"apiKeyLength":92,"apiKeyPrefix":"apik_nDfes...","appId":"app_c3h6KfmEbV1ATb","viteAppId":"app_c3h6KfmEbV1ATb","sdkInitialized":true,"userId":"user_z9RDYAlNQ8ZGg","app":{"id":"app_c3h6KfmEbV1ATb","name":"GG33 Cue"}}
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for POST /api/checkout/create
+[Whop Checkout] Starting checkout creation for user: user_z9RDYAlNQ8ZGg
+[Whop Checkout] Creating checkout configuration for plan: plan_Y3B9vXQrU183x
+[Whop Checkout] API Key present: true
+[Whop Checkout] API Key length: 92
+[Whop Checkout] App ID: app_c3h6KfmEbV1ATb
+[Whop Checkout] Success! Configuration ID: ch_z1HdDLj9KZ8BHEP
+[Whop Checkout] Plan ID from response: plan_Y3B9vXQrU183x
+5:53:44 PM [express] POST /api/checkout/create 200 in 245ms :: {"id":"ch_z1HdDLj9KZ8BHEP","planId":"plan_Y3B9vXQrU183x"}
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for POST /api/upgrade-to-pro
+[Whop] Checking membership status for user user_z9RDYAlNQ8ZGg...
+[Whop] Error listing memberships: 400 {"error":{"message":"The Company ID parameter is required","type":"bad_request"}}
+5:54:08 PM [express] POST /api/upgrade-to-pro 500 in 322ms :: {"error":"Could not verify membership status"}
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for POST /api/upgrade-to-pro
+[Whop] Checking membership status for user user_z9RDYAlNQ8ZGg...
+[Whop] Error listing memberships: 400 {"error":{"message":"The Company ID parameter is required","type":"bad_request"}}
+5:54:10 PM [express] POST /api/upgrade-to-pro 500 in 228ms :: {"error":"Could not verify membership status"}
+[Whop] User user_z9RDYAlNQ8ZGg authenticated for POST /api/upgrade-to-pro
+[Whop] Checking membership status for user user_z9RDYAlNQ8ZGg...
+[Whop] Error listing memberships: 400 {"error":{"message":"The Company ID parameter is required","type":"bad_request"}}
+5:54:13 PM [express] POST /api/upgrade-to-pro 500 in 231ms :: {"error":"Could not verify membership status"}
