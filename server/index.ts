@@ -59,14 +59,15 @@ export async function setupApp() {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+  // On Vercel, static files are served by Vercel's CDN — not Express.
+  // Only set up static/vite when running outside Vercel.
+  if (!process.env.VERCEL) {
+    if (process.env.NODE_ENV === "production") {
+      serveStatic(app);
+    } else {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    }
   }
 
   return app;
