@@ -59,17 +59,25 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      // Check if this is a new user (Google sign-in auto-creates accounts)
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
       toast({
-        title: "Welcome back!",
-        description: "Successfully logged in with Google.",
+        title: isNewUser ? "Account Created!" : "Welcome back!",
+        description: isNewUser
+          ? "Your account has been created with Google."
+          : "Successfully signed in with Google.",
       });
       setLocation("/");
     } catch (err: any) {
       console.error(err);
+      // Don't show error if user just closed the popup
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        return;
+      }
       toast({
         variant: "destructive",
-        title: "Google Login Failed",
+        title: "Google Sign-In Failed",
         description: err?.message || "An error occurred during Google sign-in.",
       });
     } finally {

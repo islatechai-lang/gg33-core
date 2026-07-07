@@ -2,24 +2,37 @@ import { initializeApp, cert, getApp, getApps } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-const projectId = process.env.VITE_FIREBASE_PROJECT_ID || "gg33-core";
+const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || "gg33-core";
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
 let app;
 
 try {
   if (getApps().length === 0) {
     if (serviceAccountJson) {
+      // Method 1: Full service account JSON string
       const serviceAccount = JSON.parse(serviceAccountJson);
       app = initializeApp({
         credential: cert(serviceAccount)
       });
       console.log("Firebase Admin initialized using FIREBASE_SERVICE_ACCOUNT env variable.");
+    } else if (clientEmail && privateKey) {
+      // Method 2: Individual env vars
+      app = initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        })
+      });
+      console.log("Firebase Admin initialized using individual env vars (FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY).");
     } else {
-      // Fallback for local development or GCP ADC
+      // Method 3: Fallback for GCP ADC or local development
       app = initializeApp({
         projectId: projectId
       });
-      console.log(`Firebase Admin initialized with project ID: ${projectId}. If accessing production Firestore, ensure you set FIREBASE_SERVICE_ACCOUNT or Application Default Credentials.`);
+      console.log(`Firebase Admin initialized with project ID: ${projectId}. WARNING: Firestore writes will likely fail without credentials. Set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY env vars.`);
     }
   } else {
     app = getApp();
