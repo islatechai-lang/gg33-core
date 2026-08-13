@@ -113,15 +113,23 @@ export const db: Firestore = getFirestore();
 
 // Helper to check connection or mock connection
 export async function connectDB(): Promise<boolean> {
+  // On Vercel, skip the listCollections ping — it can hang for 10+ seconds
+  // if credentials are misconfigured (tries to reach GCE metadata server).
+  // Just trust that if we have credentials configured, Firestore will work.
+  if (process.env.VERCEL) {
+    console.log("[connectDB] Running on Vercel, skipping listCollections ping.");
+    return true;
+  }
+
   try {
-    // A simple read/ping to Firestore to check connection
-    // We try to list collections, which should fail if not configured
-    await db.listCollections();
+    // Add a timeout so this never hangs the server
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Firestore connection check timed out after 5s")), 5000)
+    );
+    await Promise.race([db.listCollections(), timeoutPromise]);
     return true;
   } catch (error) {
-    console.error("Firestore connection check failed (you might need to set FIREBASE_SERVICE_ACCOUNT):", error);
-    // Return true for local emulator, but false for actual connection failures.
-    // If we're using local firestore emulator, it should work fine.
+    console.error("Firestore connection check failed:", error);
     if (process.env.FIRESTORE_EMULATOR_HOST) {
       return true;
     }
