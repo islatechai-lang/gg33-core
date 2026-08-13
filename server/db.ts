@@ -22,10 +22,20 @@ function parseServiceAccount(val: string | undefined): any | null {
 function parsePrivateKey(val: string | undefined): string | undefined {
   if (!val) return undefined;
   let str = val.trim();
-  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
-    str = str.slice(1, -1);
+  // Replace escaped \n literals with real newlines
+  str = str.replace(/\\n/g, "\n");
+
+  // Extract exact PEM block from -----BEGIN... to -----END...-----
+  const beginIndex = str.indexOf("-----BEGIN");
+  const endIndex = str.lastIndexOf("-----");
+
+  if (beginIndex !== -1 && endIndex !== -1 && endIndex > beginIndex) {
+    str = str.substring(beginIndex, endIndex + 5);
+  } else {
+    str = str.replace(/^["']|["']$/g, "").trim();
   }
-  return str.replace(/\\n/g, "\n");
+
+  return str;
 }
 
 const serviceAccountJson = parseServiceAccount(process.env.FIREBASE_SERVICE_ACCOUNT);
