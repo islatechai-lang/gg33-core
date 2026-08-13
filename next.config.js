@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [],
-  turbopack: {},
   webpack: (config, { isServer }) => {
     config.resolve.alias['wouter'] = path.resolve(__dirname, 'client/src/lib/wouter-next.tsx');
     config.resolve.alias['@'] = path.resolve(__dirname, 'client/src');
