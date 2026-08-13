@@ -110,9 +110,9 @@ export async function registerRoutes(
           firebaseUser: req.user
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting current user:", error);
-      res.status(500).json({ error: "Failed to get user" });
+      res.status(500).json({ error: error?.message || "Failed to get user" });
     }
   });
 

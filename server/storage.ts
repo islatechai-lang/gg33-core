@@ -129,6 +129,10 @@ export class FirestoreStorage implements IStorage {
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<DBUser | null> {
+    if (!isFirestoreConfigured()) {
+      console.warn("[getUserByFirebaseUid] Firestore credentials not configured");
+      return null;
+    }
     await this.ensureConnected();
     try {
       const snapshot = await db.collection("users").where("firebaseUid", "==", firebaseUid).limit(1).get();
