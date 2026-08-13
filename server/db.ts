@@ -21,7 +21,7 @@ try {
       });
       console.log("Firebase Admin initialized using FIREBASE_SERVICE_ACCOUNT env variable.");
     } else if (clientEmail && privateKey) {
-      // Method 2: Individual env vars
+      // Method 2: Individual env vars (Vercel deployment certified)
       app = initializeApp({
         credential: cert({
           projectId,
