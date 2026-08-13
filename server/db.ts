@@ -1,5 +1,6 @@
 import { initializeApp, cert, getApp, getApps } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+import crypto from "crypto";
 
 function parseServiceAccount(val: string | undefined): any | null {
   if (!val) return null;
@@ -22,17 +23,35 @@ function parseServiceAccount(val: string | undefined): any | null {
 function parsePrivateKey(val: string | undefined): string | undefined {
   if (!val) return undefined;
   let str = val.trim();
-  // Replace escaped \n literals with real newlines
-  str = str.replace(/\\n/g, "\n");
+  
+  // Strip surrounding quotes if present
+  while ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    str = str.slice(1, -1).trim();
+  }
 
-  // Extract exact PEM block from -----BEGIN... to -----END...-----
+  // Replace all variations of escaped newlines with actual line breaks
+  str = str.replace(/\\\\n/g, "\n").replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
+
+  // Extract exact PEM block between -----BEGIN... and -----END...-----
   const beginIndex = str.indexOf("-----BEGIN");
   const endIndex = str.lastIndexOf("-----");
 
   if (beginIndex !== -1 && endIndex !== -1 && endIndex > beginIndex) {
     str = str.substring(beginIndex, endIndex + 5);
-  } else {
-    str = str.replace(/^["']|["']$/g, "").trim();
+  }
+
+  // Ensure header and footer end with newlines
+  str = str.replace(/(-----BEGIN [A-Z ]+-----)\s*/, "$1\n");
+  str = str.replace(/\s*(-----END [A-Z ]+-----)/, "\n$1");
+
+  // Verify key format with crypto before initializing Firebase Admin
+  try {
+    const sign = crypto.createSign("RSA-SHA256");
+    sign.update("verify-firebase-key");
+    sign.sign(str);
+    console.log("[Firebase Admin] Private key validated successfully with RSA-SHA256.");
+  } catch (err: any) {
+    console.error("[Firebase Admin Error] FIREBASE_PRIVATE_KEY is invalid PEM:", err?.message || err);
   }
 
   return str;
@@ -75,7 +94,19 @@ try {
 }
 
 export function isFirestoreConfigured(): boolean {
-  return Boolean(serviceAccountJson || (clientEmail && privateKey) || process.env.FIRESTORE_EMULATOR_HOST);
+  if (process.env.FIRESTORE_EMULATOR_HOST) return true;
+  if (serviceAccountJson) return true;
+  if (clientEmail && privateKey) {
+    try {
+      const sign = crypto.createSign("RSA-SHA256");
+      sign.update("check");
+      sign.sign(privateKey);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 export const db: Firestore = getFirestore();
