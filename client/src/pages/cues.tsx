@@ -54,34 +54,36 @@ import roosterImg from '@assets/generated_images/chinese_zodiac_rooster_icon.png
 import dogImg from '@assets/generated_images/chinese_zodiac_dog_icon.png';
 import pigImg from '@assets/generated_images/chinese_zodiac_pig_icon.png';
 
+const getImageSrc = (img: any): string => (typeof img === 'object' && img?.src ? img.src : (img as string));
+
 const westernZodiacImages: Record<string, string> = {
-  'Aries': ariesImg,
-  'Taurus': taurusImg,
-  'Gemini': geminiImg,
-  'Cancer': cancerImg,
-  'Leo': leoImg,
-  'Virgo': virgoImg,
-  'Libra': libraImg,
-  'Scorpio': scorpioImg,
-  'Sagittarius': sagittariusImg,
-  'Capricorn': capricornImg,
-  'Aquarius': aquariusImg,
-  'Pisces': piscesImg,
+  'Aries': getImageSrc(ariesImg),
+  'Taurus': getImageSrc(taurusImg),
+  'Gemini': getImageSrc(geminiImg),
+  'Cancer': getImageSrc(cancerImg),
+  'Leo': getImageSrc(leoImg),
+  'Virgo': getImageSrc(virgoImg),
+  'Libra': getImageSrc(libraImg),
+  'Scorpio': getImageSrc(scorpioImg),
+  'Sagittarius': getImageSrc(sagittariusImg),
+  'Capricorn': getImageSrc(capricornImg),
+  'Aquarius': getImageSrc(aquariusImg),
+  'Pisces': getImageSrc(piscesImg),
 };
 
 const chineseZodiacImages: Record<string, string> = {
-  'Rat': ratImg,
-  'Ox': oxImg,
-  'Tiger': tigerImg,
-  'Rabbit': rabbitImg,
-  'Dragon': dragonImg,
-  'Snake': snakeImg,
-  'Horse': horseImg,
-  'Goat': goatImg,
-  'Monkey': monkeyImg,
-  'Rooster': roosterImg,
-  'Dog': dogImg,
-  'Pig': pigImg,
+  'Rat': getImageSrc(ratImg),
+  'Ox': getImageSrc(oxImg),
+  'Tiger': getImageSrc(tigerImg),
+  'Rabbit': getImageSrc(rabbitImg),
+  'Dragon': getImageSrc(dragonImg),
+  'Snake': getImageSrc(snakeImg),
+  'Horse': getImageSrc(horseImg),
+  'Goat': getImageSrc(goatImg),
+  'Monkey': getImageSrc(monkeyImg),
+  'Rooster': getImageSrc(roosterImg),
+  'Dog': getImageSrc(dogImg),
+  'Pig': getImageSrc(pigImg),
 };
 
 interface Cue {

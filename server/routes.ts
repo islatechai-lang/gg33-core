@@ -33,7 +33,7 @@ export async function registerRoutes(
   });
 
   // Create new user profile (generates odisId)
-  app.post("/api/profile", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/profile", requireFirebaseAuth, async (req: any, res) => {
     const { fullName, birthDate, birthTime, birthLocation } = req.body;
 
     if (!fullName || !birthDate) {
@@ -69,7 +69,7 @@ export async function registerRoutes(
   });
 
   // Get user by Firebase UID (protected - only own profile)
-  app.get("/api/profile/firebase/:firebaseUid", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/profile/firebase/:firebaseUid", requireFirebaseAuth, async (req: any, res) => {
     const { firebaseUid } = req.params;
 
     if (req.user!.uid !== firebaseUid) {
@@ -89,7 +89,7 @@ export async function registerRoutes(
   });
 
   // Get current authenticated user's profile (or request onboarding)
-  app.get("/api/me", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/me", requireFirebaseAuth, async (req: any, res) => {
     const firebaseUid = req.user?.uid;
 
     if (!firebaseUid) {
@@ -258,7 +258,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/access/:resourceId", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/access/:resourceId", requireFirebaseAuth, async (req: any, res) => {
     const { resourceId } = req.params;
     const firebaseUid = req.user!.uid;
 
@@ -270,7 +270,7 @@ export async function registerRoutes(
     res.json(access);
   });
 
-  app.get("/api/whop/user/:userId", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/whop/user/:userId", requireFirebaseAuth, async (req: any, res) => {
     const { userId } = req.params;
 
     try {
@@ -2685,7 +2685,7 @@ export async function registerRoutes(
   });
 
   // Diagnostic endpoint to check Whop API key and company info
-  app.get("/api/whop/debug", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/whop/debug", requireFirebaseAuth, async (req: any, res) => {
     console.log("[Whop Debug] Starting diagnostics...");
 
     try {
@@ -2726,7 +2726,7 @@ export async function registerRoutes(
   });
 
   // Whop In-App Purchase - Create checkout configuration
-  app.post("/api/checkout/create", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/checkout/create", requireFirebaseAuth, async (req: any, res) => {
     const firebaseUid = req.user!.uid;
     const { odisId } = req.body;
     console.log(`[Whop Checkout] Starting checkout creation for Firebase user: ${firebaseUid}`);
@@ -2858,7 +2858,7 @@ export async function registerRoutes(
   });
 
   // Whop In-App Purchase - Upgrade user to Pro after successful payment
-  app.post("/api/upgrade-to-pro", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/upgrade-to-pro", requireFirebaseAuth, async (req: any, res) => {
     try {
       const firebaseUid = req.user!.uid;
       const { paymentId, membershipId, receiptId, odisId } = req.body;
@@ -2945,7 +2945,7 @@ export async function registerRoutes(
   });
 
   // Get user's Pro membership info including billing portal URL
-  app.get("/api/membership", requireFirebaseAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/membership", requireFirebaseAuth, async (req: any, res) => {
     try {
       const firebaseUid = req.user!.uid;
       const user = await storage.getUserByFirebaseUid(firebaseUid);

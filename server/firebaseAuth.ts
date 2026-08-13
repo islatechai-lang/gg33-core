@@ -16,12 +16,20 @@ export interface FirebaseUser {
   picture?: string;
 }
 
-export interface AuthenticatedRequest extends Request {
-  user?: FirebaseUser;
+// Use module augmentation to extend Express Request
+declare global {
+  namespace Express {
+    interface Request {
+      firebaseUser?: FirebaseUser;
+    }
+  }
 }
 
+// Keep AuthenticatedRequest as a simple alias for backward compatibility
+export type AuthenticatedRequest = Request;
+
 export async function firebaseAuthMiddleware(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
@@ -42,7 +50,7 @@ export async function firebaseAuthMiddleware(
     });
 
     if (payload && payload.sub) {
-      req.user = {
+      (req as any).user = {
         uid: payload.sub,
         email: payload.email as string | undefined,
         email_verified: payload.email_verified as boolean | undefined,
@@ -52,7 +60,7 @@ export async function firebaseAuthMiddleware(
       
       const path = req.path;
       if (path.startsWith('/api/') && !path.includes('.')) {
-        console.log(`[Firebase Auth] User ${req.user.uid} (${req.user.email || 'no email'}) authenticated for ${req.method} ${path}`);
+        console.log(`[Firebase Auth] User ${(req as any).user.uid} (${(req as any).user.email || 'no email'}) authenticated for ${req.method} ${path}`);
       }
     }
   } catch (error: any) {
@@ -63,11 +71,11 @@ export async function firebaseAuthMiddleware(
 }
 
 export function requireFirebaseAuth(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
-  if (!req.user) {
+  if (!(req as any).user) {
     return res.status(401).json({ error: "Authentication required" });
   }
   next();
