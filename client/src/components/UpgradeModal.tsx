@@ -102,11 +102,11 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           <div className="space-y-3 pt-2">
             <Button
               onClick={handleProceedToCheckout}
-              className="w-full h-13 sm:h-14 text-sm sm:text-base font-extrabold bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-600 text-zinc-950 shadow-xl shadow-amber-500/20 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
+              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none"
             >
-              <Sparkles className="w-5 h-5" />
+              <Sparkles className="w-5 h-5 text-zinc-950 fill-zinc-950/20" />
               <span>Upgrade to Pro — $35/mo</span>
-              <ArrowRight className="w-5 h-5 ml-1" />
+              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
             </Button>
 
             <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 pt-1">
