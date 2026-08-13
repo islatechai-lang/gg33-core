@@ -83,6 +83,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(idToken);
           setFirebaseToken(idToken);
           await fetchProfile(idToken);
+
+          // If running inside Median.co / GoNative In-App Browser modal, close it to return to main app view
+          if (typeof window !== "undefined") {
+            const win = window as any;
+            if (win.median?.inappbrowser?.close) {
+              win.median.inappbrowser.close();
+            } else if (win.gonative?.inappbrowser?.close) {
+              win.gonative.inappbrowser.close();
+            }
+          }
         } else {
           setUser(null);
           setDbUser(null);
