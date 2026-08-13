@@ -4,7 +4,7 @@ import { registerRoutes } from "../../server/routes";
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
 let isRoutesRegistered = false;
@@ -21,20 +21,28 @@ export const config = {
     bodyParser: false, // Express handles body parsing
     externalResolver: true,
   },
+  maxDuration: 60, // Allow up to 60 seconds for AI generation
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await routesPromise;
-  return new Promise<void>((resolve, reject) => {
-    app(req as any, res as any, (err: any) => {
-      if (err) {
-        console.error("[Next API Catch-all Error]:", err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: err?.message || "Internal Server Error" });
+  try {
+    await routesPromise;
+    return new Promise<void>((resolve) => {
+      app(req as any, res as any, (err: any) => {
+        if (err) {
+          console.error("[Next API Catch-all Error]:", err);
+          if (!res.headersSent) {
+            res.status(500).json({ error: err?.message || "Internal Server Error" });
+          }
+          return resolve();
         }
-        return resolve();
-      }
-      resolve();
+        resolve();
+      });
     });
-  });
+  } catch (error: any) {
+    console.error("[Next API Fatal Error]:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error?.message || "Internal Server Error" });
+    }
+  }
 }
