@@ -6,11 +6,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Crown, Check, Sparkles, Users, Database, Compass, MessageCircle, GraduationCap, Hash, Clock, Zap, Lock, Loader2, Sun } from 'lucide-react';
-import proBgImage from '@assets/generated_images/clean_minimal_sacred_geometry_background.png';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Crown, Check, Sparkles, Users, Database, Compass, MessageCircle, GraduationCap, Hash, Lock, Loader2, Sun, ExternalLink } from 'lucide-react';
+import { WhopCheckoutEmbed } from "@whop/checkout/react";
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 
@@ -31,15 +29,11 @@ const benefits = [
 
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const { toast } = useToast();
-  const { dbUser, refreshDbUser } = useAuth();
+  const { dbUser } = useAuth();
   
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [planId, setPlanId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
-  
-  const [manualPaymentId, setManualPaymentId] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // Initialize checkout configuration when modal opens
   useEffect(() => {
@@ -64,7 +58,6 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           const data = await res.json();
           if (data.id) {
             setSessionId(data.id);
-            setPlanId(data.planId);
             setCheckoutUrl(data.url);
           }
         } catch (error: any) {
@@ -83,76 +76,14 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     } else {
       // Clear state when closed
       setSessionId(null);
-      setPlanId(null);
       setCheckoutUrl(null);
-      setManualPaymentId('');
     }
-  }, [open, dbUser]);
-
-  // Refresh Whop scripts to capture dynamic data-whop-checkout elements
-  useEffect(() => {
-    if (sessionId) {
-      // Whop's loader script parses elements with data-whop-checkout on load.
-      // If we insert them dynamically, we should notify the loader script.
-      // Standard Whop JS loader exposes Whop objects or we can re-inject the loader.
-      try {
-        const whopWindow = window as any;
-        if (whopWindow.Whop && typeof whopWindow.Whop.init === 'function') {
-          whopWindow.Whop.init();
-        }
-      } catch (err) {
-        console.error('Failed to re-initialize Whop checkout loader:', err);
-      }
-    }
-  }, [sessionId]);
-
-  const handleManualVerify = async () => {
-    if (!manualPaymentId) return;
-
-    setIsVerifying(true);
-    try {
-      const res = await apiRequest('POST', '/api/upgrade-to-pro', {
-        paymentId: manualPaymentId,
-        odisId: dbUser?.odisId,
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        toast({
-          title: 'Welcome to Pro!',
-          description: 'Your purchase has been verified. You now have full access.',
-        });
-        await refreshDbUser();
-        // Invalidate queries to update layout
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/me'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/membership'] }),
-        ]);
-        onOpenChange(false);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Verification Failed',
-          description: data.error || 'Could not verify payment with Whop.',
-        });
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: err?.message || 'Verification failed. Make sure your payment ID is correct.',
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  }, [open, dbUser, toast]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="sm:max-w-3xl lg:max-w-5xl mx-4 p-0 rounded-xl border-amber-9/30 overflow-hidden max-h-[90vh]" 
+        className="sm:max-w-3xl lg:max-w-5xl mx-4 p-0 rounded-xl border-amber-500/30 overflow-hidden max-h-[90vh]" 
         data-testid="modal-upgrade"
       >
         <div className="relative grid md:grid-cols-5 gap-0 max-h-[90vh] overflow-y-auto">
@@ -190,8 +121,8 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             </div>
           </div>
 
-          {/* Right panel: Checkout Embed / Manual Verify (3/5 columns) */}
-          <div className="md:col-span-3 p-6 flex flex-col bg-zinc-900/20 backdrop-blur-md justify-between min-h-[450px]">
+          {/* Right panel: Embedded Checkout (3/5 columns) */}
+          <div className="md:col-span-3 p-6 flex flex-col bg-zinc-900/40 backdrop-blur-md justify-between min-h-[500px]">
             <div>
               <DialogHeader className="pb-4">
                 <DialogTitle className="text-xl font-bold text-zinc-100 flex items-center gap-2">
@@ -200,62 +131,38 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
                 </DialogTitle>
               </DialogHeader>
 
-              {/* Loader */}
+              {/* Loading State */}
               {loadingCheckout && (
-                <div className="h-60 flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-                  <p className="text-sm text-zinc-400">Loading checkout session...</p>
+                <div className="h-80 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                  <p className="text-sm font-medium text-zinc-400">Loading secure checkout...</p>
                 </div>
               )}
 
-              {/* Whop Embedded Checkout Element */}
+              {/* Embedded Whop Checkout */}
               {!loadingCheckout && sessionId && (
                 <div className="space-y-4">
-                  <div className="border border-zinc-800 rounded-lg overflow-hidden bg-black/40 min-h-[350px] p-2">
-                    <div
-                      data-whop-checkout-plan-id={planId}
-                      data-whop-checkout-session={sessionId}
-                      data-whop-checkout-return-url={window.location.origin + "/?status=success"}
-                      className="w-full h-full min-h-[340px]"
+                  <div className="border border-zinc-800/80 rounded-xl overflow-hidden bg-black/60 min-h-[400px]">
+                    <WhopCheckoutEmbed
+                      sessionId={sessionId}
+                      returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
+                      theme="dark"
                     />
                   </div>
-                  
+
                   {checkoutUrl && (
                     <Button
                       variant="outline"
-                      className="w-full border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+                      className="w-full border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 flex items-center justify-center gap-2 transition-colors text-xs py-2"
                       onClick={() => window.open(checkoutUrl, '_blank')}
                     >
-                      Pay in new window instead
+                      <span>Open Checkout in New Tab</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
               )}
             </div>
-
-            {/* Manual Verification Fallback */}
-            {!loadingCheckout && (
-              <div className="mt-6 pt-4 border-t border-zinc-800/80">
-                <p className="text-xs font-semibold text-zinc-300 mb-2">Already paid? Verify manually</p>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter Whop Payment ID (e.g., pay_xxxxx)"
-                    value={manualPaymentId}
-                    onChange={(e) => setManualPaymentId(e.target.value)}
-                    className="bg-zinc-950 border-zinc-800 text-zinc-200 placeholder-zinc-500 text-xs h-9 focus:border-amber-500"
-                  />
-                  <Button
-                    onClick={handleManualVerify}
-                    disabled={isVerifying || !manualPaymentId}
-                    variant="gold"
-                    size="sm"
-                    className="font-bold text-xs h-9"
-                  >
-                    {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </DialogContent>
