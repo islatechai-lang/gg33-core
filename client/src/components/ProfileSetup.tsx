@@ -10,6 +10,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { formatUTCDate, parseUTCDate } from '@shared/dateUtils';
+import { useToast } from '@/hooks/use-toast';
 
 export interface ProfileData {
   odisId: string;
@@ -24,6 +25,7 @@ interface ProfileSetupProps {
 }
 
 export function ProfileSetup({ onComplete }: ProfileSetupProps) {
+  const { toast } = useToast();
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [birthTime, setBirthTime] = useState('');
@@ -87,8 +89,13 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
         birthLocation: user.birthLocation || 'Unknown',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to create profile:', error);
+      toast({
+        title: "Failed to create profile",
+        description: error?.message || "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

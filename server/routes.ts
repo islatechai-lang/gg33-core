@@ -62,9 +62,9 @@ export async function registerRoutes(
         email,
       });
       res.json({ success: true, user });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating profile:", error);
-      res.status(500).json({ error: "Failed to create profile" });
+      res.status(500).json({ error: error?.message || "Failed to create profile" });
     }
   });
 

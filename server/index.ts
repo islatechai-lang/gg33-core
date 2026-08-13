@@ -55,8 +55,10 @@ export async function setupApp() {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    console.error(`[Server Error ${status}]:`, err);
+    if (!res.headersSent) {
+      res.status(status).json({ error: message, message });
+    }
   });
 
   // On Vercel, static files are served by Vercel's CDN — not Express.
