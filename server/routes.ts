@@ -253,8 +253,21 @@ export async function registerRoutes(
 
       res.json({ insight: savedInsight, cached: false });
     } catch (error) {
-      console.error("Error generating/saving personality insight:", error);
-      res.status(500).json({ error: "Failed to generate personality insight" });
+      console.error("Error generating/saving personality insight, returning fallback:", error);
+      res.json({
+        insight: {
+          odisId,
+          overview: `${profile.name || 'Your'} Life Path ${profile.lifePathNumber || ''} carries powerful alignment with ${profile.westernZodiac || 'your sign'} and ${profile.chineseZodiac || 'zodiac'}.`,
+          strengths: ["Strong intuition and natural leadership", "High strategic insight", "Resilient vision"],
+          challenges: ["Patience with long-term process", "Avoiding burnout", "Balancing drive with rest"],
+          lifeLesson: "Mastering inner strength while remaining grounded in purpose.",
+          careerPaths: ["Leadership & Strategy", "Creative Direction", "Advising & Mentorship"],
+          relationshipStyle: "Authentic, deeply loyal, and values mutual personal evolution.",
+          spiritualGifts: ["Intuitive foresight", "Energetic sensitivity", "Clear perception"],
+        },
+        cached: false,
+        fallback: true
+      });
     }
   });
 
