@@ -1107,30 +1107,49 @@ export default function Explore() {
       const response = await fetch(`/api/profile/${savedOdisId}`);
       if (!response.ok) return null;
       const data = await response.json();
-      return { ...data.user, isPro: data.user?.isPro || data.isPro } as ProfileData & { isPro?: boolean };
+      return { ...(data.user || data), isPro: data.user?.isPro || data.isPro } as ProfileData & { isPro?: boolean };
     },
     enabled: !!savedOdisId,
     staleTime: 1000 * 60 * 5,
   });
 
-  const hasProfile = !!profileData;
+  const effectiveProfile = useMemo(() => {
+    if (profileData?.birthDate && profileData?.fullName) return profileData;
+    if (dbUser?.birthDate && dbUser?.fullName) {
+      return {
+        odisId: dbUser.odisId,
+        fullName: dbUser.fullName,
+        birthDate: dbUser.birthDate,
+        birthTime: dbUser.birthTime || '12:00',
+        birthLocation: dbUser.birthLocation || 'Unknown',
+        isPro: dbUser.isPro,
+      } as ProfileData & { isPro?: boolean };
+    }
+    return null;
+  }, [profileData, dbUser]);
+
+  const hasProfile = !!effectiveProfile;
   const isPro = dbUser?.isPro || profileData?.isPro || (profileData as any)?.user?.isPro || false;
-  const profileLoaded = !savedOdisId || !isProfileLoading;
-  const birthDate = profileData?.birthDate || null;
+  const profileLoaded = !savedOdisId || !isProfileLoading || !!dbUser;
+  const birthDate = effectiveProfile?.birthDate || null;
 
   const calculatedProfile = useMemo(() => {
-    if (!profileData?.birthDate || !profileData?.fullName) return null;
+    if (!effectiveProfile?.birthDate || !effectiveProfile?.fullName) return null;
     try {
+      const parsedDate = typeof effectiveProfile.birthDate === 'string'
+        ? parseUTCDate(effectiveProfile.birthDate)
+        : new Date(effectiveProfile.birthDate);
       return calculateComprehensiveProfile(
-        profileData.fullName,
-        new Date(profileData.birthDate),
-        profileData.birthTime || '12:00',
-        profileData.birthLocation || 'Unknown'
+        effectiveProfile.fullName,
+        parsedDate,
+        effectiveProfile.birthTime || '12:00',
+        effectiveProfile.birthLocation || 'Unknown'
       );
-    } catch {
+    } catch (err) {
+      console.error("[Explore] Error calculating profile:", err);
       return null;
     }
-  }, [profileData]);
+  }, [effectiveProfile]);
 
   const lifePathNumber = calculatedProfile?.lifePathNumber || null;
   const energySignature = calculatedProfile?.energySignature || null;
@@ -1257,7 +1276,7 @@ export default function Explore() {
       <TrendingEnergiesDialog
         open={activeFeature === 'trending'}
         onClose={() => setActiveFeature(null)}
-        profileData={profileData || null}
+        profileData={effectiveProfile}
       />
 
       <BestDaysDialog
@@ -1327,7 +1346,7 @@ export default function Explore() {
       <LetterologyDialog
         open={activeFeature === 'letterology'}
         onClose={handleCloseDialog}
-        profileData={profileData}
+        profileData={effectiveProfile}
       />
 
       <MatrixNumbersDialog
@@ -1370,7 +1389,7 @@ export default function Explore() {
       <AllAboutYouDialog
         open={activeFeature === 'all-about-you'}
         onClose={handleCloseDialog}
-        profileData={profileData}
+        profileData={effectiveProfile}
       />
 
       <SaturnInsightsDialog
