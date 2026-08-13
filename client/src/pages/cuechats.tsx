@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { useAuth } from '@/context/AuthContext';
 import { MessageCircle, Send, Bot, User, AlertCircle, RotateCcw, Sparkles, Plus, Play, Lock, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -180,12 +181,13 @@ export default function CueChats() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const savedOdisId = localStorage.getItem('gg33-odis-id');
-  const { data: profileData } = useQuery<{ isPro?: boolean }>({
+  const { dbUser } = useAuth();
+  const savedOdisId = dbUser?.odisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
+  const { data: profileData } = useQuery<{ isPro?: boolean; user?: { isPro?: boolean } }>({
     queryKey: ['/api/profile', savedOdisId],
     enabled: !!savedOdisId,
   });
-  const isPro = profileData?.isPro ?? false;
+  const isPro = dbUser?.isPro || profileData?.isPro || profileData?.user?.isPro || false;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

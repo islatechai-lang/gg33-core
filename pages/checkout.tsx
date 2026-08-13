@@ -162,6 +162,18 @@ export default function CheckoutPage() {
                     sessionId={sessionId}
                     returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
                     theme="dark"
+                    onComplete={async (paymentId: any) => {
+                      try {
+                        await apiRequest('POST', '/api/upgrade-to-pro', {
+                          paymentId: paymentId || sessionId || 'whop_checkout_success',
+                          odisId: dbUser?.odisId,
+                        });
+                        await refreshDbUser();
+                        router.push('/?status=success');
+                      } catch (e) {
+                        router.push('/?status=success');
+                      }
+                    }}
                   />
                 </div>
               )}

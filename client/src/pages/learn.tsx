@@ -10,6 +10,7 @@ import { UpgradeModal } from '@/components/UpgradeModal';
 import { BookOpen, Play, Clock, Star, Lock, Sparkles } from 'lucide-react';
 import { courses } from '@/lib/courses-data';
 import { useWhopContext } from '@/context/WhopContext';
+import { useAuth } from '@/context/AuthContext';
 
 const ODIS_ID_KEY = 'gg33-odis-id';
 
@@ -17,12 +18,13 @@ export default function Learn() {
   const { basePath } = useWhopContext();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const savedOdisId = localStorage.getItem(ODIS_ID_KEY);
-  const { data: profileData } = useQuery<{ isPro?: boolean }>({
+  const { dbUser } = useAuth();
+  const savedOdisId = dbUser?.odisId || (typeof window !== 'undefined' ? localStorage.getItem(ODIS_ID_KEY) : null);
+  const { data: profileData } = useQuery<{ isPro?: boolean; user?: { isPro?: boolean } }>({
     queryKey: ['/api/profile', savedOdisId],
     enabled: !!savedOdisId,
   });
-  const isPro = profileData?.isPro ?? false;
+  const isPro = dbUser?.isPro || profileData?.isPro || profileData?.user?.isPro || false;
 
   return (
     <>

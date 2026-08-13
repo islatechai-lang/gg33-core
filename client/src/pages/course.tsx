@@ -12,6 +12,7 @@ import { getCourseById } from '@/lib/courses-data';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useWhopContext } from '@/context/WhopContext';
+import { useAuth } from '@/context/AuthContext';
 
 const ODIS_ID_KEY = 'gg33-odis-id';
 
@@ -22,12 +23,13 @@ export default function Course() {
   const course = getCourseById(courseId || '');
   const { basePath } = useWhopContext();
 
-  const savedOdisId = localStorage.getItem(ODIS_ID_KEY);
-  const { data: profileData } = useQuery<{ isPro?: boolean }>({
+  const { dbUser } = useAuth();
+  const savedOdisId = dbUser?.odisId || (typeof window !== 'undefined' ? localStorage.getItem(ODIS_ID_KEY) : null);
+  const { data: profileData } = useQuery<{ isPro?: boolean; user?: { isPro?: boolean } }>({
     queryKey: ['/api/profile', savedOdisId],
     enabled: !!savedOdisId,
   });
-  const isPro = profileData?.isPro ?? false;
+  const isPro = dbUser?.isPro || profileData?.isPro || profileData?.user?.isPro || false;
 
   const { data: progress } = useQuery<{ lessonId: string; completed: boolean }[]>({
     queryKey: ['/api/progress', courseId],

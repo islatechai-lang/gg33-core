@@ -95,30 +95,17 @@ export function Navigation() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {isPro ? (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-a3 border border-amber-9/30">
-                  <Crown className="w-4 h-4 text-amber-9" />
-                  <span className="text-2 font-medium text-amber-11">Pro</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-extrabold text-xs">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>PRO</span>
                 </div>
               ) : (
                 <Button
-                  variant="gold"
-                  size="sm"
-                  className="hidden sm:flex"
                   onClick={handleUpgradeClick}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-8 px-3.5 rounded-lg shadow-sm shadow-amber-500/20"
                   data-testid="button-upgrade"
                 >
-                  Get Pro
-                </Button>
-              )}
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={logout}
-                  className="text-gray-11 hover:text-red-9 hover:bg-red-9/10"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
+                  Upgrade to Pro
                 </Button>
               )}
               <Button

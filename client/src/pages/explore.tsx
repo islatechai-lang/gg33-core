@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { useAuth } from '@/context/AuthContext';
 import { Compass, TrendingUp, Calendar, Star, Globe, Heart, Loader2, MapPin, Briefcase, Users, Check, AlertCircle, X, Lock, Crown, CalendarDays, CalendarRange, Home, Car, Hash, Type, Grid, Square, Moon, Zap, Palette, Sun, UserCircle, CircleDashed } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Link } from 'wouter';
@@ -1096,7 +1097,8 @@ export default function Explore() {
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const savedOdisId = typeof window !== 'undefined' ? localStorage.getItem(ODIS_ID_KEY) : null;
+  const { dbUser } = useAuth();
+  const savedOdisId = dbUser?.odisId || (typeof window !== 'undefined' ? localStorage.getItem(ODIS_ID_KEY) : null);
 
   const { data: profileData, isLoading: isProfileLoading } = useQuery<ProfileData & { isPro?: boolean } | null>({
     queryKey: ['/api/profile', savedOdisId],
@@ -1105,14 +1107,14 @@ export default function Explore() {
       const response = await fetch(`/api/profile/${savedOdisId}`);
       if (!response.ok) return null;
       const data = await response.json();
-      return { ...data.user, isPro: data.isPro } as ProfileData & { isPro?: boolean };
+      return { ...data.user, isPro: data.user?.isPro || data.isPro } as ProfileData & { isPro?: boolean };
     },
     enabled: !!savedOdisId,
     staleTime: 1000 * 60 * 5,
   });
 
   const hasProfile = !!profileData;
-  const isPro = profileData?.isPro ?? false;
+  const isPro = dbUser?.isPro || profileData?.isPro || (profileData as any)?.user?.isPro || false;
   const profileLoaded = !savedOdisId || !isProfileLoading;
   const birthDate = profileData?.birthDate || null;
 

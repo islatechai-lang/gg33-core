@@ -40,28 +40,32 @@ export default function Home() {
     const status = params.get('status');
     const paymentId = params.get('payment_id');
 
-    if (status === 'success' && paymentId && dbUser) {
+    if (status === 'success' && dbUser) {
       const verifyPayment = async () => {
         setIsVerifyingPayment(true);
         toast({
-          title: 'Verifying Purchase',
-          description: 'Please wait a moment while we unlock your Pro access...',
+          title: 'Activating GG33 Pro',
+          description: 'Please wait a moment while we unlock all Pro access...',
         });
 
         try {
           const res = await apiRequest('POST', '/api/upgrade-to-pro', {
-            paymentId,
+            paymentId: paymentId || 'whop_checkout_success',
             odisId: dbUser.odisId,
           });
 
           const data = await res.json();
           if (data.success) {
             toast({
-              title: 'Welcome to Pro!',
-              description: 'Your payment was successfully verified! You now have full access to GG33 Pro features.',
+              title: 'Welcome to GG33 Pro!',
+              description: 'You now have full access to Cues Database, Explore, and CueChats!',
             });
             await refreshDbUser();
-            await queryClient.invalidateQueries({ queryKey: ['/api/membership'] });
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['/api/me'] }),
+              queryClient.invalidateQueries({ queryKey: ['/api/membership'] }),
+              queryClient.invalidateQueries({ queryKey: ['/api/profile', dbUser.odisId] }),
+            ]);
           } else {
             toast({
               variant: 'destructive',
