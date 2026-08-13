@@ -97,12 +97,15 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-zinc-100">GG33 Pro</h2>
-                  <p className="text-xs text-amber-400 font-medium">All-Access Pass</p>
+                  <p className="text-xs text-amber-400 font-medium">$35 / month • All-Access Pass</p>
                 </div>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                PRO
-              </span>
+              <div className="text-right">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 block text-center mb-1">
+                  PRO
+                </span>
+                <span className="text-xs font-extrabold text-zinc-100">$35/mo</span>
+              </div>
             </div>
 
             {/* Feature Bullet Points */}

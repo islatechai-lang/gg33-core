@@ -226,14 +226,19 @@ export default function Signup() {
             variant="outline"
             onClick={handleGoogleSignup}
             disabled={isLoading || isGoogleLoading}
-            className="w-full border-zinc-800 hover:bg-zinc-900/50 text-zinc-200 bg-transparent flex items-center justify-center gap-3 transition-colors duration-300"
+            className="w-full border-zinc-800 hover:bg-zinc-900/50 text-zinc-200 bg-transparent flex items-center justify-center gap-3 transition-colors duration-300 h-10"
           >
             {isGoogleLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+                <span className="text-amber-300 text-sm font-medium">Connecting to Google...</span>
+              </>
             ) : (
-              <FcGoogle className="h-5 w-5" />
+              <>
+                <FcGoogle className="h-5 w-5" />
+                <span>Continue with Google</span>
+              </>
             )}
-            Google
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-zinc-900/50 py-4">

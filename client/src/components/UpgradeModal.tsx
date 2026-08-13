@@ -2,8 +2,6 @@ import { useRouter } from 'next/router';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Crown, Check, Sparkles, Users, Database, Compass, MessageCircle, GraduationCap, Hash, Lock, Sun, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -30,7 +28,6 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const { dbUser } = useAuth();
 
   const handleProceedToCheckout = async () => {
-    // Send email notification on click
     if (dbUser) {
       try {
         await apiRequest('POST', '/api/notify-upgrade-click', {
@@ -64,9 +61,12 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               </div>
               <span className="text-xs font-extrabold text-amber-400 uppercase tracking-widest">GG33 Pro Access</span>
             </div>
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Unlimited
-            </span>
+            
+            {/* Price Badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+              <span className="text-sm font-extrabold text-amber-300">$35</span>
+              <span className="text-[11px] text-amber-400/80 font-medium">/ month</span>
+            </div>
           </div>
           
           <div className="text-center sm:text-left mb-6">
@@ -98,14 +98,14 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             ))}
           </div>
 
-          {/* High-converting Upgrade Button */}
+          {/* High-converting Upgrade Button with Price */}
           <div className="space-y-3 pt-2">
             <Button
               onClick={handleProceedToCheckout}
               className="w-full h-13 sm:h-14 text-sm sm:text-base font-extrabold bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-600 text-zinc-950 shadow-xl shadow-amber-500/20 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Upgrade to GG33 Pro</span>
+              <span>Upgrade to Pro — $35/mo</span>
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
 
