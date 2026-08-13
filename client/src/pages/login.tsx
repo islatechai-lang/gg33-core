@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { auth, googleProvider } from "../lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Label } from "../components/Label";
 import { useToast } from "../hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,26 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Check redirect result for mobile / in-app WebView auth (Median.co, iOS, Android)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+          toast({
+            title: isNewUser ? "Account Created!" : "Welcome back!",
+            description: isNewUser
+              ? "Your account has been created with Google."
+              : "Successfully signed in with Google.",
+          });
+          setLocation("/");
+        }
+      })
+      .catch((err) => {
+        console.error("[Auth Redirect Error]:", err);
+      });
+  }, [setLocation, toast]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,26 +79,44 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      // Check if this is a new user (Google sign-in auto-creates accounts)
-      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
-      toast({
-        title: isNewUser ? "Account Created!" : "Welcome back!",
-        description: isNewUser
-          ? "Your account has been created with Google."
-          : "Successfully signed in with Google.",
-      });
-      setLocation("/");
+      // Check if user is in an in-app WebView (Median.co, iOS/Android WebView) or mobile
+      const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+      const isMobileWebView = /wv|Android|iPhone|iPad|iPod|Median|GoNative/i.test(userAgent);
+
+      if (isMobileWebView) {
+        // Use redirect auth for WebViews to avoid stuck popups
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        // Use popup for desktop web browsers
+        const result = await signInWithPopup(auth, googleProvider);
+        const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+        toast({
+          title: isNewUser ? "Account Created!" : "Welcome back!",
+          description: isNewUser
+            ? "Your account has been created with Google."
+            : "Successfully signed in with Google.",
+        });
+        setLocation("/");
+      }
     } catch (err: any) {
       console.error(err);
-      // Don't show error if user just closed the popup
       if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
         return;
       }
+      // If popup is blocked by browser/WebView, fallback to redirect automatically
+      if (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-allowed") {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error(redirectErr);
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
-        description: err?.message || "An error occurred during Google sign-in.",
+        description: err?.message || "An error occurred during Google sign-in. You can also log in with email.",
       });
     } finally {
       setIsGoogleLoading(false);
@@ -111,7 +149,7 @@ export default function Login() {
         <CardContent className="space-y-4">
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
+              <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</label>
               <Input
                 id="email"
                 type="email"
@@ -124,7 +162,7 @@ export default function Login() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-zinc-300">Password</Label>
+                <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
               </div>
               <Input
                 id="password"

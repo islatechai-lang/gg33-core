@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { auth, googleProvider } from "../lib/firebase";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { useToast } from "../hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
 import { Loader2 } from "lucide-react";
@@ -19,6 +18,23 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Check redirect result for mobile / in-app WebView auth (Median.co, iOS, Android)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          toast({
+            title: "Welcome to GG33 Core!",
+            description: "Successfully signed up with Google.",
+          });
+          setLocation("/");
+        }
+      })
+      .catch((err) => {
+        console.error("[Auth Redirect Error]:", err);
+      });
+  }, [setLocation, toast]);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,18 +96,41 @@ export default function Signup() {
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-      toast({
-        title: "Welcome to GG33 Core!",
-        description: "Successfully signed up with Google.",
-      });
-      setLocation("/");
+      // Check if user is in an in-app WebView (Median.co, iOS/Android WebView) or mobile
+      const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+      const isMobileWebView = /wv|Android|iPhone|iPad|iPod|Median|GoNative/i.test(userAgent);
+
+      if (isMobileWebView) {
+        // Use redirect auth for WebViews to avoid stuck popups
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        // Use popup for desktop web browsers
+        await signInWithPopup(auth, googleProvider);
+        toast({
+          title: "Welcome to GG33 Core!",
+          description: "Successfully signed up with Google.",
+        });
+        setLocation("/");
+      }
     } catch (err: any) {
       console.error(err);
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        return;
+      }
+      // If popup is blocked by browser/WebView, fallback to redirect automatically
+      if (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-allowed") {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error(redirectErr);
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
-        description: err?.message || "An error occurred during Google sign-in.",
+        description: err?.message || "An error occurred during Google sign-in. You can also sign up with email.",
       });
     } finally {
       setIsGoogleLoading(false);
@@ -124,7 +163,7 @@ export default function Signup() {
         <CardContent className="space-y-4">
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
+              <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</label>
               <Input
                 id="email"
                 type="email"
@@ -136,7 +175,7 @@ export default function Signup() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-zinc-300">Password</Label>
+              <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
               <Input
                 id="password"
                 type="password"
@@ -148,7 +187,7 @@ export default function Signup() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-zinc-300">Confirm Password</Label>
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-300">Confirm Password</label>
               <Input
                 id="confirmPassword"
                 type="password"
