@@ -8,4 +8,5 @@ vite.config.ts.*
 .env.local
 .env.*.local
 .vercel
+.next
 gg33-core-firebase-adminsdk.json
