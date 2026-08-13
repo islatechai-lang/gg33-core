@@ -1,4 +1,4 @@
-import { connectDB, db, type DBUser, type DBDailyEnergy, type DBPersonalityInsight } from "./db";
+import { connectDB, db, isFirestoreConfigured, type DBUser, type DBDailyEnergy, type DBPersonalityInsight } from "./db";
 import { Timestamp } from "firebase-admin/firestore";
 import crypto from "crypto";
 
@@ -155,6 +155,11 @@ export class FirestoreStorage implements IStorage {
   }
 
   async createUser(data: { odisId: string; fullName: string; birthDate: Date; birthTime?: string; birthLocation?: string; whopUserId?: string; firebaseUid?: string; email?: string; whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access'; isPro?: boolean }): Promise<DBUser> {
+    if (!isFirestoreConfigured()) {
+      const msg = "Firebase Admin credentials are not configured in Vercel environment variables. Please set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY (or FIREBASE_SERVICE_ACCOUNT) in your Vercel Project Settings.";
+      console.error("[Firestore Config Error]:", msg);
+      throw new Error(msg);
+    }
     await this.ensureConnected();
     try {
       const docRef = db.collection("users").doc(data.odisId);

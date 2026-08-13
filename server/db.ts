@@ -1,27 +1,48 @@
 import { initializeApp, cert, getApp, getApps } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 
-const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+function parseServiceAccount(val: string | undefined): any | null {
+  if (!val) return null;
+  let str = val.trim();
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    try {
+      str = JSON.parse(str);
+    } catch {}
+  }
+  try {
+    return typeof str === 'object' ? str : JSON.parse(str);
+  } catch {}
+  try {
+    const decoded = Buffer.from(str, 'base64').toString('utf-8');
+    return JSON.parse(decoded);
+  } catch {}
+  return null;
+}
+
+function parsePrivateKey(val: string | undefined): string | undefined {
+  if (!val) return undefined;
+  let str = val.trim();
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    str = str.slice(1, -1);
+  }
+  return str.replace(/\\n/g, "\n");
+}
+
+const serviceAccountJson = parseServiceAccount(process.env.FIREBASE_SERVICE_ACCOUNT);
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || "gg33-core";
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
-const privateKey = rawPrivateKey
-  ? rawPrivateKey.trim().replace(/^["']|["']$/g, "").replace(/\\n/g, "\n")
-  : undefined;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+const privateKey = parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
 let app;
 
 try {
   if (getApps().length === 0) {
     if (serviceAccountJson) {
-      // Method 1: Full service account JSON string
-      const serviceAccount = typeof serviceAccountJson === 'string' ? JSON.parse(serviceAccountJson) : serviceAccountJson;
       app = initializeApp({
-        credential: cert(serviceAccount)
+        credential: cert(serviceAccountJson)
       });
       console.log("Firebase Admin initialized using FIREBASE_SERVICE_ACCOUNT env variable.");
     } else if (clientEmail && privateKey) {
-      // Method 2: Individual env vars (Vercel deployment certified)
       app = initializeApp({
         credential: cert({
           projectId,
@@ -31,17 +52,20 @@ try {
       });
       console.log("Firebase Admin initialized using individual env vars (FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY).");
     } else {
-      // Method 3: Fallback for GCP ADC or local development
       app = initializeApp({
         projectId: projectId
       });
-      console.log(`Firebase Admin initialized with project ID: ${projectId}. WARNING: Firestore writes will likely fail without credentials. Set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY env vars.`);
+      console.warn(`[Firebase Admin Warning] No service account credentials found (FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY or FIREBASE_SERVICE_ACCOUNT). Firestore operations on Vercel will fail until credentials are set in environment variables.`);
     }
   } else {
     app = getApp();
   }
 } catch (error) {
   console.error("Failed to initialize Firebase Admin:", error);
+}
+
+export function isFirestoreConfigured(): boolean {
+  return Boolean(serviceAccountJson || (clientEmail && privateKey) || process.env.FIRESTORE_EMULATOR_HOST);
 }
 
 export const db: Firestore = getFirestore();
