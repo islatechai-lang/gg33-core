@@ -2906,7 +2906,7 @@ export async function registerRoutes(
         console.log(`[Whop Upgrade] Verifying payment: ${idToCheck}`);
         try {
           const payment = await whopSdk.payments.retrieve(idToCheck);
-          if (payment && (payment.status === 'paid' || payment.status === 'succeeded' || payment.status === 'completed')) {
+          if (payment && (payment.status === 'paid' || (payment.status as string) === 'succeeded' || (payment.status as string) === 'completed')) {
             isPaymentValid = true;
             console.log(`[Whop Upgrade] Payment ${idToCheck} is verified paid!`);
           } else {
@@ -2922,7 +2922,7 @@ export async function registerRoutes(
         console.log(`[Whop Upgrade] Verifying membership: ${membershipId}`);
         try {
           const membership = await whopSdk.memberships.retrieve(membershipId);
-          if (membership && (membership.status === 'active' || membership.status === 'trialing' || membership.status === 'completed')) {
+          if (membership && (membership.status === 'active' || membership.status === 'trialing' || (membership.status as string) === 'completed')) {
             isPaymentValid = true;
             console.log(`[Whop Upgrade] Membership ${membershipId} is verified active/trialing!`);
           }
