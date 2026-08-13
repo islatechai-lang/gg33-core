@@ -21,7 +21,7 @@ const benefits = [
 export default function CheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { dbUser, loading: authLoading } = useAuth();
+  const { dbUser, refreshDbUser, loading: authLoading } = useAuth();
   
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
