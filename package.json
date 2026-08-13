@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
-    "vercel-build": "next build --webpack",
+    "build": "next build",
+    "vercel-build": "next build",
     "start": "next start",
     "check": "tsc",
     "db:push": "drizzle-kit push"
