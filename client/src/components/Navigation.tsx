@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { ManageSubscriptionModal } from '@/components/ManageSubscriptionModal';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -37,6 +38,7 @@ const navItems = [
 export function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
   const { logout, user, dbUser } = useAuth();
 
   const { data: membership } = useQuery<MembershipInfo>({
@@ -95,10 +97,14 @@ export function Navigation() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {isPro ? (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-extrabold text-xs">
+                <button
+                  onClick={() => setShowManageModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-extrabold text-xs transition-colors cursor-pointer"
+                  title="Manage Subscription"
+                >
                   <Crown className="w-3.5 h-3.5 text-amber-400" />
                   <span>PRO</span>
-                </div>
+                </button>
               ) : (
                 <Button
                   onClick={handleUpgradeClick}
@@ -145,31 +151,41 @@ export function Navigation() {
                   </NavLink>
                 ))}
                 {isPro ? (
-                  <div className="flex items-center justify-center gap-2 mt-4 px-4 py-2.5 rounded-md bg-amber-a3 border border-amber-9/30">
-                    <Crown className="w-5 h-5 text-amber-9" />
-                    <span className="text-3 font-medium text-amber-11">Pro Member</span>
+                  <div className="flex items-center justify-between mt-4 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-300">Pro Member</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        setShowManageModal(true);
+                      }}
+                      className="text-[11px] font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors cursor-pointer"
+                    >
+                      Manage subscription
+                    </button>
                   </div>
                 ) : (
                   <Button
-                    variant="gold"
-                    className="mt-4"
                     onClick={handleUpgradeClick}
+                    className="mt-4 w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-10 rounded-xl shadow-md shadow-amber-500/20"
                     data-testid="button-mobile-upgrade"
                   >
-                    Get Pro
+                    Upgrade to Pro
                   </Button>
                 )}
                 {user && (
                   <Button
                     variant="ghost"
-                    className="mt-2 text-gray-11 hover:text-red-9 hover:bg-red-9/10 w-full flex items-center justify-center gap-3"
+                    className="mt-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-xl transition-colors"
                     onClick={() => {
                       setMobileOpen(false);
                       logout();
                     }}
                   >
-                    <LogOut className="w-5 h-5" />
-                    <span>Logout</span>
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-xs font-semibold">Logout</span>
                   </Button>
                 )}
               </div>
@@ -179,6 +195,7 @@ export function Navigation() {
       </nav>
 
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
+      <ManageSubscriptionModal open={showManageModal} onOpenChange={setShowManageModal} />
     </>
   );
 }

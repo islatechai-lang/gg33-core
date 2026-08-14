@@ -2984,6 +2984,36 @@ export async function registerRoutes(
     }
   });
 
+  // Cancel user's Pro membership
+  app.post("/api/membership/cancel", requireFirebaseAuth, async (req: any, res) => {
+    try {
+      const firebaseUid = req.user!.uid;
+      const user = await storage.getUserByFirebaseUid(firebaseUid);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const membershipId = (user as any).proPaymentReceiptId;
+      if (membershipId && typeof membershipId === 'string' && membershipId.startsWith('mem_')) {
+        const { whopSdk } = await import("./whop");
+        if (whopSdk) {
+          try {
+            console.log(`[Whop Cancel] Cancelling membership ${membershipId} for user ${user.odisId}`);
+            await whopSdk.memberships.cancel(membershipId);
+          } catch (err: any) {
+            console.error(`[Whop Cancel] Error cancelling with Whop SDK:`, err?.message || err);
+          }
+        }
+      }
+
+      const updatedUser = await storage.updateUser(user.odisId, { isPro: false });
+      res.json({ success: true, message: "Subscription cancelled successfully", user: updatedUser });
+    } catch (error: any) {
+      console.error("Error cancelling membership:", error);
+      res.status(500).json({ error: "Failed to cancel subscription" });
+    }
+  });
+
   app.get("/api/cron/notifications", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
