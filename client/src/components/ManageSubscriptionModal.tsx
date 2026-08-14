@@ -134,7 +134,7 @@ export function ManageSubscriptionModal({ open, onOpenChange }: ManageSubscripti
                 <div className="space-y-1 text-left">
                   <p className="text-xs font-bold text-red-300">Are you sure you want to cancel?</p>
                   <p className="text-[11px] text-zinc-400 leading-relaxed">
-                    You will immediately lose access to the Cues Database, Explore deep insights, and unlimited AI CueChats.
+                    You will immediately lose access to all GG33 Pro features, including Daily Energy readings, Cues Database, Explore insights, Study Zone courses, and AI CueChats.
                   </p>
                 </div>
               </div>
