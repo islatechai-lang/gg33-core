@@ -14,7 +14,7 @@ export interface IStorage {
   getUserByFirebaseUid(firebaseUid: string): Promise<DBUser | null>;
   getUserByEmail(email: string): Promise<DBUser | null>;
   createUser(data: { odisId: string; fullName: string; birthDate: Date; birthTime?: string; birthLocation?: string; whopUserId?: string; firebaseUid?: string; email?: string; whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access'; isPro?: boolean }): Promise<DBUser>;
-  updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string }): Promise<DBUser | null>;
+  updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null }): Promise<DBUser | null>;
   updateWhopProfile(whopUserId: string, data: { whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access' }): Promise<DBUser | null>;
   upgradeUserToPro(odisId: string, receiptId: string): Promise<DBUser | null>;
   syncProStatus(whopUserId: string, isPro: boolean, membershipId?: string | null): Promise<DBUser | null>;
@@ -191,7 +191,7 @@ export class FirestoreStorage implements IStorage {
     }
   }
 
-  async updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string }): Promise<DBUser | null> {
+  async updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null }): Promise<DBUser | null> {
     await this.ensureConnected();
     try {
       const docRef = db.collection("users").doc(odisId);
