@@ -17,6 +17,8 @@ import Lesson from "@/pages/lesson";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
 import { Loader2 } from "lucide-react";
 
 function Router() {
@@ -35,6 +37,8 @@ function Router() {
       {/* Public Routes */}
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
 
       {/* Protected Routes */}
       <Route path="/">
