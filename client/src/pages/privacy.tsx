@@ -17,19 +17,11 @@ export default function PrivacyPage() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[radial-gradient(circle_at_center,rgba(212,163,62,0.1)_0%,transparent_70%)] blur-3xl z-0 pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 sm:py-16">
-        {/* Navigation / Back Button */}
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-amber-400 hover:bg-zinc-900/50 gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold tracking-widest bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
-              GG33 CORE
-            </span>
-          </div>
+        {/* Brand Header */}
+        <div className="flex items-center justify-center mb-8">
+          <span className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
+            GG33 CORE
+          </span>
         </div>
 
         <Card className="bg-zinc-950/80 border-zinc-800/80 backdrop-blur-xl shadow-2xl">
