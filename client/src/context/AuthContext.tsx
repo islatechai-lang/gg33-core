@@ -28,6 +28,35 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function syncMedianOneSignalUser(odisId?: string | null) {
+  if (typeof window === "undefined") return;
+  const win = window as any;
+  try {
+    if (odisId) {
+      // OneSignal SDK v5+ via Median
+      if (typeof win.median?.onesignal?.login === "function") {
+        win.median.onesignal.login(odisId);
+      } else if (typeof win.median?.onesignal?.externalId?.set === "function") {
+        win.median.onesignal.externalId.set({ externalId: odisId });
+      } else if (typeof win.gonative?.onesignal?.login === "function") {
+        win.gonative.onesignal.login(odisId);
+      } else if (typeof win.gonative?.onesignal?.externalId?.set === "function") {
+        win.gonative.onesignal.externalId.set({ externalId: odisId });
+      }
+    } else {
+      if (typeof win.median?.onesignal?.logout === "function") {
+        win.median.onesignal.logout();
+      } else if (typeof win.median?.onesignal?.externalId?.delete === "function") {
+        win.median.onesignal.externalId.delete();
+      } else if (typeof win.gonative?.onesignal?.logout === "function") {
+        win.gonative.onesignal.logout();
+      }
+    }
+  } catch (err) {
+    console.warn("[OneSignal Bridge] Error syncing user:", err);
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [dbUser, setDbUser] = useState<DBUser | null>(null);
@@ -50,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setNeedsOnboarding(data.needsOnboarding);
         if (data.user?.odisId) {
           localStorage.setItem('gg33-odis-id', data.user.odisId);
+          syncMedianOneSignalUser(data.user.odisId);
         } else {
           localStorage.removeItem('gg33-odis-id');
         }
@@ -100,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setFirebaseToken(null);
           setNeedsOnboarding(false);
           localStorage.removeItem('gg33-odis-id');
+          syncMedianOneSignalUser(null);
         }
       } catch (error) {
         console.error("[AuthContext] Auth state change handler error:", error);
@@ -114,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setLoading(true);
     try {
+      syncMedianOneSignalUser(null);
       await signOut(auth);
       localStorage.removeItem('gg33-odis-id');
     } catch (err) {

@@ -1,12 +1,12 @@
 import { storage } from "./storage";
-import { createWhopNotification } from "./whop";
+import { sendOneSignalNotificationToAll, sendOneSignalNotificationToUsers } from "./onesignal";
 import { format } from "date-fns";
 
 let lastResetNotificationDate: string | null = null;
 let lastReminderDate: string | null = null;
 
 /**
- * Sends a "Your Daily Energy has reset!" notification to ALL users
+ * Sends a "Your Daily Energy has reset!" native push notification to ALL users
  * right after midnight UTC when the new day begins.
  */
 export async function sendDailyEnergyResetNotifications() {
@@ -17,49 +17,29 @@ export async function sendDailyEnergyResetNotifications() {
     return;
   }
 
-  console.log(`[Notifications] Sending daily energy RESET notifications for ${today}...`);
+  console.log(`[Notifications] Sending daily energy RESET OneSignal push notifications for ${today}...`);
 
   try {
-    const allUsers = await storage.getAllUsersWithWhopId();
+    const success = await sendOneSignalNotificationToAll({
+      title: "🌅 Your Daily Energy Has Reset!",
+      content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+      subtitle: format(new Date(), "EEEE, MMMM do"),
+      url: "https://gg33-core.vercel.app/",
+    });
 
-    if (allUsers.length === 0) {
-      console.log("[Notifications] No users found to notify about energy reset.");
+    if (success) {
+      console.log(`[Notifications] Reset push notification successfully broadcast to all app users.`);
       lastResetNotificationDate = today;
-      return;
+    } else {
+      console.warn(`[Notifications] OneSignal broadcast returned false.`);
     }
-
-    console.log(`[Notifications] Notifying ${allUsers.length} users about daily energy reset.`);
-
-    let successCount = 0;
-    for (const user of allUsers) {
-      if (!user.whopUserId) continue;
-
-      const firstName = user.fullName?.split(" ")[0] || "there";
-
-      const success = await createWhopNotification({
-        userId: user.whopUserId,
-        title: "🌅 Your Daily Energy Has Reset!",
-        content: `Good morning ${firstName}! A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.`,
-        subtitle: format(new Date(), "EEEE, MMMM do"),
-      });
-
-      if (success) successCount++;
-
-      // Small delay between notifications to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-
-    console.log(
-      `[Notifications] Reset notifications sent: ${successCount}/${allUsers.length} successful.`
-    );
-    lastResetNotificationDate = today;
   } catch (error) {
-    console.error("[Notifications] Error sending reset notifications:", error);
+    console.error("[Notifications] Error sending OneSignal reset notifications:", error);
   }
 }
 
 /**
- * Sends a reminder notification to users who haven't revealed their
+ * Sends a reminder push notification to users who haven't revealed their
  * daily energy by later in the day (10 AM UTC).
  */
 export async function sendDailyEnergyReminders() {
@@ -82,29 +62,25 @@ export async function sendDailyEnergyReminders() {
 
     console.log(`[Notifications] Found ${missingUsers.length} users to remind.`);
 
-    let successCount = 0;
-    for (const user of missingUsers) {
-      if (!user.whopUserId) continue;
+    // Extract odisIds of all users who haven't revealed energy yet today
+    const missingOdisIds = missingUsers
+      .map((u) => u.odisId)
+      .filter((id): id is string => Boolean(id));
 
-      const firstName = user.fullName?.split(" ")[0] || "there";
-
-      const success = await createWhopNotification({
-        userId: user.whopUserId,
+    if (missingOdisIds.length > 0) {
+      const success = await sendOneSignalNotificationToUsers({
+        externalUserIds: missingOdisIds,
         title: "✨ Your Daily Energy is Still Waiting!",
-        content: `Hey ${firstName}, you haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!`,
+        content: "You haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!",
         subtitle: "Tap to reveal your reading",
+        url: "https://gg33-core.vercel.app/",
       });
 
-      if (success) successCount++;
-
-      // Small delay between notifications to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      if (success) {
+        console.log(`[Notifications] Reminders sent successfully to ${missingOdisIds.length} users.`);
+        lastReminderDate = today;
+      }
     }
-
-    console.log(
-      `[Notifications] Reminders sent: ${successCount}/${missingUsers.length} successful.`
-    );
-    lastReminderDate = today;
   } catch (error) {
     console.error("[Notifications] Error in daily energy reminder service:", error);
   }
@@ -114,13 +90,13 @@ export async function sendDailyEnergyReminders() {
  * Starts the notification background service.
  *
  * - At midnight UTC (when the daily energy resets): sends a "Your energy has reset!"
- *   notification to ALL users.
+ *   notification to ALL users via OneSignal.
  * - At 10 AM UTC: sends a reminder to users who still haven't revealed their reading.
  *
  * The service checks every 15 minutes to ensure timely delivery without excessive polling.
  */
 export function startNotificationService() {
-  console.log("[Notifications] Daily energy notification service started.");
+  console.log("[Notifications] Daily energy OneSignal notification service started.");
 
   const CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes
 
