@@ -67,7 +67,7 @@ export function Navigation() {
                 <img src="/images/logo.png?v=1" alt="GG33" className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col justify-center min-w-0">
-                <span className="text-3 font-semibold gradient-text leading-none">GG33</span>
+                <span className="text-3 font-semibold gradient-text leading-none">GG33 CORE</span>
               </div>
             </NavLink>
 

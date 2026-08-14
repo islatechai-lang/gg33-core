@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { auth, googleProvider } from "../lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useToast } from "../hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
-import { Loader2 } from "lucide-react";
+import { Loader2, KeyRound, Mail } from "lucide-react";
 import { StarField } from "../components/StarField";
+import { LegalModal } from "../components/LegalModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../components/ui/dialog";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -18,6 +26,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [legalType, setLegalType] = useState<'terms' | 'privacy' | null>(null);
 
   // Check redirect result for mobile / in-app WebView auth (Median.co, iOS, Android)
   useEffect(() => {
@@ -123,8 +135,38 @@ export default function Login() {
     }
   };
 
+  const handleSendResetEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast({
+        variant: "destructive",
+        title: "Email Required",
+        description: "Please enter your email address to receive the password reset link.",
+      });
+      return;
+    }
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+      toast({
+        title: "Reset Email Sent!",
+        description: `We've sent a password reset link to ${resetEmail.trim()}. Please check your inbox.`,
+      });
+      setShowForgotModal(false);
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Reset Failed",
+        description: err?.message || "Could not send password reset email. Please ensure your email is correct.",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden px-4 py-8">
       {/* Background Starfield effect */}
       <div className="absolute inset-0 z-0 opacity-40">
         <StarField />
@@ -163,6 +205,16 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(email);
+                    setShowForgotModal(true);
+                  }}
+                  className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors cursor-pointer"
+                >
+                  Forgot password?
+                </button>
               </div>
               <Input
                 id="password"
@@ -217,15 +269,109 @@ export default function Login() {
             )}
           </Button>
         </CardContent>
-        <CardFooter className="flex justify-center border-t border-zinc-900/50 py-4">
+        <CardFooter className="flex flex-col gap-4 justify-center border-t border-zinc-900/50 py-4">
           <p className="text-sm text-zinc-400">
             Don't have an account?{" "}
             <Link href="/signup" className="text-amber-400 hover:text-amber-300 font-medium transition-colors">
               Sign up
             </Link>
           </p>
+
+          <div className="text-[11px] text-zinc-500 text-center leading-relaxed">
+            By signing in, you agree to our{" "}
+            <button
+              type="button"
+              onClick={() => setLegalType('terms')}
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+            >
+              Terms of Service
+            </button>{" "}
+            and{" "}
+            <button
+              type="button"
+              onClick={() => setLegalType('privacy')}
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+          </div>
         </CardFooter>
       </Card>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
+        <DialogContent className="w-[95vw] sm:max-w-md p-0 rounded-2xl border-zinc-800 bg-zinc-950 overflow-hidden text-zinc-100">
+          <div className="p-6 space-y-4">
+            <DialogHeader className="space-y-2 text-left">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4 text-amber-400" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-zinc-100">
+                  Reset Your Password
+                </DialogTitle>
+              </div>
+              <DialogDescription className="text-xs text-zinc-400">
+                Enter your account email and we'll send you a link to reset your password.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSendResetEmail} className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <label htmlFor="reset-email" className="text-xs font-medium text-zinc-300">
+                  Email Address
+                </label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isResetting}
+                  className="bg-zinc-900/60 border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-zinc-800 text-xs"
+                  onClick={() => setShowForgotModal(false)}
+                  disabled={isResetting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="flex-1 text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950"
+                  disabled={isResetting}
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Legal Modal */}
+      {legalType && (
+        <LegalModal
+          open={!!legalType}
+          onOpenChange={(isOpen) => !isOpen && setLegalType(null)}
+          type={legalType}
+        />
+      )}
     </div>
   );
 }

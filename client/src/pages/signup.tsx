@@ -9,6 +9,7 @@ import { useToast } from "../hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
 import { Loader2 } from "lucide-react";
 import { StarField } from "../components/StarField";
+import { LegalModal } from "../components/LegalModal";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -18,6 +19,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [legalType, setLegalType] = useState<'terms' | 'privacy' | null>(null);
 
   // Check redirect result for mobile / in-app WebView auth (Median.co, iOS, Android)
   useEffect(() => {
@@ -241,15 +243,43 @@ export default function Signup() {
             )}
           </Button>
         </CardContent>
-        <CardFooter className="flex justify-center border-t border-zinc-900/50 py-4">
+        <CardFooter className="flex flex-col gap-4 justify-center border-t border-zinc-900/50 py-4">
           <p className="text-sm text-zinc-400">
             Already have an account?{" "}
             <Link href="/login" className="text-amber-400 hover:text-amber-300 font-medium transition-colors">
               Log in
             </Link>
           </p>
+
+          <div className="text-[11px] text-zinc-500 text-center leading-relaxed">
+            By signing up, you agree to our{" "}
+            <button
+              type="button"
+              onClick={() => setLegalType('terms')}
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+            >
+              Terms of Service
+            </button>{" "}
+            and{" "}
+            <button
+              type="button"
+              onClick={() => setLegalType('privacy')}
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+          </div>
         </CardFooter>
       </Card>
+
+      {/* Legal Modal */}
+      {legalType && (
+        <LegalModal
+          open={!!legalType}
+          onOpenChange={(isOpen) => !isOpen && setLegalType(null)}
+          type={legalType}
+        />
+      )}
     </div>
   );
 }
