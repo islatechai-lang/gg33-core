@@ -350,24 +350,24 @@ export class FirestoreStorage implements IStorage {
   async getUsersMissingDailyEnergy(date: string): Promise<DBUser[]> {
     await this.ensureConnected();
     try {
-      // Get all users
+      // Get all Pro users
       const usersSnapshot = await db.collection("users").get();
-      const allWhopUsers = usersSnapshot.docs
+      const allProUsers = usersSnapshot.docs
         .map(doc => mapUserDoc(doc.id, doc.data()))
-        .filter(user => !!user.whopUserId);
+        .filter(user => user.isPro);
 
       // Get all daily energy entries for this date
       const energySnapshot = await db.collection("dailyEnergy").where("date", "==", date).get();
       const usersWithEnergy = new Set(energySnapshot.docs.map(doc => doc.data().odisId));
 
-      // Filter to users who don't have a reading yet
-      const missingUsers = allWhopUsers.filter(user => !usersWithEnergy.has(user.odisId));
+      // Filter to Pro users who don't have a reading yet today
+      const missingUsers = allProUsers.filter(user => !usersWithEnergy.has(user.odisId));
 
-      // Deduplicate by whopUserId
-      const seenWhopIds = new Set<string>();
+      // Deduplicate by odisId
+      const seenOdisIds = new Set<string>();
       return missingUsers.filter(user => {
-        if (!user.whopUserId || seenWhopIds.has(user.whopUserId)) return false;
-        seenWhopIds.add(user.whopUserId);
+        if (!user.odisId || seenOdisIds.has(user.odisId)) return false;
+        seenOdisIds.add(user.odisId);
         return true;
       });
     } catch (error) {
