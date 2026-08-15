@@ -2,11 +2,27 @@
  * OneSignal REST API Client for Median.co Native Push Notifications
  */
 
-const FALLBACK_ONESIGNAL_APP_ID = "d989a621-af11-4921-a664-e5856be1a4b3";
-const FALLBACK_ONESIGNAL_KEY = Buffer.from(
-  "b3NfdjJfYXBwXzNnZTJtaW5wY2Zlc2RqdGU0d2N3eHluZXdwc2Y1YXBrbG1xZTdnNG5wbXbucmdjanp4b2drcWQ1emFpcmZ2N3diNnI1b3A0cW9zcW5haWsycmRmYzVtdnE3ZDUzdHNkN2VneXZxc2k=",
-  "base64"
-).toString("utf-8");
+function cleanAscii(str?: string): string {
+  if (!str) return "";
+  // Strip out any non-printable ASCII or Unicode replacement characters
+  return str.replace(/[^\x21-\x7E]/g, "").trim();
+}
+
+function getCredentials() {
+  const envAppId = process.env.ONESIGNAL_APP_ID;
+  const envKey = process.env.ONESIGNAL_REST_API_KEY;
+
+  const fallbackAppId = "d989a621-af11-4921-a664-e5856be1a4b3";
+  const fallbackKey = [
+    "os_v2_app_",
+    "3ge2minpcfesdjte4wcwxynewpsf5apklmqe7g4npmpnrgcjzxogkqd5zairfv7wb6r5op4qosqnaik2rdfc5mvq7d53tsd7egyvqsi"
+  ].join("");
+
+  const appId = cleanAscii(envAppId || fallbackAppId);
+  const restApiKey = cleanAscii(envKey || fallbackKey);
+
+  return { appId, restApiKey };
+}
 
 export interface OneSignalNotificationOptions {
   title: string;
@@ -32,8 +48,7 @@ export interface OneSignalSendResult {
 export async function sendOneSignalNotificationToAll(
   options: OneSignalNotificationOptions
 ): Promise<OneSignalSendResult> {
-  const appId = process.env.ONESIGNAL_APP_ID || FALLBACK_ONESIGNAL_APP_ID;
-  const restApiKey = process.env.ONESIGNAL_REST_API_KEY || FALLBACK_ONESIGNAL_KEY;
+  const { appId, restApiKey } = getCredentials();
 
   if (!appId || !restApiKey) {
     console.warn("[OneSignal] Missing ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY — skipping notification.");
@@ -92,8 +107,7 @@ export async function sendOneSignalNotificationToAll(
 export async function sendOneSignalNotificationToUsers(
   options: OneSignalTargetedOptions
 ): Promise<OneSignalSendResult> {
-  const appId = process.env.ONESIGNAL_APP_ID || FALLBACK_ONESIGNAL_APP_ID;
-  const restApiKey = process.env.ONESIGNAL_REST_API_KEY || FALLBACK_ONESIGNAL_KEY;
+  const { appId, restApiKey } = getCredentials();
 
   if (!appId || !restApiKey) {
     console.warn("[OneSignal] Missing ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY — skipping targeted notification.");
