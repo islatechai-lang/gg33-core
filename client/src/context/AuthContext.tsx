@@ -28,6 +28,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+if (typeof window !== "undefined") {
+  const win = window as any;
+  win.median_onesignal_info = function (info: any) {
+    console.log("[Median OneSignal Info callback]:", info);
+    const playerId = info?.oneSignalUserId || info?.userId || info?.subscriptionId || info?.id;
+    if (playerId) {
+      localStorage.setItem("gg33-onesignal-player-id", playerId);
+      const odisId = localStorage.getItem("gg33-odis-id");
+      if (odisId) {
+        fetch("/api/user/onesignal-player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ odisId, playerId }),
+        }).catch((e) => console.warn(e));
+      }
+    }
+  };
+}
+
 function syncMedianOneSignalUser(odisId?: string | null) {
   if (typeof window === "undefined") return;
   const win = window as any;
@@ -40,6 +59,16 @@ function syncMedianOneSignalUser(odisId?: string | null) {
     }
 
     if (odisId) {
+      // Sync stored Player ID if already obtained from native app
+      const storedPlayerId = localStorage.getItem("gg33-onesignal-player-id");
+      if (storedPlayerId) {
+        fetch("/api/user/onesignal-player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ odisId, playerId: storedPlayerId }),
+        }).catch((e) => console.warn(e));
+      }
+
       // OneSignal SDK v5+ via Median
       if (typeof win.median?.onesignal?.login === "function") {
         win.median.onesignal.login(odisId);

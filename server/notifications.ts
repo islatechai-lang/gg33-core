@@ -21,11 +21,15 @@ export async function sendDailyEnergyResetNotifications(force = false) {
   console.log(`[Notifications] Sending daily energy RESET OneSignal push notifications for ${today} (force=${force})...`);
 
   try {
+    const allPlayerIds = await storage.getAllOneSignalPlayerIds();
+    console.log(`[Notifications] Found ${allPlayerIds.length} stored device Player IDs for broadcast.`);
+
     const result = await sendOneSignalNotificationToAll({
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
       subtitle: format(new Date(), "EEEE, MMMM do"),
       url: "https://gg33-core.vercel.app/",
+      playerIds: allPlayerIds,
     });
 
     if (result.success) {
@@ -34,7 +38,7 @@ export async function sendDailyEnergyResetNotifications(force = false) {
     } else {
       console.warn(`[Notifications] OneSignal broadcast returned error:`, result.error);
     }
-    return result;
+    return { ...result, totalStoredPlayerIds: allPlayerIds.length };
   } catch (error: any) {
     console.error("[Notifications] Error sending OneSignal reset notifications:", error);
     return { success: false, error: error?.message || "Unknown error" };
@@ -66,14 +70,19 @@ export async function sendDailyEnergyReminders(force = false) {
 
     console.log(`[Notifications] Found ${missingUsers.length} users to remind.`);
 
-    // Extract odisIds of all users who haven't revealed energy yet today
+    // Extract odisIds and playerIds of all users who haven't revealed energy yet today
     const missingOdisIds = missingUsers
       .map((u) => u.odisId)
       .filter((id): id is string => Boolean(id));
 
-    if (missingOdisIds.length > 0) {
+    const missingPlayerIds = missingUsers
+      .map((u) => u.oneSignalPlayerId)
+      .filter((id): id is string => Boolean(id));
+
+    if (missingOdisIds.length > 0 || missingPlayerIds.length > 0) {
       const result = await sendOneSignalNotificationToUsers({
         externalUserIds: missingOdisIds,
+        playerIds: missingPlayerIds,
         title: "✨ Your Daily Energy is Still Waiting!",
         content: "You haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!",
         subtitle: "Tap to reveal your reading",
@@ -84,10 +93,10 @@ export async function sendDailyEnergyReminders(force = false) {
         console.log(`[Notifications] Reminders sent successfully to ${missingOdisIds.length} users.`);
         lastReminderDate = today;
       }
-      return { ...result, targetUserCount: missingOdisIds.length };
+      return { ...result, targetUserCount: missingOdisIds.length, targetPlayerIdCount: missingPlayerIds.length };
     }
 
-    return { success: true, skipped: true, reason: "No valid odisIds found" };
+    return { success: true, skipped: true, reason: "No valid targets found" };
   } catch (error: any) {
     console.error("[Notifications] Error in daily energy reminder service:", error);
     return { success: false, error: error?.message || "Unknown error" };

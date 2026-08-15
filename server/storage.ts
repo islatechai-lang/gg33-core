@@ -14,7 +14,8 @@ export interface IStorage {
   getUserByFirebaseUid(firebaseUid: string): Promise<DBUser | null>;
   getUserByEmail(email: string): Promise<DBUser | null>;
   createUser(data: { odisId: string; fullName: string; birthDate: Date; birthTime?: string; birthLocation?: string; whopUserId?: string; firebaseUid?: string; email?: string; whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access'; isPro?: boolean }): Promise<DBUser>;
-  updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null }): Promise<DBUser | null>;
+  updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null; oneSignalPlayerId?: string | null }): Promise<DBUser | null>;
+  getAllOneSignalPlayerIds(): Promise<string[]>;
   updateWhopProfile(whopUserId: string, data: { whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access' }): Promise<DBUser | null>;
   upgradeUserToPro(odisId: string, receiptId: string): Promise<DBUser | null>;
   syncProStatus(whopUserId: string, isPro: boolean, membershipId?: string | null): Promise<DBUser | null>;
@@ -85,6 +86,7 @@ function mapUserDoc(docId: string, data: any): DBUser {
     birthLocation: data.birthLocation || null,
     isPro: isProOverridden ? true : (data.isPro ?? false),
     proPaymentReceiptId: data.proPaymentReceiptId || null,
+    oneSignalPlayerId: data.oneSignalPlayerId || null,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };
@@ -191,7 +193,7 @@ export class FirestoreStorage implements IStorage {
     }
   }
 
-  async updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null }): Promise<DBUser | null> {
+  async updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null; oneSignalPlayerId?: string | null }): Promise<DBUser | null> {
     await this.ensureConnected();
     try {
       const docRef = db.collection("users").doc(odisId);
@@ -389,6 +391,24 @@ export class FirestoreStorage implements IStorage {
       });
     } catch (error) {
       console.error("Error getting all users with Whop ID:", error);
+      return [];
+    }
+  }
+
+  async getAllOneSignalPlayerIds(): Promise<string[]> {
+    await this.ensureConnected();
+    try {
+      const snapshot = await db.collection("users").get();
+      const ids: string[] = [];
+      snapshot.docs.forEach(doc => {
+        const pid = doc.data()?.oneSignalPlayerId;
+        if (pid && typeof pid === "string" && pid.trim().length > 0) {
+          ids.push(pid.trim());
+        }
+      });
+      return Array.from(new Set(ids));
+    } catch (error) {
+      console.error("Error getting OneSignal player IDs:", error);
       return [];
     }
   }

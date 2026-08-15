@@ -153,6 +153,7 @@ export interface DBUser {
   birthLocation?: string | null;
   isPro: boolean;
   proPaymentReceiptId?: string | null;
+  oneSignalPlayerId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

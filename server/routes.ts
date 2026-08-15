@@ -3040,8 +3040,43 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/notifications/test", async (_req, res) => {
+  app.post("/api/user/onesignal-player", async (req, res) => {
+    const { odisId, playerId } = req.body;
+    if (!odisId || !playerId) {
+      return res.status(400).json({ error: "Missing odisId or playerId" });
+    }
     try {
+      const updated = await storage.updateUser(odisId, { oneSignalPlayerId: playerId });
+      return res.json({ success: true, user: updated });
+    } catch (err: any) {
+      console.error("Error saving OneSignal player ID:", err);
+      return res.status(500).json({ error: err?.message || "Failed to update player ID" });
+    }
+  });
+
+  app.all("/api/notifications/test", async (req, res) => {
+    try {
+      const bodyPlayerId = req.body?.playerId || (req.query?.playerId as string);
+      const bodyOdisId = req.body?.odisId || (req.query?.odisId as string);
+
+      if (bodyPlayerId || bodyOdisId) {
+        const { sendOneSignalNotificationToUsers } = await import("./onesignal");
+        const result = await sendOneSignalNotificationToUsers({
+          playerIds: bodyPlayerId ? [bodyPlayerId] : undefined,
+          externalUserIds: bodyOdisId ? [bodyOdisId] : undefined,
+          title: "🌅 Your Daily Energy Has Reset!",
+          content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+          subtitle: "GG33 CORE Daily Guidance",
+          url: "https://gg33-core.vercel.app/",
+        });
+        return res.json({
+          message: "Targeted test push notification sent to your device!",
+          targetPlayerId: bodyPlayerId,
+          targetOdisId: bodyOdisId,
+          result,
+        });
+      }
+
       const result = await sendDailyEnergyResetNotifications(true);
       return res.json({
         message: "Triggered OneSignal broadcast push notification test!",
