@@ -32,6 +32,13 @@ function syncMedianOneSignalUser(odisId?: string | null) {
   if (typeof window === "undefined") return;
   const win = window as any;
   try {
+    // Prompt push notification permissions on mobile if not already prompted
+    if (typeof win.median?.onesignal?.register === "function") {
+      win.median.onesignal.register();
+    } else if (typeof win.median?.onesignal?.promptPushAccept === "function") {
+      win.median.onesignal.promptPushAccept();
+    }
+
     if (odisId) {
       // OneSignal SDK v5+ via Median
       if (typeof win.median?.onesignal?.login === "function") {

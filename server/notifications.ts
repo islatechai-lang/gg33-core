@@ -9,32 +9,35 @@ let lastReminderDate: string | null = null;
  * Sends a "Your Daily Energy has reset!" native push notification to ALL users
  * right after midnight UTC when the new day begins.
  */
-export async function sendDailyEnergyResetNotifications() {
+export async function sendDailyEnergyResetNotifications(force = false) {
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Only send once per day
-  if (today === lastResetNotificationDate) {
-    return;
+  // Only send once per day unless forced
+  if (!force && today === lastResetNotificationDate) {
+    console.log(`[Notifications] Reset notification already sent for ${today}. Skipping.`);
+    return { success: true, skipped: true, reason: "Already sent today" };
   }
 
-  console.log(`[Notifications] Sending daily energy RESET OneSignal push notifications for ${today}...`);
+  console.log(`[Notifications] Sending daily energy RESET OneSignal push notifications for ${today} (force=${force})...`);
 
   try {
-    const success = await sendOneSignalNotificationToAll({
+    const result = await sendOneSignalNotificationToAll({
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
       subtitle: format(new Date(), "EEEE, MMMM do"),
       url: "https://gg33-core.vercel.app/",
     });
 
-    if (success) {
+    if (result.success) {
       console.log(`[Notifications] Reset push notification successfully broadcast to all app users.`);
       lastResetNotificationDate = today;
     } else {
-      console.warn(`[Notifications] OneSignal broadcast returned false.`);
+      console.warn(`[Notifications] OneSignal broadcast returned error:`, result.error);
     }
-  } catch (error) {
+    return result;
+  } catch (error: any) {
     console.error("[Notifications] Error sending OneSignal reset notifications:", error);
+    return { success: false, error: error?.message || "Unknown error" };
   }
 }
 
@@ -42,14 +45,15 @@ export async function sendDailyEnergyResetNotifications() {
  * Sends a reminder push notification to users who haven't revealed their
  * daily energy by later in the day (10 AM UTC).
  */
-export async function sendDailyEnergyReminders() {
+export async function sendDailyEnergyReminders(force = false) {
   const today = format(new Date(), "yyyy-MM-dd");
 
-  if (today === lastReminderDate) {
-    return;
+  if (!force && today === lastReminderDate) {
+    console.log(`[Notifications] Reminder notification already sent for ${today}. Skipping.`);
+    return { success: true, skipped: true, reason: "Already sent today" };
   }
 
-  console.log(`[Notifications] Starting daily energy reminder check for ${today}...`);
+  console.log(`[Notifications] Starting daily energy reminder check for ${today} (force=${force})...`);
 
   try {
     const missingUsers = await storage.getUsersMissingDailyEnergy(today);
@@ -57,7 +61,7 @@ export async function sendDailyEnergyReminders() {
     if (missingUsers.length === 0) {
       console.log("[Notifications] No users found requiring a reminder today.");
       lastReminderDate = today;
-      return;
+      return { success: true, skipped: true, reason: "No users missing daily energy today" };
     }
 
     console.log(`[Notifications] Found ${missingUsers.length} users to remind.`);
@@ -68,7 +72,7 @@ export async function sendDailyEnergyReminders() {
       .filter((id): id is string => Boolean(id));
 
     if (missingOdisIds.length > 0) {
-      const success = await sendOneSignalNotificationToUsers({
+      const result = await sendOneSignalNotificationToUsers({
         externalUserIds: missingOdisIds,
         title: "✨ Your Daily Energy is Still Waiting!",
         content: "You haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!",
@@ -76,13 +80,17 @@ export async function sendDailyEnergyReminders() {
         url: "https://gg33-core.vercel.app/",
       });
 
-      if (success) {
+      if (result.success) {
         console.log(`[Notifications] Reminders sent successfully to ${missingOdisIds.length} users.`);
         lastReminderDate = today;
       }
+      return { ...result, targetUserCount: missingOdisIds.length };
     }
-  } catch (error) {
+
+    return { success: true, skipped: true, reason: "No valid odisIds found" };
+  } catch (error: any) {
     console.error("[Notifications] Error in daily energy reminder service:", error);
+    return { success: false, error: error?.message || "Unknown error" };
   }
 }
 

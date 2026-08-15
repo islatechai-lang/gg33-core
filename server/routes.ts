@@ -3020,21 +3020,36 @@ export async function registerRoutes(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    const force = req.query.force === "true" || req.query.force === "1";
+    const typeParam = req.query.type as string;
     const now = new Date();
     const utcHour = now.getUTCHours();
     
     try {
-      if (utcHour >= 0 && utcHour < 10) {
-        await sendDailyEnergyResetNotifications();
-        return res.json({ success: true, type: "reset" });
-      } else if (utcHour >= 10) {
-        await sendDailyEnergyReminders();
-        return res.json({ success: true, type: "reminder" });
+      if (typeParam === "reset" || (utcHour >= 0 && utcHour < 10) || force) {
+        const result = await sendDailyEnergyResetNotifications(force);
+        return res.json({ success: true, type: "reset", result });
+      } else if (typeParam === "reminder" || utcHour >= 10) {
+        const result = await sendDailyEnergyReminders(force);
+        return res.json({ success: true, type: "reminder", result });
       }
       res.json({ success: true, skipped: true });
     } catch (error: any) {
       console.error("Cron notifications trigger failed:", error);
       res.status(500).json({ error: error?.message || "Cron failed" });
+    }
+  });
+
+  app.get("/api/notifications/test", async (_req, res) => {
+    try {
+      const result = await sendDailyEnergyResetNotifications(true);
+      return res.json({
+        message: "Triggered OneSignal broadcast push notification test!",
+        result,
+      });
+    } catch (error: any) {
+      console.error("Test notification failed:", error);
+      return res.status(500).json({ error: error?.message || "Failed to trigger test push notification" });
     }
   });
 
