@@ -67,16 +67,15 @@ export async function sendOneSignalNotificationToAll(
     payload.include_player_ids = options.playerIds;
   }
 
+  const targetUrl = options.url || "https://gg33-core.vercel.app/";
+  payload.data = {
+    targetUrl: targetUrl,
+    url: targetUrl,
+    ...(options.data || {}),
+  };
+
   if (options.subtitle) {
     payload.subtitle = { en: options.subtitle };
-  }
-
-  if (options.url) {
-    payload.url = options.url;
-  }
-
-  if (options.data) {
-    payload.data = options.data;
   }
 
   try {
@@ -126,11 +125,17 @@ export async function sendOneSignalNotificationToUsers(
     return { success: false, error: "No target user IDs or player IDs provided" };
   }
 
+  const targetUrl = options.url || "https://gg33-core.vercel.app/";
   const payload: Record<string, any> = {
     app_id: appId,
     target_channel: "push",
     headings: { en: options.title },
     contents: { en: options.content },
+    data: {
+      targetUrl: targetUrl,
+      url: targetUrl,
+      ...(options.data || {}),
+    },
   };
 
   if (validExternalIds.length > 0) {
@@ -146,14 +151,6 @@ export async function sendOneSignalNotificationToUsers(
 
   if (options.subtitle) {
     payload.subtitle = { en: options.subtitle };
-  }
-
-  if (options.url) {
-    payload.url = options.url;
-  }
-
-  if (options.data) {
-    payload.data = options.data;
   }
 
   try {
