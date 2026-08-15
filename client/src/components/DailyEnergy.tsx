@@ -295,33 +295,8 @@ export function DailyEnergy({ profile, isPro = false }: DailyEnergyProps) {
                   </p>
                 </div>
               </div>
-
             </>
           )}
-
-          <div className="mt-4 px-6 pb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-1 text-gray-10"
-              onClick={async () => {
-                try {
-                  const odisId = localStorage.getItem('gg33-odis-id') || profile.odisId;
-                  const playerId = localStorage.getItem('gg33-onesignal-player-id');
-                  const params = new URLSearchParams();
-                  if (playerId) params.set('playerId', playerId);
-                  if (odisId) params.set('odisId', odisId);
-                  const res = await fetch(`/api/notifications/test?${params.toString()}`);
-                  const data = await res.json();
-                  alert(JSON.stringify(data, null, 2));
-                } catch (err: any) {
-                  alert('Error: ' + (err?.message || 'Failed'));
-                }
-              }}
-            >
-              🔔 Test Push Notification
-            </Button>
-          </div>
         </CardContent>
       </Card>
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
