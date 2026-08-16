@@ -21,15 +21,11 @@ export async function sendDailyEnergyResetNotifications(force = false) {
   console.log(`[Notifications] Sending daily energy RESET OneSignal push notifications for ${today} (force=${force})...`);
 
   try {
-    const allPlayerIds = await storage.getAllOneSignalPlayerIds();
-    console.log(`[Notifications] Found ${allPlayerIds.length} stored device Player IDs for broadcast.`);
-
     const result = await sendOneSignalNotificationToAll({
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
       subtitle: format(new Date(), "EEEE, MMMM do"),
       url: "https://gg33-core.vercel.app/",
-      playerIds: allPlayerIds,
     });
 
     if (result.success) {
@@ -38,7 +34,7 @@ export async function sendDailyEnergyResetNotifications(force = false) {
     } else {
       console.warn(`[Notifications] OneSignal broadcast returned error:`, result.error);
     }
-    return { ...result, totalStoredPlayerIds: allPlayerIds.length };
+    return result;
   } catch (error: any) {
     console.error("[Notifications] Error sending OneSignal reset notifications:", error);
     return { success: false, error: error?.message || "Unknown error" };

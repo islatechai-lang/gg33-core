@@ -29,7 +29,6 @@ export interface OneSignalNotificationOptions {
   subtitle?: string;
   url?: string;
   data?: Record<string, any>;
-  playerIds?: string[];
 }
 
 export interface OneSignalTargetedOptions extends OneSignalNotificationOptions {
@@ -44,7 +43,8 @@ export interface OneSignalSendResult {
 }
 
 /**
- * Sends a push notification to all subscribed users via OneSignal broadcast.
+ * Sends a push notification to ALL subscribed mobile users via OneSignal broadcast.
+ * Note: OneSignal rules require 'included_segments' to NOT be mixed with any other targeting parameter.
  */
 export async function sendOneSignalNotificationToAll(
   options: OneSignalNotificationOptions
@@ -56,22 +56,18 @@ export async function sendOneSignalNotificationToAll(
     return { success: false, error: "Missing OneSignal credentials" };
   }
 
+  const targetUrl = options.url || "https://gg33-core.vercel.app/";
+
   const payload: Record<string, any> = {
     app_id: appId,
     included_segments: ["Subscribed Users"],
     headings: { en: options.title },
     contents: { en: options.content },
-  };
-
-  if (options.playerIds && options.playerIds.length > 0) {
-    payload.include_player_ids = options.playerIds;
-  }
-
-  const targetUrl = options.url || "https://gg33-core.vercel.app/";
-  payload.data = {
-    targetUrl: targetUrl,
-    url: targetUrl,
-    ...(options.data || {}),
+    data: {
+      targetUrl: targetUrl,
+      url: targetUrl,
+      ...(options.data || {}),
+    },
   };
 
   if (options.subtitle) {
@@ -79,7 +75,7 @@ export async function sendOneSignalNotificationToAll(
   }
 
   try {
-    console.log(`[OneSignal] Sending broadcast push notification via App ID: ${appId}...`);
+    console.log(`[OneSignal] Sending broadcast push notification to Subscribed Users via App ID: ${appId}...`);
     const response = await fetch("https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
@@ -105,7 +101,8 @@ export async function sendOneSignalNotificationToAll(
 }
 
 /**
- * Sends a push notification to specific users identified by their external ID (odisId) or device player ID.
+ * Sends a targeted push notification to specific users identified by their player ID or external ID.
+ * OneSignal allows only ONE targeting method per request.
  */
 export async function sendOneSignalNotificationToUsers(
   options: OneSignalTargetedOptions
@@ -117,15 +114,16 @@ export async function sendOneSignalNotificationToUsers(
     return { success: false, error: "Missing OneSignal credentials" };
   }
 
-  const validExternalIds = (options.externalUserIds || []).filter(Boolean);
   const validPlayerIds = (options.playerIds || []).filter(Boolean);
+  const validExternalIds = (options.externalUserIds || []).filter(Boolean);
 
-  if (validExternalIds.length === 0 && validPlayerIds.length === 0) {
-    console.log("[OneSignal] No target external IDs or player IDs provided.");
+  if (validPlayerIds.length === 0 && validExternalIds.length === 0) {
+    console.log("[OneSignal] No target player IDs or external IDs provided.");
     return { success: false, error: "No target user IDs or player IDs provided" };
   }
 
   const targetUrl = options.url || "https://gg33-core.vercel.app/";
+
   const payload: Record<string, any> = {
     app_id: appId,
     target_channel: "push",
@@ -138,23 +136,22 @@ export async function sendOneSignalNotificationToUsers(
     },
   };
 
-  if (validExternalIds.length > 0) {
-    payload.include_aliases = {
-      external_id: validExternalIds,
-    };
-    payload.include_external_user_ids = validExternalIds;
-  }
-
-  if (validPlayerIds.length > 0) {
-    payload.include_player_ids = validPlayerIds;
-  }
-
   if (options.subtitle) {
     payload.subtitle = { en: options.subtitle };
   }
 
+  // OneSignal only permits one targeting strategy per payload:
+  // Prioritize playerIds if present, otherwise use include_aliases / external_id
+  if (validPlayerIds.length > 0) {
+    payload.include_player_ids = validPlayerIds;
+  } else if (validExternalIds.length > 0) {
+    payload.include_aliases = {
+      external_id: validExternalIds,
+    };
+  }
+
   try {
-    console.log(`[OneSignal] Sending targeted push to users: externalIds=${validExternalIds.length}, playerIds=${validPlayerIds.length}`);
+    console.log(`[OneSignal] Sending targeted push: playerIds=${validPlayerIds.length}, externalIds=${validExternalIds.length}`);
     const response = await fetch("https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
