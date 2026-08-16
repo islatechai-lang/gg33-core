@@ -3079,7 +3079,7 @@ export async function registerRoutes(
 
       // If odisId is provided, look up their Player ID from Firestore
       if (bodyOdisId) {
-        const user = await storage.getUser(bodyOdisId);
+        const user = await storage.getUserByOdisId(bodyOdisId);
         if (user?.oneSignalPlayerId) {
           const result = await sendOneSignalNotification({
             playerIds: [user.oneSignalPlayerId],
