@@ -1,5 +1,9 @@
 /**
  * OneSignal REST API Client for Median.co Native Push Notifications
+ *
+ * Important: We target devices DIRECTLY by Player ID rather than using
+ * OneSignal segments, because the Median.co integration does not always
+ * register devices into the "Subscribed Users" segment.
  */
 
 function cleanAscii(str?: string): string {
@@ -29,11 +33,11 @@ export interface OneSignalNotificationOptions {
   subtitle?: string;
   url?: string;
   data?: Record<string, any>;
+  playerIds?: string[];
 }
 
 export interface OneSignalTargetedOptions extends OneSignalNotificationOptions {
   externalUserIds?: string[];
-  playerIds?: string[];
 }
 
 export interface OneSignalSendResult {
@@ -43,10 +47,11 @@ export interface OneSignalSendResult {
 }
 
 /**
- * Sends a push notification to ALL subscribed mobile users via OneSignal broadcast.
- * Note: OneSignal rules require 'included_segments' to NOT be mixed with any other targeting parameter.
+ * Sends a push notification to specific devices by Player ID.
+ * This is the primary method — we always target by Player ID since
+ * OneSignal segments don't reliably contain Median.co devices.
  */
-export async function sendOneSignalNotificationToAll(
+export async function sendOneSignalNotification(
   options: OneSignalNotificationOptions
 ): Promise<OneSignalSendResult> {
   const { appId, restApiKey } = getCredentials();
@@ -56,77 +61,18 @@ export async function sendOneSignalNotificationToAll(
     return { success: false, error: "Missing OneSignal credentials" };
   }
 
-  const targetUrl = options.url || "https://gg33-core.vercel.app/";
-
-  const payload: Record<string, any> = {
-    app_id: appId,
-    included_segments: ["Subscribed Users"],
-    headings: { en: options.title },
-    contents: { en: options.content },
-    data: {
-      targetUrl: targetUrl,
-      url: targetUrl,
-      ...(options.data || {}),
-    },
-  };
-
-  if (options.subtitle) {
-    payload.subtitle = { en: options.subtitle };
-  }
-
-  try {
-    console.log(`[OneSignal] Sending broadcast push notification to Subscribed Users via App ID: ${appId}...`);
-    const response = await fetch("https://api.onesignal.com/notifications", {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${restApiKey}`,
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error(`[OneSignal] Broadcast API error ${response.status}:`, responseData);
-      return { success: false, error: `API Error ${response.status}: ${JSON.stringify(responseData)}`, data: responseData };
-    }
-
-    console.log(`[OneSignal] Broadcast sent successfully! ID: ${responseData.id}, Recipients: ${responseData.recipients ?? "all"}`);
-    return { success: true, data: responseData };
-  } catch (error: any) {
-    console.error("[OneSignal] Failed to send broadcast notification:", error);
-    return { success: false, error: error?.message || "Network error" };
-  }
-}
-
-/**
- * Sends a targeted push notification to specific users identified by their player ID or external ID.
- * OneSignal allows only ONE targeting method per request.
- */
-export async function sendOneSignalNotificationToUsers(
-  options: OneSignalTargetedOptions
-): Promise<OneSignalSendResult> {
-  const { appId, restApiKey } = getCredentials();
-
-  if (!appId || !restApiKey) {
-    console.warn("[OneSignal] Missing ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY — skipping targeted notification.");
-    return { success: false, error: "Missing OneSignal credentials" };
-  }
-
   const validPlayerIds = (options.playerIds || []).filter(Boolean);
-  const validExternalIds = (options.externalUserIds || []).filter(Boolean);
 
-  if (validPlayerIds.length === 0 && validExternalIds.length === 0) {
-    console.log("[OneSignal] No target player IDs or external IDs provided.");
-    return { success: false, error: "No target user IDs or player IDs provided" };
+  if (validPlayerIds.length === 0) {
+    console.warn("[OneSignal] No Player IDs provided — cannot send notification.");
+    return { success: false, error: "No Player IDs provided" };
   }
 
   const targetUrl = options.url || "https://gg33-core.vercel.app/";
 
   const payload: Record<string, any> = {
     app_id: appId,
-    target_channel: "push",
+    include_player_ids: validPlayerIds,
     headings: { en: options.title },
     contents: { en: options.content },
     data: {
@@ -140,18 +86,8 @@ export async function sendOneSignalNotificationToUsers(
     payload.subtitle = { en: options.subtitle };
   }
 
-  // OneSignal only permits one targeting strategy per payload:
-  // Prioritize playerIds if present, otherwise use include_aliases / external_id
-  if (validPlayerIds.length > 0) {
-    payload.include_player_ids = validPlayerIds;
-  } else if (validExternalIds.length > 0) {
-    payload.include_aliases = {
-      external_id: validExternalIds,
-    };
-  }
-
   try {
-    console.log(`[OneSignal] Sending targeted push: playerIds=${validPlayerIds.length}, externalIds=${validExternalIds.length}`);
+    console.log(`[OneSignal] Sending push notification to ${validPlayerIds.length} device(s)...`);
     const response = await fetch("https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
@@ -164,14 +100,18 @@ export async function sendOneSignalNotificationToUsers(
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error(`[OneSignal] Targeted API error ${response.status}:`, responseData);
+      console.error(`[OneSignal] API error ${response.status}:`, responseData);
       return { success: false, error: `API Error ${response.status}: ${JSON.stringify(responseData)}`, data: responseData };
     }
 
-    console.log(`[OneSignal] Targeted notification sent successfully! ID: ${responseData.id}`);
+    console.log(`[OneSignal] Push sent successfully! ID: ${responseData.id}, Recipients: ${responseData.recipients ?? validPlayerIds.length}`);
     return { success: true, data: responseData };
   } catch (error: any) {
-    console.error("[OneSignal] Failed to send targeted notification:", error);
+    console.error("[OneSignal] Failed to send notification:", error);
     return { success: false, error: error?.message || "Network error" };
   }
 }
+
+// Keep these as aliases for backward compatibility
+export const sendOneSignalNotificationToAll = sendOneSignalNotification;
+export const sendOneSignalNotificationToUsers = sendOneSignalNotification;

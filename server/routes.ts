@@ -3058,12 +3058,12 @@ export async function registerRoutes(
     try {
       const bodyPlayerId = req.body?.playerId || (req.query?.playerId as string);
       const bodyOdisId = req.body?.odisId || (req.query?.odisId as string);
+      const { sendOneSignalNotification } = await import("./onesignal");
 
-      if (bodyPlayerId || bodyOdisId) {
-        const { sendOneSignalNotificationToUsers } = await import("./onesignal");
-        const result = await sendOneSignalNotificationToUsers({
-          playerIds: bodyPlayerId ? [bodyPlayerId] : undefined,
-          externalUserIds: bodyOdisId ? [bodyOdisId] : undefined,
+      // If a specific playerId is provided, target that single device
+      if (bodyPlayerId) {
+        const result = await sendOneSignalNotification({
+          playerIds: [bodyPlayerId],
           title: "🌅 Your Daily Energy Has Reset!",
           content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
           subtitle: "GG33 CORE Daily Guidance",
@@ -3077,9 +3077,53 @@ export async function registerRoutes(
         });
       }
 
-      const result = await sendDailyEnergyResetNotifications(true);
+      // If odisId is provided, look up their Player ID from Firestore
+      if (bodyOdisId) {
+        const user = await storage.getUser(bodyOdisId);
+        if (user?.oneSignalPlayerId) {
+          const result = await sendOneSignalNotification({
+            playerIds: [user.oneSignalPlayerId],
+            title: "🌅 Your Daily Energy Has Reset!",
+            content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+            subtitle: "GG33 CORE Daily Guidance",
+            url: "https://gg33-core.vercel.app/",
+          });
+          return res.json({
+            message: "Targeted test push notification sent via odisId lookup!",
+            targetOdisId: bodyOdisId,
+            resolvedPlayerId: user.oneSignalPlayerId,
+            result,
+          });
+        } else {
+          return res.json({
+            message: "User found but no Player ID stored. Open the app on your phone first to register the device.",
+            targetOdisId: bodyOdisId,
+            userFound: !!user,
+            hasPlayerId: false,
+          });
+        }
+      }
+
+      // No specific target — broadcast to ALL stored Player IDs
+      const allPlayerIds = await storage.getAllOneSignalPlayerIds();
+      if (allPlayerIds.length === 0) {
+        return res.json({
+          message: "No Player IDs stored in database. Open the app on your phone first to register devices.",
+          totalDevices: 0,
+        });
+      }
+
+      const result = await sendOneSignalNotification({
+        playerIds: allPlayerIds,
+        title: "🌅 Your Daily Energy Has Reset!",
+        content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+        subtitle: "GG33 CORE Test Broadcast",
+        url: "https://gg33-core.vercel.app/",
+      });
       return res.json({
-        message: "Triggered OneSignal broadcast push notification test!",
+        message: `Broadcast test sent to ${allPlayerIds.length} device(s)!`,
+        totalDevices: allPlayerIds.length,
+        playerIds: allPlayerIds,
         result,
       });
     } catch (error: any) {
