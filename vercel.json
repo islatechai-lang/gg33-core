@@ -2,8 +2,12 @@
   "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/cron/notifications",
+      "path": "/api/cron/notifications?type=reset",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/notifications?type=reminder",
+      "schedule": "0 10 * * *"
     }
   ]
 }
