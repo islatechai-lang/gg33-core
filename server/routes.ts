@@ -3060,75 +3060,70 @@ export async function registerRoutes(
       const bodyOdisId = req.body?.odisId || (req.query?.odisId as string);
       const { sendOneSignalNotification } = await import("./onesignal");
 
-      // If a specific playerId is provided, target that single device
+      // If a specific playerId/subscriptionId is provided, target that device
       if (bodyPlayerId) {
         const result = await sendOneSignalNotification({
-          playerIds: [bodyPlayerId],
+          subscriptionIds: [bodyPlayerId],
+          externalIds: bodyOdisId ? [bodyOdisId] : undefined,
           title: "🌅 Your Daily Energy Has Reset!",
           content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
           subtitle: "GG33 CORE Daily Guidance",
           url: "https://gg33-core.vercel.app/",
         });
         return res.json({
-          message: "Targeted test push notification sent to your device!",
-          targetPlayerId: bodyPlayerId,
-          targetOdisId: bodyOdisId,
+          message: "Targeted test push sent!",
+          targetSubscriptionId: bodyPlayerId,
+          targetExternalId: bodyOdisId,
           result,
         });
       }
 
-      // If odisId is provided, look up their Player ID from Firestore
+      // If only odisId is provided, target by external_id
       if (bodyOdisId) {
-        const user = await storage.getUserByOdisId(bodyOdisId);
-        if (user?.oneSignalPlayerId) {
-          const result = await sendOneSignalNotification({
-            playerIds: [user.oneSignalPlayerId],
-            title: "🌅 Your Daily Energy Has Reset!",
-            content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
-            subtitle: "GG33 CORE Daily Guidance",
-            url: "https://gg33-core.vercel.app/",
-          });
-          return res.json({
-            message: "Targeted test push notification sent via odisId lookup!",
-            targetOdisId: bodyOdisId,
-            resolvedPlayerId: user.oneSignalPlayerId,
-            result,
-          });
-        } else {
-          return res.json({
-            message: "User found but no Player ID stored. Open the app on your phone first to register the device.",
-            targetOdisId: bodyOdisId,
-            userFound: !!user,
-            hasPlayerId: false,
-          });
-        }
+        const result = await sendOneSignalNotification({
+          externalIds: [bodyOdisId],
+          title: "🌅 Your Daily Energy Has Reset!",
+          content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+          subtitle: "GG33 CORE Daily Guidance",
+          url: "https://gg33-core.vercel.app/",
+        });
+        return res.json({
+          message: "Targeted test push sent via external_id (odisId)!",
+          targetExternalId: bodyOdisId,
+          result,
+        });
       }
 
-      // No specific target — broadcast to ALL stored Player IDs
-      const allPlayerIds = await storage.getAllOneSignalPlayerIds();
-      if (allPlayerIds.length === 0) {
+      // No specific target — broadcast to ALL stored IDs
+      const allSubscriptionIds = await storage.getAllOneSignalPlayerIds();
+      const allOdisIds = await storage.getAllOdisIds();
+
+      if (allSubscriptionIds.length === 0 && allOdisIds.length === 0) {
         return res.json({
-          message: "No Player IDs stored in database. Open the app on your phone first to register devices.",
+          message: "No targets stored in database. Open the app on your phone first.",
           totalDevices: 0,
         });
       }
 
       const result = await sendOneSignalNotification({
-        playerIds: allPlayerIds,
+        subscriptionIds: allSubscriptionIds,
+        externalIds: allOdisIds,
         title: "🌅 Your Daily Energy Has Reset!",
         content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
         subtitle: "GG33 CORE Test Broadcast",
         url: "https://gg33-core.vercel.app/",
       });
       return res.json({
-        message: `Broadcast test sent to ${allPlayerIds.length} device(s)!`,
-        totalDevices: allPlayerIds.length,
-        playerIds: allPlayerIds,
+        message: `Broadcast test sent!`,
+        totalSubscriptionIds: allSubscriptionIds.length,
+        totalExternalIds: allOdisIds.length,
+        subscriptionIds: allSubscriptionIds,
+        externalIds: allOdisIds,
         result,
       });
     } catch (error: any) {
       console.error("Test notification failed:", error);
-      return res.status(500).json({ error: error?.message || "Failed to trigger test push notification" });
+      return res.status(500).json({ error: error?.message || "Failed" });
     }
   });
 

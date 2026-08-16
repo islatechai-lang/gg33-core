@@ -31,16 +31,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 if (typeof window !== "undefined") {
   const win = window as any;
   win.median_onesignal_info = function (info: any) {
-    console.log("[Median OneSignal Info callback]:", info);
-    const playerId = info?.oneSignalUserId || info?.userId || info?.subscriptionId || info?.id;
-    if (playerId) {
-      localStorage.setItem("gg33-onesignal-player-id", playerId);
+    console.log("[Median OneSignal Info callback]:", JSON.stringify(info));
+    // SDK v5+ may return: subscriptionId, oneSignalUserId, userId, pushToken, onesignalId
+    const subId = info?.subscriptionId || info?.oneSignalUserId || info?.userId || info?.pushToken || info?.id;
+    if (subId) {
+      localStorage.setItem("gg33-onesignal-player-id", subId);
+      console.log("[OneSignal] Stored subscription ID:", subId);
       const odisId = localStorage.getItem("gg33-odis-id");
       if (odisId) {
         fetch("/api/user/onesignal-player", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ odisId, playerId }),
+          body: JSON.stringify({ odisId, playerId: subId }),
         }).catch((e) => console.warn(e));
       }
     }
@@ -87,6 +89,14 @@ function syncMedianOneSignalUser(odisId?: string | null) {
       } else if (typeof win.gonative?.onesignal?.logout === "function") {
         win.gonative.onesignal.logout();
       }
+    }
+
+    // Actively request current subscription info from native SDK
+    // This triggers the median_onesignal_info callback with the fresh subscription ID
+    if (typeof win.median?.onesignal?.info === "function") {
+      win.median.onesignal.info();
+    } else if (typeof win.gonative?.onesignal?.info === "function") {
+      win.gonative.onesignal.info();
     }
   } catch (err) {
     console.warn("[OneSignal Bridge] Error syncing user:", err);

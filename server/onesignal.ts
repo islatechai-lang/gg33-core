@@ -1,9 +1,8 @@
 /**
  * OneSignal REST API Client for Median.co Native Push Notifications
  *
- * Important: We target devices DIRECTLY by Player ID rather than using
- * OneSignal segments, because the Median.co integration does not always
- * register devices into the "Subscribed Users" segment.
+ * Uses include_subscription_ids (SDK v5+) and include_aliases with external_id
+ * for reliable device targeting. Does NOT use segments or deprecated include_player_ids.
  */
 
 function cleanAscii(str?: string): string {
@@ -33,11 +32,8 @@ export interface OneSignalNotificationOptions {
   subtitle?: string;
   url?: string;
   data?: Record<string, any>;
-  playerIds?: string[];
-}
-
-export interface OneSignalTargetedOptions extends OneSignalNotificationOptions {
-  externalUserIds?: string[];
+  subscriptionIds?: string[];
+  externalIds?: string[];
 }
 
 export interface OneSignalSendResult {
@@ -47,9 +43,13 @@ export interface OneSignalSendResult {
 }
 
 /**
- * Sends a push notification to specific devices by Player ID.
- * This is the primary method — we always target by Player ID since
- * OneSignal segments don't reliably contain Median.co devices.
+ * Sends a push notification using the best available targeting method.
+ * 
+ * Priority:
+ * 1. include_aliases with external_id (odisId) — most reliable for SDK v5+
+ * 2. include_subscription_ids — direct device targeting for SDK v5+
+ * 
+ * If both are provided, sends TWO separate requests (OneSignal doesn't allow mixing).
  */
 export async function sendOneSignalNotification(
   options: OneSignalNotificationOptions
@@ -57,22 +57,21 @@ export async function sendOneSignalNotification(
   const { appId, restApiKey } = getCredentials();
 
   if (!appId || !restApiKey) {
-    console.warn("[OneSignal] Missing ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY — skipping notification.");
+    console.warn("[OneSignal] Missing credentials — skipping notification.");
     return { success: false, error: "Missing OneSignal credentials" };
   }
 
-  const validPlayerIds = (options.playerIds || []).filter(Boolean);
+  const validSubscriptionIds = (options.subscriptionIds || []).filter(Boolean);
+  const validExternalIds = (options.externalIds || []).filter(Boolean);
 
-  if (validPlayerIds.length === 0) {
-    console.warn("[OneSignal] No Player IDs provided — cannot send notification.");
-    return { success: false, error: "No Player IDs provided" };
+  if (validSubscriptionIds.length === 0 && validExternalIds.length === 0) {
+    console.warn("[OneSignal] No subscription IDs or external IDs provided.");
+    return { success: false, error: "No targets provided" };
   }
 
   const targetUrl = options.url || "https://gg33-core.vercel.app/";
-
-  const payload: Record<string, any> = {
+  const basePayload: Record<string, any> = {
     app_id: appId,
-    include_player_ids: validPlayerIds,
     headings: { en: options.title },
     contents: { en: options.content },
     data: {
@@ -83,35 +82,73 @@ export async function sendOneSignalNotification(
   };
 
   if (options.subtitle) {
-    payload.subtitle = { en: options.subtitle };
+    basePayload.subtitle = { en: options.subtitle };
   }
 
-  try {
-    console.log(`[OneSignal] Sending push notification to ${validPlayerIds.length} device(s)...`);
-    const response = await fetch("https://api.onesignal.com/notifications", {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${restApiKey}`,
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify(payload),
-    });
+  const results: any[] = [];
 
-    const responseData = await response.json();
+  // Method 1: Target by external_id (odisId) — preferred for SDK v5+
+  if (validExternalIds.length > 0) {
+    const aliasPayload = {
+      ...basePayload,
+      include_aliases: { external_id: validExternalIds },
+      target_channel: "push",
+    };
 
-    if (!response.ok) {
-      console.error(`[OneSignal] API error ${response.status}:`, responseData);
-      return { success: false, error: `API Error ${response.status}: ${JSON.stringify(responseData)}`, data: responseData };
+    try {
+      console.log(`[OneSignal] Sending push via external_id to ${validExternalIds.length} user(s)...`);
+      const response = await fetch("https://api.onesignal.com/notifications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${restApiKey}`,
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(aliasPayload),
+      });
+      const data = await response.json();
+      console.log("[OneSignal] external_id response:", JSON.stringify(data));
+      results.push({ method: "external_id", status: response.status, data });
+    } catch (err: any) {
+      console.error("[OneSignal] external_id request failed:", err);
+      results.push({ method: "external_id", error: err?.message });
     }
-
-    console.log(`[OneSignal] Push sent successfully! ID: ${responseData.id}, Recipients: ${responseData.recipients ?? validPlayerIds.length}`);
-    return { success: true, data: responseData };
-  } catch (error: any) {
-    console.error("[OneSignal] Failed to send notification:", error);
-    return { success: false, error: error?.message || "Network error" };
   }
+
+  // Method 2: Target by subscription_id — direct device targeting
+  if (validSubscriptionIds.length > 0) {
+    const subPayload = {
+      ...basePayload,
+      include_subscription_ids: validSubscriptionIds,
+    };
+
+    try {
+      console.log(`[OneSignal] Sending push via subscription_id to ${validSubscriptionIds.length} device(s)...`);
+      const response = await fetch("https://api.onesignal.com/notifications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${restApiKey}`,
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(subPayload),
+      });
+      const data = await response.json();
+      console.log("[OneSignal] subscription_id response:", JSON.stringify(data));
+      results.push({ method: "subscription_id", status: response.status, data });
+    } catch (err: any) {
+      console.error("[OneSignal] subscription_id request failed:", err);
+      results.push({ method: "subscription_id", error: err?.message });
+    }
+  }
+
+  // Check if any method succeeded
+  const anySuccess = results.some(r => r.data?.id && !r.data?.errors);
+  
+  return {
+    success: anySuccess || results.some(r => r.status === 200),
+    data: results.length === 1 ? results[0] : results,
+  };
 }
 
-// Keep these as aliases for backward compatibility
+// Backward compatibility aliases
 export const sendOneSignalNotificationToAll = sendOneSignalNotification;
 export const sendOneSignalNotificationToUsers = sendOneSignalNotification;

@@ -16,6 +16,7 @@ export interface IStorage {
   createUser(data: { odisId: string; fullName: string; birthDate: Date; birthTime?: string; birthLocation?: string; whopUserId?: string; firebaseUid?: string; email?: string; whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access'; isPro?: boolean }): Promise<DBUser>;
   updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null; oneSignalPlayerId?: string | null }): Promise<DBUser | null>;
   getAllOneSignalPlayerIds(): Promise<string[]>;
+  getAllOdisIds(): Promise<string[]>;
   updateWhopProfile(whopUserId: string, data: { whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access' }): Promise<DBUser | null>;
   upgradeUserToPro(odisId: string, receiptId: string): Promise<DBUser | null>;
   syncProStatus(whopUserId: string, isPro: boolean, membershipId?: string | null): Promise<DBUser | null>;
@@ -409,6 +410,24 @@ export class FirestoreStorage implements IStorage {
       return Array.from(new Set(ids));
     } catch (error) {
       console.error("Error getting OneSignal player IDs:", error);
+      return [];
+    }
+  }
+
+  async getAllOdisIds(): Promise<string[]> {
+    await this.ensureConnected();
+    try {
+      const snapshot = await db.collection("users").get();
+      const ids: string[] = [];
+      snapshot.docs.forEach(doc => {
+        const odisId = doc.data()?.odisId;
+        if (odisId && typeof odisId === "string" && odisId.trim().length > 0) {
+          ids.push(odisId.trim());
+        }
+      });
+      return Array.from(new Set(ids));
+    } catch (error) {
+      console.error("Error getting all odisIds:", error);
       return [];
     }
   }
