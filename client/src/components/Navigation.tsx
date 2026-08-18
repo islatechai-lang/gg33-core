@@ -12,6 +12,7 @@ import {
   Database,
   MessageCircle,
   BookOpen,
+  Sparkles,
   Menu,
   X,
   Crown,
@@ -33,6 +34,7 @@ const navItems = [
   { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/cuechats', label: 'CueChats', icon: MessageCircle },
   { to: '/learn', label: 'Study Zone', icon: BookOpen },
+  { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
 ];
 
 export function Navigation() {

@@ -11,6 +11,7 @@ import Cues from "@/pages/cues";
 import Explore from "@/pages/explore";
 import CueChats from "@/pages/cuechats";
 import Learn from "@/pages/learn";
+import BirthChartPage from "@/pages/birth-chart";
 import NumberDetailPage from "@/pages/number-detail";
 import Course from "@/pages/course";
 import Lesson from "@/pages/lesson";
@@ -58,6 +59,9 @@ function Router() {
       </Route>
       <Route path="/learn">
         {!user ? <Redirect to="/login" /> : <Learn />}
+      </Route>
+      <Route path="/birth-chart">
+        {!user ? <Redirect to="/login" /> : <BirthChartPage />}
       </Route>
       <Route path="/course/:courseId">
         {() => !user ? <Redirect to="/login" /> : <Course />}
