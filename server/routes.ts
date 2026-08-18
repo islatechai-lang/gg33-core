@@ -2944,6 +2944,22 @@ export async function registerRoutes(
       }
 
       console.log(`[Whop Upgrade] User ${dbUser.odisId} successfully upgraded to Pro!`);
+
+      // Trigger Push Notification: Welcome to Pro
+      try {
+        const { sendOneSignalNotification } = await import("./onesignal");
+        await sendOneSignalNotification({
+          externalIds: [dbUser.odisId],
+          subscriptionIds: updatedUser.oneSignalPlayerId ? [updatedUser.oneSignalPlayerId] : undefined,
+          title: "👑 Welcome to GG33 CORE Pro!",
+          content: "Your Pro membership is now active! Enjoy unlimited Daily Energy, full Cues Database access, deep insights, and more.",
+          subtitle: "Pro Membership Activated",
+          url: "https://gg33-core.vercel.app/",
+        });
+      } catch (notifErr) {
+        console.warn("[Push Notification] Error sending Pro upgrade notification:", notifErr);
+      }
+
       res.json({ success: true, user: updatedUser });
     } catch (error) {
       console.error("Error upgrading user to Pro:", error);
@@ -2951,7 +2967,7 @@ export async function registerRoutes(
     }
   });
 
-  // Get user's Pro membership info including billing portal URL
+  // Get user's Pro membership info including billing portal URL and next charge date
   app.get("/api/membership", requireFirebaseAuth, async (req: any, res) => {
     try {
       const firebaseUid = req.user!.uid;
@@ -2969,6 +2985,53 @@ export async function registerRoutes(
         user.odisId === 'odis_af728c65-76e4-4c20-8fc3-84b0d10bf851' ||
         user.odisId === 'odis_33d1fd75-fd80-432b-bcad-0d4bb2b47671';
 
+      let nextBillingDate: string | null = null;
+      let renewalPeriodEnd: string | null = null;
+      let cancelAtPeriodEnd = false;
+
+      const membershipId = (user as any).proPaymentReceiptId;
+      if (isPro && membershipId && typeof membershipId === 'string' && membershipId.startsWith('mem_')) {
+        try {
+          const { whopSdk } = await import("./whop");
+          if (whopSdk) {
+            const membership = await whopSdk.memberships.retrieve(membershipId);
+            if (membership) {
+              const rawEnd = (membership as any).renewal_period_end || (membership as any).valid_thru;
+              if (rawEnd) {
+                const dateObj = typeof rawEnd === 'number' ? new Date(rawEnd * 1000) : new Date(rawEnd);
+                if (!isNaN(dateObj.getTime())) {
+                  renewalPeriodEnd = dateObj.toISOString();
+                  nextBillingDate = dateObj.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  });
+                }
+              }
+              cancelAtPeriodEnd = !!(membership as any).cancel_at_period_end;
+            }
+          }
+        } catch (err: any) {
+          console.warn("[Membership Info] Notice retrieving from Whop SDK:", err?.message || err);
+        }
+      }
+
+      // If no next billing date could be fetched from Whop, calculate 30 days forward
+      if (isPro && !nextBillingDate) {
+        const baseDate = user.createdAt ? new Date(user.createdAt) : new Date();
+        const nextDate = new Date(baseDate);
+        nextDate.setDate(nextDate.getDate() + 30);
+        const now = new Date();
+        while (nextDate < now) {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+        }
+        nextBillingDate = nextDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      }
+
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
 
@@ -2977,6 +3040,9 @@ export async function registerRoutes(
         membershipId: (user as any).proPaymentReceiptId || "db_membership",
         status: isPro ? "active" : "inactive",
         manageUrl: "https://whop.com/hub/",
+        nextBillingDate: isPro ? nextBillingDate : null,
+        renewalPeriodEnd,
+        cancelAtPeriodEnd,
       });
     } catch (error) {
       console.error("Error getting membership status:", error);
@@ -3007,6 +3073,22 @@ export async function registerRoutes(
       }
 
       const updatedUser = await storage.updateUser(user.odisId, { isPro: false });
+
+      // Trigger Push Notification: Subscription Cancelled
+      try {
+        const { sendOneSignalNotification } = await import("./onesignal");
+        await sendOneSignalNotification({
+          externalIds: [user.odisId],
+          subscriptionIds: updatedUser?.oneSignalPlayerId || user.oneSignalPlayerId ? [updatedUser?.oneSignalPlayerId || user.oneSignalPlayerId!] : undefined,
+          title: "Subscription Cancelled",
+          content: "Your GG33 CORE Pro membership has been cancelled. You can reactivate anytime from your profile.",
+          subtitle: "Plan Cancelled",
+          url: "https://gg33-core.vercel.app/",
+        });
+      } catch (notifErr) {
+        console.warn("[Push Notification] Error sending cancel notification:", notifErr);
+      }
+
       res.json({ success: true, message: "Subscription cancelled successfully", user: updatedUser });
     } catch (error: any) {
       console.error("Error cancelling membership:", error);

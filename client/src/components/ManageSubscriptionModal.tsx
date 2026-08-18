@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, ExternalLink, AlertTriangle, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Crown, ExternalLink, AlertTriangle, Loader2, CheckCircle2, ShieldCheck, Calendar } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -23,6 +24,23 @@ export function ManageSubscriptionModal({ open, onOpenChange }: ManageSubscripti
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+
+  const { data: membershipData, isLoading: isLoadingMembership } = useQuery<{
+    hasMembership: boolean;
+    membershipId?: string;
+    status?: string;
+    manageUrl?: string;
+    nextBillingDate?: string;
+    renewalPeriodEnd?: string;
+    cancelAtPeriodEnd?: boolean;
+  }>({
+    queryKey: ['/api/membership'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/membership');
+      return res.json();
+    },
+    enabled: open,
+  });
 
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
@@ -90,6 +108,20 @@ export function ManageSubscriptionModal({ open, onOpenChange }: ManageSubscripti
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-400">Current Plan</span>
               <span className="font-bold text-zinc-200">GG33 Pro ($35/mo)</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-400 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-amber-400" /> Next Charge Date
+              </span>
+              <span className="font-semibold text-amber-400">
+                {isLoadingMembership ? (
+                  <span className="flex items-center gap-1 text-zinc-500">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Loading...
+                  </span>
+                ) : (
+                  membershipData?.nextBillingDate || "Next billing cycle"
+                )}
+              </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-400">Billing Provider</span>
