@@ -608,3 +608,123 @@ export function calculateNatalChart(birthDate: Date, birthTimeStr?: string, birt
     birthLocation: birthLocation || 'Calculated Coordinate',
   };
 }
+
+export interface ChartSynthesis {
+  archetypeTitle: string;
+  tagline: string;
+  coreIdentitySummary: string;
+  superpowers: Array<{ title: string; desc: string; icon: string }>;
+  karmicChallenge: { title: string; challenge: string; solution: string };
+  relationshipStyle: { title: string; desc: string; needs: string[] };
+  careerAndCalling: { title: string; path: string; advice: string };
+  alignmentRules: string[];
+}
+
+/**
+ * Generates an intuitive, plain-English synthesis of the entire natal chart
+ */
+export function generateChartSynthesis(chart: NatalChartData): ChartSynthesis {
+  const sunSign = chart.sun.sign;
+  const moonSign = chart.moon.sign;
+  const risingSign = chart.rising.sign;
+  const dominantElement = chart.elementBalance.dominantElement;
+  const dominantModality = chart.modalityBalance.dominantModality;
+  const mars = chart.planets.find(p => p.id === 'mars')!;
+  const venus = chart.planets.find(p => p.id === 'venus')!;
+  const saturn = chart.planets.find(p => p.id === 'saturn')!;
+  const jupiter = chart.planets.find(p => p.id === 'jupiter')!;
+
+  // Determine Archetype Title
+  const ARCHETYPES: Record<string, { title: string; tagline: string }> = {
+    Aries: { title: 'The Trailblazing Pioneer', tagline: 'Unstoppable initiative, raw courage, and first-mover instincts.' },
+    Taurus: { title: 'The Architect of Abundance', tagline: 'Unyielding endurance, grounded luxury, and master of lasting value.' },
+    Gemini: { title: 'The Visionary Messenger', tagline: 'Brilliant intellectual agility, polymath curiosity, and rapid networking.' },
+    Cancer: { title: 'The Sovereign Guardian', tagline: 'Fierce emotional protective instincts, ancestral intuition, and profound loyalty.' },
+    Leo: { title: 'The Solar Sovereign', tagline: 'Magnetic radiance, generous leadership, and unforgettable stage presence.' },
+    Virgo: { title: 'The Alchemical Master', tagline: 'Flawless precision, elite discernment, and systematic execution of excellence.' },
+    Libra: { title: 'The Harmonious Strategist', tagline: 'High-level diplomacy, aesthetic mastery, and keen relational intelligence.' },
+    Scorpio: { title: 'The Phoenix Alchemist', tagline: 'Uncompromising psychological depth, psychic magnetism, and total transformation.' },
+    Sagittarius: { title: 'The Cosmic Explorer', tagline: 'Unbounded optimism, philosophical foresight, and grand horizon seeker.' },
+    Capricorn: { title: 'The Master Strategist', tagline: 'Monumental ambition, ironclad discipline, and builder of generational empires.' },
+    Aquarius: { title: 'The Maverick Futurist', tagline: 'Unorthodox innovation, revolutionary intellect, and architect of the new paradigm.' },
+    Pisces: { title: 'The Mystical Visionary', tagline: 'Infinite creative empathy, transcendent intuition, and master of unseen realms.' },
+  };
+
+  const archetype = ARCHETYPES[sunSign] || ARCHETYPES['Aries'];
+
+  // Core Identity Summary
+  const coreIdentitySummary = `At your core, you are built on a powerful triumvirate: your ${sunSign} Sun drives your conscious purpose and vital spark, your ${moonSign} Moon shapes your private emotional world and gut instincts, and your ${risingSign} Ascendant defines your outer aura and how people immediately feel your presence. With a dominant ${dominantElement} element signature and ${dominantModality} drive, you operate with ${
+    dominantElement === 'Fire' ? 'intense passion, bold leadership, and immediate instinct' :
+    dominantElement === 'Earth' ? 'laser focus, grounded discipline, and an obsession with real-world results' :
+    dominantElement === 'Air' ? 'lightning-fast intellect, social charm, and innovative ideas' :
+    'deep emotional intuition, magnetic empathy, and profound spiritual perception'
+  }.`;
+
+  // 3 Core Superpowers
+  const superpowers = [
+    {
+      title: `${sunSign} Willpower & Solar Magnetism`,
+      desc: `Your ability to project confidence and generate momentum when you believe in a mission. People naturally look to your ${sunSign} light for direction.`,
+      icon: 'Sun',
+    },
+    {
+      title: `${moonSign} Intuitive Radar`,
+      desc: `You possess an inner radar governed by ${moonSign}. You pick up on subtleties, hidden motivations, and energetic shifts long before others notice them.`,
+      icon: 'Moon',
+    },
+    {
+      title: `Strategic Execution (${mars.sign} Mars & ${jupiter.sign} Jupiter)`,
+      desc: `With Mars in ${mars.sign}, your drive is persistent and sharp. Jupiter in ${jupiter.sign} expands your opportunities whenever you take calculated risks.`,
+      icon: 'Zap',
+    },
+  ];
+
+  // Karmic Challenge & Shadow to Master
+  const karmicChallenge = {
+    title: `Mastering ${saturn.sign} Saturn & ${sunSign} Blindspots`,
+    challenge: `Your primary growth edge involves navigating Saturn in ${saturn.sign} (House ${saturn.house}). You may periodically experience moments where self-doubt or impatience makes you feel like you have to carry the entire weight of the world alone.`,
+    solution: `Embrace structured patience over panic. Trust that the delays Saturn introduces are not denials, but the building of permanent, unshakable mastery.`,
+  };
+
+  // Relationship Style
+  const relationshipStyle = {
+    title: `${venus.sign} Venus & ${moonSign} Moon Harmony`,
+    desc: `In love and partnerships, Venus in ${venus.sign} means you value ${
+      venus.element === 'Fire' ? 'passionate excitement, genuine admiration, and shared adventure' :
+      venus.element === 'Earth' ? 'loyalty, physical stability, dependability, and shared empire building' :
+      venus.element === 'Air' ? 'stimulating mental connection, playful banter, and mutual intellectual respect' :
+      'profound emotional depth, soul-level intimacy, and unwavering loyalty'
+    }.`,
+    needs: [
+      `Unconditional respect for your ${risingSign} individuality`,
+      `Emotional safety to drop your guard and express your ${moonSign} feelings`,
+      `A partner who matches your ambition without feeling intimidated`,
+    ],
+  };
+
+  // Career & Calling
+  const careerAndCalling = {
+    title: `${chart.midheaven.sign} Midheaven Career Direction`,
+    path: `Your 10th House Midheaven in ${chart.midheaven.sign} indicates a destiny of recognized leadership, expertise, and creating tangible value that outlives you.`,
+    advice: `Focus your professional efforts where your natural ${dominantElement} intelligence can shine. Avoid micromanagement or environments that restrict your creative autonomy.`,
+  };
+
+  // 3 Golden Rules for Daily Alignment
+  const alignmentRules = [
+    `Honor your ${moonSign} emotional fuel: When overwhelmed, step back to recharge in your natural element (${chart.moon.element}).`,
+    `Lead with your ${risingSign} strengths: Trust your first impressions—your Ascendant is tuned to pick up on authenticity instantly.`,
+    `Turn ${saturn.sign} pressure into diamonds: Treat every obstacle as a test of endurance designed to forge your next level.`,
+  ];
+
+  return {
+    archetypeTitle: archetype.title,
+    tagline: archetype.tagline,
+    coreIdentitySummary,
+    superpowers,
+    karmicChallenge,
+    relationshipStyle,
+    careerAndCalling,
+    alignmentRules,
+  };
+}
+

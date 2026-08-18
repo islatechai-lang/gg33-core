@@ -3,7 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 import { BirthChartWheel } from '@/components/BirthChartWheel';
-import { calculateNatalChart, NatalChartData } from '@/lib/astrologyCalculations';
+import {
+  calculateNatalChart,
+  generateChartSynthesis,
+  NatalChartData,
+  ChartSynthesis
+} from '@/lib/astrologyCalculations';
 import { parseUTCDate } from '@shared/dateUtils';
 import { useAuth } from '@/context/AuthContext';
 import { UpgradeModal } from '@/components/UpgradeModal';
@@ -23,11 +28,15 @@ import {
   Zap,
   Shield,
   Crown,
-  ChevronRight,
-  Info,
+  Heart,
+  Briefcase,
+  AlertCircle,
+  CheckCircle2,
   Calendar,
   Clock,
-  MapPin
+  MapPin,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 
 interface MembershipInfo {
@@ -40,7 +49,6 @@ interface MembershipInfo {
 export default function BirthChartPage() {
   const { dbUser } = useAuth();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'wheel' | 'placements' | 'aspects' | 'elements'>('wheel');
 
   const { data: membership } = useQuery<MembershipInfo>({
     queryKey: ['/api/membership'],
@@ -60,12 +68,18 @@ export default function BirthChartPage() {
     return calculateNatalChart(bDate, bTime, bLocation);
   }, [dbUser]);
 
-  if (!chartData) {
+  // Compute Plain-English Synthesis
+  const synthesis: ChartSynthesis | null = useMemo(() => {
+    if (!chartData) return null;
+    return generateChartSynthesis(chartData);
+  }, [chartData]);
+
+  if (!chartData || !synthesis) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
         <StarField />
         <Navigation />
-        <p className="text-zinc-400">Loading your astrological birth chart...</p>
+        <p className="text-zinc-400">Calculating your astrological birth chart...</p>
       </div>
     );
   }
@@ -129,7 +143,157 @@ export default function BirthChartPage() {
             </div>
           </div>
 
-          {/* Big Three Feature Cards */}
+          {/* Core Archetype Summary Blueprint */}
+          <Card className="bg-gradient-to-r from-amber-500/10 via-zinc-950 to-zinc-950 border border-amber-500/40 shadow-2xl p-6 sm:p-8 relative overflow-hidden">
+            <div className="space-y-4 relative z-10">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Crown className="w-4 h-4" /> Your Cosmic Archetype
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-zinc-100">
+                    {synthesis.archetypeTitle}
+                  </h2>
+                </div>
+                <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-xs px-3 py-1 font-semibold">
+                  {chartData.elementBalance.dominantElement} Dominant • {chartData.modalityBalance.dominantModality}
+                </Badge>
+              </div>
+
+              <p className="text-sm sm:text-base text-zinc-200 font-medium italic">
+                "{synthesis.tagline}"
+              </p>
+
+              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed pt-2 border-t border-zinc-800/80">
+                {synthesis.coreIdentitySummary}
+              </p>
+            </div>
+          </Card>
+
+          {/* Plain English Deep Insights Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 1. Superpowers Card */}
+            <Card className="bg-zinc-950/80 border-zinc-800 backdrop-blur-xl p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-100">Your Core Superpowers</h3>
+                  <p className="text-[11px] text-zinc-400">Natural gifts encoded into your planetary alignment</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {synthesis.superpowers.map((sp, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 space-y-1">
+                    <span className="text-xs font-bold text-amber-400 block">{sp.title}</span>
+                    <p className="text-xs text-zinc-300 leading-relaxed">{sp.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* 2. Karmic Growth & Shadow to Master */}
+            <Card className="bg-zinc-950/80 border-zinc-800 backdrop-blur-xl p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-100">Karmic Shadow & Growth Edge</h3>
+                  <p className="text-[11px] text-zinc-400">The friction point you are destined to master</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 space-y-1.5">
+                  <span className="text-xs font-bold text-red-300 block">{synthesis.karmicChallenge.title}</span>
+                  <p className="text-xs text-zinc-300 leading-relaxed">{synthesis.karmicChallenge.challenge}</p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
+                  <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" /> The Breakthrough Solution
+                  </span>
+                  <p className="text-xs text-zinc-200 leading-relaxed">{synthesis.karmicChallenge.solution}</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* 3. Love & Relationship Dynamics */}
+            <Card className="bg-zinc-950/80 border-zinc-800 backdrop-blur-xl p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center">
+                  <Heart className="w-4 h-4 text-pink-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-100">Love, Chemistry & Relationships</h3>
+                  <p className="text-[11px] text-zinc-400">How you connect, express affection, and choose partners</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 space-y-2">
+                <span className="text-xs font-bold text-pink-400 block">{synthesis.relationshipStyle.title}</span>
+                <p className="text-xs text-zinc-300 leading-relaxed">{synthesis.relationshipStyle.desc}</p>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">Your Relationship Non-Negotiables:</span>
+                <ul className="space-y-1 text-xs text-zinc-300">
+                  {synthesis.relationshipStyle.needs.map((need, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                      <span>{need}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+
+            {/* 4. Career Calling & Wealth Potential */}
+            <Card className="bg-zinc-950/80 border-zinc-800 backdrop-blur-xl p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                  <Briefcase className="w-4 h-4 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-100">Career Trajectory & Wealth Calling</h3>
+                  <p className="text-[11px] text-zinc-400">Midheaven direction & professional authority</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 space-y-1.5">
+                <span className="text-xs font-bold text-cyan-400 block">{synthesis.careerAndCalling.title}</span>
+                <p className="text-xs text-zinc-300 leading-relaxed">{synthesis.careerAndCalling.path}</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 space-y-1">
+                <span className="text-xs font-bold text-cyan-300 block">Strategic Career Advice</span>
+                <p className="text-xs text-zinc-200 leading-relaxed">{synthesis.careerAndCalling.advice}</p>
+              </div>
+            </Card>
+          </div>
+
+          {/* 3 Golden Rules for Daily Alignment */}
+          <Card className="bg-zinc-950/90 border border-zinc-800 p-6 sm:p-7 space-y-4">
+            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm sm:text-base">
+              <Sparkles className="w-4 h-4" />
+              <span>3 Golden Rules to Master Your Chart's Energy</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+              {synthesis.alignmentRules.map((rule, idx) => (
+                <div key={idx} className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-1.5 flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <span className="text-xs font-extrabold text-amber-400 font-mono">RULE 0{idx + 1}</span>
+                    <p className="text-xs text-zinc-300 leading-relaxed">{rule}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* The Big Three Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Sun Sign Card */}
             <Card className="bg-gradient-to-b from-amber-500/10 via-zinc-950 to-zinc-950 border-amber-500/30 shadow-xl overflow-hidden hover:border-amber-500/50 transition-all">
@@ -143,7 +307,7 @@ export default function BirthChartPage() {
                   </Badge>
                 </div>
                 <div>
-                  <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider block">Sun Sign • Core Identity</span>
+                  <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider block">Sun Sign • Core Vitality</span>
                   <h3 className="text-lg font-bold text-zinc-100">{chartData.sun.sign}</h3>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
