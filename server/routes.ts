@@ -2787,7 +2787,7 @@ export async function registerRoutes(
 
       const resendApiKey = process.env.RESEND_API_KEY;
       const notificationEmail = process.env.NOTIFICATION_EMAIL;
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
 
       if (!resendApiKey || !notificationEmail) {
         console.error('[Notify] Missing RESEND_API_KEY or NOTIFICATION_EMAIL');
@@ -2881,7 +2881,7 @@ export async function registerRoutes(
 
       const resendApiKey = process.env.RESEND_API_KEY;
       const notificationEmail = process.env.NOTIFICATION_EMAIL;
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
 
       if (!resendApiKey || !notificationEmail) {
         console.error('[Delete Request] Missing RESEND_API_KEY or NOTIFICATION_EMAIL');
