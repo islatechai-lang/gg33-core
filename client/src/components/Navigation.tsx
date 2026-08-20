@@ -217,9 +217,9 @@ export function Navigation() {
                         setMobileOpen(false);
                         setShowManageModal(true);
                       }}
-                      className="text-[11px] font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors cursor-pointer"
+                      className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                     >
-                      Manage subscription
+                      Manage
                     </button>
                   </div>
                 ) : (

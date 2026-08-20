@@ -164,14 +164,13 @@ export default function Home() {
           </div>
 
           {membership?.manageUrl && isPro && (
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-2">
               <button
                 onClick={() => window.open(membership.manageUrl!, '_blank')}
-                className="text-2 text-gray-9 hover:text-gray-11 flex items-center gap-1.5 transition-colors"
+                className="text-[11px] text-zinc-600 hover:text-zinc-400 flex items-center gap-1 transition-colors"
                 data-testid="link-manage-subscription"
               >
-                Manage Subscription
-                <ExternalLink className="w-3.5 h-3.5" />
+                Manage Plan
               </button>
             </div>
           )}
