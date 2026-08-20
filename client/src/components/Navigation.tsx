@@ -3,6 +3,16 @@ import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { ManageSubscriptionModal } from '@/components/ManageSubscriptionModal';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -41,6 +51,7 @@ export function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { logout, user, dbUser } = useAuth();
   const navRef = useRef<HTMLElement>(null);
 
@@ -145,6 +156,19 @@ export function Navigation() {
                   Upgrade to Pro
                 </Button>
               )}
+
+              {/* Desktop Logout Button */}
+              {user && (
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  title="Log Out"
+                  aria-label="Log Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -181,8 +205,9 @@ export function Navigation() {
                     </div>
                   </NavLink>
                 ))}
+
                 {isPro ? (
-                  <div className="flex items-center justify-between mt-4 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-center justify-between mt-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
                     <div className="flex items-center gap-2">
                       <Crown className="w-4 h-4 text-amber-400" />
                       <span className="text-xs font-bold text-amber-300">Pro Member</span>
@@ -200,30 +225,75 @@ export function Navigation() {
                 ) : (
                   <Button
                     onClick={handleUpgradeClick}
-                    className="mt-4 w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-10 rounded-xl shadow-md shadow-amber-500/20"
+                    className="mt-3 w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-10 rounded-xl shadow-md shadow-amber-500/20"
                     data-testid="button-mobile-upgrade"
                   >
                     Upgrade to Pro
                   </Button>
                 )}
+
+                {/* Mobile User Info & Right-Side Logout Button */}
                 {user && (
-                  <Button
-                    variant="ghost"
-                    className="mt-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-xl transition-colors"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      logout();
-                    }}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Logout</span>
-                  </Button>
+                  <div className="mt-3 pt-3 border-t border-zinc-800/80 flex items-center justify-between px-3 py-1">
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span className="text-xs font-bold text-zinc-200 truncate">
+                        {dbUser?.fullName || user.displayName || user.email || 'Logged In'}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 truncate">
+                        {user.email || 'GG33 Member'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-zinc-400 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-1.5 px-3 py-1.5 h-8 rounded-xl transition-colors flex-shrink-0 cursor-pointer ml-auto"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        setShowLogoutConfirm(true);
+                      }}
+                      data-testid="button-mobile-logout"
+                    >
+                      <span className="text-xs font-semibold">Logout</span>
+                      <LogOut className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
           )}
         </div>
       </nav>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent className="w-[90vw] max-w-md p-6 rounded-2xl border-zinc-800 bg-zinc-950 text-zinc-100">
+          <AlertDialogHeader className="space-y-2 text-left">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-1">
+              <LogOut className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-lg font-bold text-zinc-100">
+              Log out of GG33 CORE?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-zinc-400 leading-relaxed">
+              Are you sure you want to log out? You will need to log back in to access your personal numerology and astrology readings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 flex flex-row items-center justify-end gap-2.5">
+            <AlertDialogCancel className="border-zinc-800 text-xs h-9 px-4 rounded-xl text-zinc-300 hover:bg-zinc-900 mt-0">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs h-9 px-4 rounded-xl transition-colors shadow-md shadow-red-600/20"
+              onClick={async () => {
+                setShowLogoutConfirm(false);
+                await logout();
+              }}
+            >
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
       <ManageSubscriptionModal open={showManageModal} onOpenChange={setShowManageModal} />
