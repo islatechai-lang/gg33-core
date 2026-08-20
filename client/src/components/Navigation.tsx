@@ -264,26 +264,26 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Logout Confirmation Dialog */}
+      {/* Compact Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="w-[90vw] max-w-md p-6 rounded-2xl border-zinc-800 bg-zinc-950 text-zinc-100">
-          <AlertDialogHeader className="space-y-2 text-left">
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-1">
-              <LogOut className="w-5 h-5" />
-            </div>
-            <AlertDialogTitle className="text-lg font-bold text-zinc-100">
-              Log out of GG33 CORE?
+        <AlertDialogContent className="w-[85vw] max-w-xs p-5 rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 text-center flex flex-col items-center">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-1">
+            <LogOut className="w-5 h-5" />
+          </div>
+          <AlertDialogHeader className="space-y-1 text-center sm:text-center">
+            <AlertDialogTitle className="text-base font-bold text-zinc-100">
+              Log Out?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-zinc-400 leading-relaxed">
-              Are you sure you want to log out? You will need to log back in to access your personal numerology and astrology readings.
+            <AlertDialogDescription className="text-xs text-zinc-400">
+              Are you sure you want to log out?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex flex-row items-center justify-end gap-2.5">
-            <AlertDialogCancel className="border-zinc-800 text-xs h-9 px-4 rounded-xl text-zinc-300 hover:bg-zinc-900 mt-0">
+          <AlertDialogFooter className="mt-4 flex flex-row items-center justify-center gap-2.5 w-full">
+            <AlertDialogCancel className="flex-1 border-zinc-800 text-xs h-9 rounded-xl text-zinc-300 hover:bg-zinc-900 mt-0">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs h-9 px-4 rounded-xl transition-colors shadow-md shadow-red-600/20"
+              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold text-xs h-9 rounded-xl transition-colors shadow-md shadow-red-600/20"
               onClick={async () => {
                 setShowLogoutConfirm(false);
                 await logout();
