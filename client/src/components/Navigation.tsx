@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/UpgradeModal';
@@ -42,6 +42,7 @@ export function Navigation() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const { logout, user, dbUser } = useAuth();
+  const navRef = useRef<HTMLElement>(null);
 
   const { data: membership } = useQuery<MembershipInfo>({
     queryKey: ['/api/membership'],
@@ -58,9 +59,37 @@ export function Navigation() {
     setMobileOpen(false);
   };
 
+  // Close mobile dropdown when clicking outside the nav component
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [mobileOpen]);
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 glass" data-testid="navigation">
+      {/* Backdrop overlay to dismiss dropdown when clicking outside on mobile */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass" data-testid="navigation">
         <div className="w-full px-4">
           <div className="flex items-center justify-between h-14 gap-4">
             {/* Logo Section - properly aligned */}
@@ -86,7 +115,7 @@ export function Navigation() {
                   <item.icon className="w-4 h-4 flex-shrink-0" />
                   <div className="flex items-center gap-1">
                     {item.label}
-                    {item.to === '/explore' && (
+                    {(item.to === '/explore' || item.to === '/birth-chart') && (
                       <Badge className="bg-red-9 text-white border-none px-1 py-0 h-3.5 text-[8px] font-black uppercase tracking-tighter shadow-sm shadow-red-9/20">
                         Hot
                       </Badge>
@@ -144,7 +173,7 @@ export function Navigation() {
                     <item.icon className="w-5 h-5" />
                     <div className="flex items-center gap-2">
                       <span>{item.label}</span>
-                      {item.to === '/explore' && (
+                      {(item.to === '/explore' || item.to === '/birth-chart') && (
                         <Badge className="bg-red-9 text-white border-none px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter">
                           Hot
                         </Badge>
