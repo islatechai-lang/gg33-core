@@ -162,18 +162,6 @@ export default function Home() {
             <PersonalityInsights profile={profile} />
             <DailyEnergy profile={profile} isPro={isPro} />
           </div>
-
-          {membership?.manageUrl && isPro && (
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={() => window.open(membership.manageUrl!, '_blank')}
-                className="text-[11px] text-zinc-600 hover:text-zinc-400 flex items-center gap-1 transition-colors"
-                data-testid="link-manage-subscription"
-              >
-                Manage Plan
-              </button>
-            </div>
-          )}
         </div>
       </main>
     </>

@@ -219,7 +219,7 @@ export function Navigation() {
                       }}
                       className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                     >
-                      Manage
+                      Manage Plan
                     </button>
                   </div>
                 ) : (
