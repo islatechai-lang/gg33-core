@@ -20,6 +20,7 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
+import DeleteAccountPage from "@/pages/delete-account";
 import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/delete-account" component={DeleteAccountPage} />
 
       {/* Protected Routes */}
       <Route path="/">
