@@ -14,6 +14,7 @@ interface UpgradeModalProps {
 }
 
 const benefits = [
+  { icon: Sparkles, label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
   { icon: Users, label: 'Compatibility Analysis', description: 'Discover relationship dynamics & matching' },
   { icon: Database, label: 'Cues Database', description: '22,000+ comprehensive numerology cues' },
   { icon: Compass, label: 'Explore Modules', description: 'Access all advanced numerology calculators' },

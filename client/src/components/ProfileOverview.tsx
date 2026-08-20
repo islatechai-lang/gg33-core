@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -5,10 +6,11 @@ import {
   getNumberMeaning
 } from '@/lib/numerology';
 import { ProfileData } from '@/components/ProfileSetup';
+import { EditProfileModal } from '@/components/EditProfileModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, Sparkles, Brain, Target, Calendar, Star, Zap, Hash, Sun, TrendingUp, ChevronRight, Lock, Crown } from 'lucide-react';
+import { Heart, Sparkles, Brain, Target, Calendar, Star, Zap, Hash, Sun, TrendingUp, ChevronRight, Lock, Crown, Pencil, Clock, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { displayUTCDate } from '@shared/dateUtils';
 
@@ -72,6 +74,8 @@ interface MembershipInfo {
 
 export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOverviewProps) {
   const [, setLocation] = useLocation();
+  const [showEditModal, setShowEditModal] = useState(false);
+
   const fullProfile = calculateComprehensiveProfile(
     profile.fullName,
     profile.birthDate,
@@ -94,55 +98,80 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
   const chineseImage = getChineseZodiacImage(fullProfile.chineseZodiac.animal);
 
   return (
-    <Card variant="frosted" className="overflow-hidden relative" data-testid="card-profile-overview">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-a2 via-transparent to-transparent pointer-events-none" />
+    <>
+      <Card variant="frosted" className="overflow-hidden relative" data-testid="card-profile-overview">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-a2 via-transparent to-transparent pointer-events-none" />
 
-      <CardContent className="relative p-6 sm:p-8">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {whopUser?.profilePictureUrl ? (
-                <Avatar className="w-16 h-16 rounded-xl flex-shrink-0">
-                  <AvatarImage
-                    src={whopUser.profilePictureUrl}
-                    alt={whopUser.name || firstName}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-8 to-amber-9 text-white text-xl font-bold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-8 to-amber-9 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">{initials}</span>
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-2 text-gray-10">Welcome back,</p>
-                <h2 className="text-6 font-bold text-gray-12 truncate" data-testid="text-user-name">{firstName}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Calendar className="w-4 h-4 text-gray-9" />
-                  <p className="text-2 text-gray-10">
-                    {displayUTCDate(profile.birthDate, { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
+        <CardContent className="relative p-6 sm:p-8">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4">
+              <div className="flex items-center gap-4">
+                {whopUser?.profilePictureUrl ? (
+                  <Avatar className="w-16 h-16 rounded-xl flex-shrink-0">
+                    <AvatarImage
+                      src={whopUser.profilePictureUrl}
+                      alt={whopUser.name || firstName}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-8 to-amber-9 text-white text-xl font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-8 to-amber-9 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl font-bold text-white">{initials}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-2 text-gray-10">Welcome back,</p>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-5 sm:text-6 font-bold text-gray-12 truncate" data-testid="text-user-name">
+                      {profile.fullName || firstName}
+                    </h2>
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-amber-500/20 border border-zinc-800 hover:border-amber-500/40 text-zinc-400 hover:text-amber-400 transition-all cursor-pointer"
+                      title="Edit Profile Information"
+                      aria-label="Edit Profile"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-10">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-amber-500/80" />
+                      {displayUTCDate(profile.birthDate, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    {profile.birthTime && profile.birthTime !== 'unknown' && profile.birthTime !== '12:00' && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-amber-500/80" />
+                        {profile.birthTime}
+                      </span>
+                    )}
+                    {profile.birthLocation && profile.birthLocation !== 'Unknown Location' && profile.birthLocation !== 'Unknown' && (
+                      <span className="flex items-center gap-1 truncate max-w-[180px]">
+                        <MapPin className="w-3.5 h-3.5 text-amber-500/80" />
+                        {profile.birthLocation}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-gradient-to-br from-amber-a3 to-amber-a2 border border-amber-a4">
-                <p className="text-0 text-amber-10 uppercase tracking-widest font-medium">Life Path</p>
-                <span className="text-6 font-bold text-amber-11 leading-none" data-testid="text-life-path-number">
-                  {fullProfile.lifePathNumber}
-                </span>
-                <div className="text-left border-l border-amber-a4 pl-4">
-                  <p className="text-3 font-semibold text-gray-12 leading-tight">{lifePathMeaning.title}</p>
-                  <p className="text-1 text-gray-10">{lifePathMeaning.keywords[0]}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-gradient-to-br from-amber-a3 to-amber-a2 border border-amber-a4">
+                  <p className="text-0 text-amber-10 uppercase tracking-widest font-medium">Life Path</p>
+                  <span className="text-6 font-bold text-amber-11 leading-none" data-testid="text-life-path-number">
+                    {fullProfile.lifePathNumber}
+                  </span>
+                  <div className="text-left border-l border-amber-a4 pl-4">
+                    <p className="text-3 font-semibold text-gray-12 leading-tight">{lifePathMeaning.title}</p>
+                    <p className="text-1 text-gray-10">{lifePathMeaning.keywords[0]}</p>
+                  </div>
                 </div>
-              </div>
 
+              </div>
             </div>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 rounded-xl bg-gradient-to-br from-gray-a3 to-gray-a2 border border-gray-a4">
@@ -285,5 +314,8 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
         </div>
       </CardContent>
     </Card>
-  );
+
+    <EditProfileModal open={showEditModal} onOpenChange={setShowEditModal} />
+  </>
+);
 }
