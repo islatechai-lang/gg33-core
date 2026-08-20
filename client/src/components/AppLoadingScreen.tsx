@@ -14,38 +14,30 @@ export function AppLoadingScreen({
       {/* Background Starfield */}
       <StarField />
 
-      {/* Subtle Warm Glow Behind Logo */}
-      <div className="absolute w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Subtle Warm Amber Glow */}
+      <div className="absolute w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center gap-5 px-4 text-center">
-        {/* Clean Logo with Soft Pulse */}
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border border-zinc-800/80 bg-zinc-950 p-2.5 transition-transform">
+      <div className="relative z-10 flex flex-col items-center gap-4 px-4 text-center">
+        {/* Floating Logo with Soft Rounded Edges (No outer box) */}
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24">
           <img
             src="/images/logo.png?v=1"
             alt="GG33 CORE"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain rounded-2xl drop-shadow-[0_4px_24px_rgba(245,158,11,0.25)]"
           />
         </div>
 
         {/* Brand Name */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight gradient-text">
-            GG33 CORE
-          </h1>
-          {message ? (
-            <p className="text-xs text-zinc-400 font-medium">
-              {message}
-            </p>
-          ) : (
-            <p className="text-xs text-zinc-500 font-medium">
-              Loading...
-            </p>
-          )}
-        </div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight gradient-text">
+          GG33 CORE
+        </h1>
 
-        {/* Minimal Clean Gold Spinner */}
-        <div className="w-5 h-5 border-2 border-amber-500/20 border-t-amber-400 rounded-full animate-spin mt-1" />
+        {/* Inline Loading Text with Side Spinner */}
+        <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium pt-1">
+          <div className="w-3.5 h-3.5 border-2 border-amber-500/25 border-t-amber-400 rounded-full animate-spin flex-shrink-0" />
+          <span>{message || 'Loading...'}</span>
+        </div>
       </div>
     </div>
   );
