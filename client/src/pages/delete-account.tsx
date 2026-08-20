@@ -302,13 +302,6 @@ export default function DeleteAccountPage() {
                   </div>
                 </form>
               )}
-
-              <p className="text-xs text-zinc-500 text-center">
-                Need help? Contact us at{" "}
-                <a href="mailto:support@gg33core.space" className="text-amber-400 hover:text-amber-300 underline underline-offset-2">
-                  support@gg33core.space
-                </a>
-              </p>
             </section>
           </CardContent>
         </Card>
