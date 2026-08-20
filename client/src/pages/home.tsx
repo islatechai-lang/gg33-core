@@ -4,6 +4,7 @@ import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 import { ProfileSetup, ProfileData } from '@/components/ProfileSetup';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { AppLoadingScreen } from '@/components/AppLoadingScreen';
 import { ProfileOverview } from '@/components/ProfileOverview';
 import { PersonalityInsights } from '@/components/PersonalityInsights';
 import { DailyEnergy } from '@/components/DailyEnergy';
@@ -127,13 +128,7 @@ export default function Home() {
   };
 
   if (isVerifyingPayment) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <StarField />
-        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-        <p className="text-zinc-300 font-medium">Verifying your Pro upgrade...</p>
-      </div>
-    );
+    return <AppLoadingScreen message="Verifying your Pro upgrade..." subMessage="GG33 Pro Activation" />;
   }
 
   if (isCalculating) {

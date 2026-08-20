@@ -20,17 +20,13 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
-import { Loader2 } from "lucide-react";
+import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 
 function Router() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   return (

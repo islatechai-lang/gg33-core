@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
+import { AppLoadingScreen } from '@/components/AppLoadingScreen';
 import { BirthChartWheel } from '@/components/BirthChartWheel';
 import {
   calculateNatalChart,
@@ -74,13 +75,7 @@ export default function BirthChartPage() {
   }, [chartData]);
 
   if (!chartData || !synthesis) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <StarField />
-        <Navigation />
-        <p className="text-zinc-400">Calculating your astrological birth chart...</p>
-      </div>
-    );
+    return <AppLoadingScreen message="Calculating your astrological birth chart..." subMessage="Western Ephemeris" />;
   }
 
   return (
