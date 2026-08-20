@@ -2870,6 +2870,86 @@ export async function registerRoutes(
     }
   });
 
+  // Account Deletion Request (public endpoint - no auth required)
+  app.post("/api/request-account-deletion", async (req, res) => {
+    try {
+      const { email, fullName, reason } = req.body as any;
+
+      if (!email || !fullName) {
+        return res.status(400).json({ error: "Email and full name are required" });
+      }
+
+      const resendApiKey = process.env.RESEND_API_KEY;
+      const notificationEmail = process.env.NOTIFICATION_EMAIL;
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+      if (!resendApiKey || !notificationEmail) {
+        console.error('[Delete Request] Missing RESEND_API_KEY or NOTIFICATION_EMAIL');
+        return res.status(500).json({ error: 'Email notification not configured' });
+      }
+
+      const resend = new Resend(resendApiKey);
+
+      const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        dateStyle: 'full',
+        timeStyle: 'long'
+      });
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #ef4444; border-bottom: 2px solid #ef4444; padding-bottom: 10px;">
+            ⚠️ Account Deletion Request
+          </h2>
+          
+          <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #fecaca;">
+            <h3 style="margin-top: 0; color: #991b1b;">User Requesting Deletion</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #666; width: 140px;"><strong>Full Name:</strong></td>
+                <td style="padding: 8px 0; color: #333;">${fullName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;"><strong>Email:</strong></td>
+                <td style="padding: 8px 0; color: #333;">${email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;"><strong>Reason:</strong></td>
+                <td style="padding: 8px 0; color: #333;">${reason || 'No reason provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;"><strong>Submitted:</strong></td>
+                <td style="padding: 8px 0; color: #333;">${timestamp}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="color: #888; font-size: 12px; margin-top: 30px;">
+            This request was submitted via the GG33 CORE Account Deletion page.
+          </p>
+        </div>
+      `;
+
+      const { data, error } = await resend.emails.send({
+        from: fromEmail,
+        to: notificationEmail,
+        subject: `🗑️ Account Deletion Request - ${fullName} (${email})`,
+        html: emailHtml,
+      });
+
+      if (error) {
+        console.error('[Delete Request] Resend error:', error);
+        return res.status(500).json({ error: 'Failed to send deletion request' });
+      }
+
+      console.log(`[Delete Request] Deletion request received for ${email}, notification sent: ${data?.id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[Delete Request] Error:', error);
+      res.status(500).json({ error: 'Failed to process deletion request' });
+    }
+  });
+
   // Whop In-App Purchase - Upgrade user to Pro after successful payment
   app.post("/api/upgrade-to-pro", requireFirebaseAuth, async (req: any, res) => {
     try {

@@ -1,11 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { StarField } from "../components/StarField";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Trash2, ArrowLeft, Mail, ShieldAlert, Clock, Database, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Trash2, ArrowLeft, Send, ShieldAlert, Clock, Database, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function DeleteAccountPage() {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email.trim() || !fullName.trim()) {
+      setError("Please fill in your email and full name.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/request-account-deletion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), fullName: fullName.trim(), reason: reason.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to submit request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-black text-zinc-100 overflow-x-hidden">
       {/* Background Starfield effect */}
@@ -45,7 +82,7 @@ export default function DeleteAccountPage() {
             {/* Intro */}
             <section className="space-y-3">
               <p>
-                We respect your right to control your personal data. If you would like to permanently delete your <strong className="text-zinc-100">GG33 CORE</strong> account and all associated data, please follow the steps outlined below. This process is irreversible.
+                We respect your right to control your personal data. If you would like to permanently delete your <strong className="text-zinc-100">GG33 CORE</strong> account and all associated data, please submit the form below. This process is irreversible.
               </p>
             </section>
 
@@ -53,26 +90,17 @@ export default function DeleteAccountPage() {
             <section className="space-y-4">
               <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-amber-400" />
-                How to Request Account Deletion
+                How It Works
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-sm">
                     1
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-zinc-100">Send a Deletion Request Email</h4>
-                    <p>
-                      Send an email to{" "}
-                      <a
-                        href="mailto:support@gg33.com?subject=Account%20Deletion%20Request&body=Hi%20GG33%20CORE%20Team%2C%0A%0AI%20would%20like%20to%20request%20the%20permanent%20deletion%20of%20my%20account%20and%20all%20associated%20data.%0A%0AMy%20account%20email%3A%20%5Byour%20email%20here%5D%0AMy%20full%20name%20on%20file%3A%20%5Byour%20name%20here%5D%0A%0AThank%20you."
-                        className="text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors font-semibold"
-                      >
-                        support@gg33.com
-                      </a>{" "}
-                      with the subject line <strong className="text-zinc-100">"Account Deletion Request"</strong>.
-                    </p>
+                    <h4 className="text-sm font-bold text-zinc-100">Submit the Deletion Request Form</h4>
+                    <p>Fill out the form below with your account email and full name. You can optionally provide a reason.</p>
                   </div>
                 </div>
 
@@ -81,44 +109,18 @@ export default function DeleteAccountPage() {
                     2
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-zinc-100">Include Your Account Details</h4>
-                    <p>
-                      In the email body, please include:
-                    </p>
-                    <ul className="space-y-1.5 pt-1">
-                      <li className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                        The <strong className="text-zinc-100">email address</strong> associated with your GG33 CORE account
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                        Your <strong className="text-zinc-100">full name</strong> as registered on the account
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-sm">
-                    3
-                  </div>
-                  <div className="space-y-1">
                     <h4 className="text-sm font-bold text-zinc-100">Verification & Processing</h4>
-                    <p>
-                      Our team will verify your identity using the email on file and process your deletion request. You will receive a confirmation email once your account and data have been permanently deleted.
-                    </p>
+                    <p>Our team will verify your identity and process your request within <strong className="text-zinc-100">7 business days</strong>.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm">
-                    4
+                    3
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-sm font-bold text-zinc-100">Deletion Complete</h4>
-                    <p>
-                      Once processed, your account, profile, and all personal data will be permanently removed from GG33 CORE's systems. This action cannot be undone.
-                    </p>
+                    <p>You will receive a confirmation email once your account and all personal data have been permanently removed.</p>
                   </div>
                 </div>
               </div>
@@ -130,9 +132,6 @@ export default function DeleteAccountPage() {
                 <Database className="w-5 h-5 text-red-400" />
                 Data That Will Be Permanently Deleted
               </h3>
-              <p>
-                Upon completing your deletion request, the following data will be <strong className="text-red-300">permanently and irreversibly removed</strong> from our systems:
-              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   "Your account profile (name, email, profile picture)",
@@ -158,16 +157,13 @@ export default function DeleteAccountPage() {
                 <Clock className="w-5 h-5 text-amber-400" />
                 Data That May Be Retained
               </h3>
-              <p>
-                Certain data may be retained for a limited period after account deletion for the following purposes:
-              </p>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
                   <CheckCircle2 className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <span className="text-xs font-bold text-amber-300 block">Payment & Transaction Records</span>
                     <p className="text-xs text-zinc-400">
-                      Records of past purchases and subscription payments may be retained for up to <strong className="text-zinc-300">90 days</strong> after deletion to comply with financial regulations and resolve any outstanding billing disputes. After 90 days, these records are permanently purged.
+                      Records of past purchases and subscription payments may be retained for up to <strong className="text-zinc-300">90 days</strong> after deletion to comply with financial regulations. After 90 days, these records are permanently purged.
                     </p>
                   </div>
                 </div>
@@ -187,68 +183,130 @@ export default function DeleteAccountPage() {
                   <div className="space-y-1">
                     <span className="text-xs font-bold text-amber-300 block">Legal & Compliance Obligations</span>
                     <p className="text-xs text-zinc-400">
-                      If required by law, court order, or regulatory obligation, certain data may be retained for the legally mandated period. We will notify you if this applies to your account.
+                      If required by law, court order, or regulatory obligation, certain data may be retained for the legally mandated period.
                     </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Processing Timeline */}
-            <section className="space-y-3">
-              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-400" />
-                Processing Timeline
-              </h3>
-              <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
-                <p>
-                  Account deletion requests are typically processed within <strong className="text-zinc-100">7 business days</strong> of receiving your verified request. You will receive a confirmation email to your registered email address once the deletion is complete.
-                </p>
-              </div>
-            </section>
-
             {/* Warning */}
-            <section className="space-y-3">
+            <section>
               <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-red-300">This Action Is Irreversible</h4>
                   <p className="text-xs text-zinc-300">
-                    Once your account is deleted, all your personal data, numerology readings, astrology charts, and progress will be permanently lost. If you have an active Pro subscription, it will be cancelled and no further charges will be made. You will not be able to recover your account or data after deletion.
+                    Once your account is deleted, all your personal data, numerology readings, astrology charts, and progress will be permanently lost. If you have an active Pro subscription, it will be cancelled and no further charges will be made.
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* CTA */}
+            {/* Deletion Request Form */}
             <section className="space-y-4 pt-4 border-t border-zinc-800/80">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href="mailto:support@gg33.com?subject=Account%20Deletion%20Request&body=Hi%20GG33%20CORE%20Team%2C%0A%0AI%20would%20like%20to%20request%20the%20permanent%20deletion%20of%20my%20account%20and%20all%20associated%20data.%0A%0AMy%20account%20email%3A%20%5Byour%20email%20here%5D%0AMy%20full%20name%20on%20file%3A%20%5Byour%20name%20here%5D%0A%0AThank%20you."
-                  className="flex-1"
-                >
-                  <Button
-                    className="w-full bg-red-600 hover:bg-red-500 text-white font-bold h-11 rounded-xl shadow-lg shadow-red-500/20 transition-all"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Request Account Deletion
-                  </Button>
-                </a>
-                <Link href="/">
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-11 rounded-xl"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to App
-                  </Button>
-                </Link>
-              </div>
+              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                <Send className="w-5 h-5 text-red-400" />
+                Request Account Deletion
+              </h3>
+
+              {submitted ? (
+                <div className="p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+                  <h4 className="text-base font-bold text-emerald-300">Request Submitted Successfully</h4>
+                  <p className="text-xs text-zinc-300 max-w-md mx-auto">
+                    Your account deletion request has been received. Our team will verify your identity and process your request within <strong className="text-zinc-100">7 business days</strong>. You will receive a confirmation email once complete.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+                      Account Email <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your-email@example.com"
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-zinc-100 text-sm placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="fullName" className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+                      Full Name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Your full name as registered"
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-zinc-100 text-sm placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="reason" className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+                      Reason for Deletion <span className="text-zinc-600">(optional)</span>
+                    </label>
+                    <textarea
+                      id="reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="Let us know why you'd like to delete your account..."
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-zinc-100 text-sm placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all resize-none"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold h-11 rounded-xl shadow-lg shadow-red-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Submit Deletion Request
+                        </>
+                      )}
+                    </Button>
+                    <Link href="/">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto border-zinc-700 text-zinc-300 hover:bg-zinc-800 h-11 rounded-xl"
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to App
+                      </Button>
+                    </Link>
+                  </div>
+                </form>
+              )}
 
               <p className="text-xs text-zinc-500 text-center">
                 Need help? Contact us at{" "}
-                <a href="mailto:support@gg33.com" className="text-amber-400 hover:text-amber-300 underline underline-offset-2">
-                  support@gg33.com
+                <a href="mailto:support@gg33core.space" className="text-amber-400 hover:text-amber-300 underline underline-offset-2">
+                  support@gg33core.space
                 </a>
               </p>
             </section>
