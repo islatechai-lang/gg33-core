@@ -3,6 +3,7 @@ import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { ManageSubscriptionModal } from '@/components/ManageSubscriptionModal';
+import { ShareModal } from '@/components/ShareModal';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -26,7 +27,8 @@ import {
   Menu,
   X,
   Crown,
-  LogOut
+  LogOut,
+  Share2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -52,6 +54,7 @@ export function Navigation() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const { logout, user, dbUser } = useAuth();
   const navRef = useRef<HTMLElement>(null);
 
@@ -157,6 +160,17 @@ export function Navigation() {
                 </Button>
               )}
 
+              {/* Desktop Share Button */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                title="Share GG33 CORE"
+                aria-label="Share GG33 CORE"
+                data-testid="button-desktop-share"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+
               {/* Desktop Logout Button */}
               {user && (
                 <button
@@ -168,6 +182,17 @@ export function Navigation() {
                   <LogOut className="w-4 h-4" />
                 </button>
               )}
+
+              {/* Mobile Header Share Icon Button */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                title="Share GG33 CORE"
+                aria-label="Share GG33 CORE"
+                data-testid="button-mobile-header-share"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
 
               <Button
                 variant="ghost"
@@ -205,6 +230,22 @@ export function Navigation() {
                     </div>
                   </NavLink>
                 ))}
+
+                {/* Mobile Drawer Share Button */}
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setShowShareModal(true);
+                  }}
+                  className="px-4 py-3 rounded-md text-gray-11 hover:text-gray-12 hover:bg-gray-a3 transition-colors flex items-center justify-between w-full text-left cursor-pointer"
+                  data-testid="mobile-link-share"
+                >
+                  <div className="flex items-center gap-3">
+                    <Share2 className="w-5 h-5 text-amber-400" />
+                    <span className="text-sm font-medium">Share App</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 font-medium">Invite friends</span>
+                </button>
 
                 {isPro ? (
                   <div className="flex items-center justify-between mt-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -297,6 +338,7 @@ export function Navigation() {
 
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
       <ManageSubscriptionModal open={showManageModal} onOpenChange={setShowManageModal} />
+      <ShareModal open={showShareModal} onOpenChange={setShowShareModal} />
     </>
   );
 }

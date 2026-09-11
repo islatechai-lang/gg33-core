@@ -7,10 +7,11 @@ import {
 } from '@/lib/numerology';
 import { ProfileData } from '@/components/ProfileSetup';
 import { EditProfileModal } from '@/components/EditProfileModal';
+import { ShareModal } from '@/components/ShareModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Heart, Sparkles, Brain, Target, Calendar, Star, Zap, Hash, Sun, TrendingUp, ChevronRight, Lock, Crown, Pencil, Clock, MapPin } from 'lucide-react';
+import { Heart, Sparkles, Brain, Target, Calendar, Star, Zap, Hash, Sun, TrendingUp, ChevronRight, Lock, Crown, Pencil, Clock, MapPin, Share2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { displayUTCDate } from '@shared/dateUtils';
 
@@ -75,6 +76,7 @@ interface MembershipInfo {
 export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOverviewProps) {
   const [, setLocation] = useLocation();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const fullProfile = calculateComprehensiveProfile(
     profile.fullName,
@@ -124,7 +126,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                 )}
                 <div className="min-w-0">
                   <p className="text-2 text-gray-10">Welcome back,</p>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-5 sm:text-6 font-bold text-gray-12 truncate" data-testid="text-user-name">
                       {profile.fullName || firstName}
                     </h2>
@@ -135,6 +137,15 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                       aria-label="Edit Profile"
                     >
                       <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setShowShareModal(true)}
+                      className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-amber-500/20 border border-zinc-800 hover:border-amber-500/40 text-zinc-400 hover:text-amber-400 transition-all cursor-pointer"
+                      title="Share GG33 CORE"
+                      aria-label="Share GG33 CORE"
+                      data-testid="button-profile-share"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-10">
@@ -315,7 +326,12 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
       </CardContent>
     </Card>
 
-    <EditProfileModal open={showEditModal} onOpenChange={setShowEditModal} />
-  </>
-);
+      <EditProfileModal open={showEditModal} onOpenChange={setShowEditModal} />
+      <ShareModal
+        open={showShareModal}
+        onOpenChange={setShowShareModal}
+        customText={`I just calculated my Life Path ${fullProfile.lifePathNumber} (${lifePathMeaning.title}) blueprint on GG33 CORE! 🔢✨ Discover your numerology & astrology birth chart:`}
+      />
+    </>
+  );
 }
