@@ -1183,16 +1183,9 @@ export default function Explore() {
       <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-explore">
         <div className="container mx-auto max-w-6xl space-y-8">
           <div className="text-center">
-            <Badge variant="outline" className="mb-4">
-              <Compass className="w-3 h-3 mr-1" />
-              Discovery
-            </Badge>
-            <h1 className="text-6 md:text-7 font-semibold mb-4">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               <span className="gradient-text">Explore</span> Your Energy
             </h1>
-            <p className="text-gray-11 text-3 max-w-2xl mx-auto">
-              Discover insights about your energy patterns and how they connect to the world around you.
-            </p>
           </div>
 
           {profileLoaded && !hasProfile && (
@@ -1214,59 +1207,59 @@ export default function Explore() {
             </Card>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-7">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5 lg:gap-6">
             {explorations.map((item) => (
               <Card
                 key={item.id}
                 variant="frosted"
-                className={`hover:border-amber-6/30 transition-all cursor-pointer group relative flex flex-col min-h-[180px] sm:min-h-[210px] lg:min-h-[230px] ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
+                className={`hover:border-amber-500/30 transition-all cursor-pointer group relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[185px] rounded-2xl ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
                   }`}
                 onClick={() => handleCardClick(item.id)}
                 data-testid={`card-explore-${item.id}`}
               >
                 {!isPro && (
-                  <div className="absolute inset-0 bg-gray-1/60 backdrop-blur-[1px] rounded-lg z-10 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-gray-a3 flex items-center justify-center">
-                        <Lock className="w-5 h-5 text-gray-11" />
+                  <div className="absolute inset-0 bg-gray-1/60 backdrop-blur-[1px] rounded-2xl z-10 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-a3 flex items-center justify-center">
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-11" />
                       </div>
-                      <Badge variant="secondary" size="sm">
-                        <Crown className="w-3 h-3 mr-1" />
+                      <Badge variant="secondary" size="sm" className="text-[9px] sm:text-xs">
+                        <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
                         Pro
                       </Badge>
                     </div>
                   </div>
                 )}
-                <CardHeader className="p-5 sm:p-6 lg:p-7 pb-3 sm:pb-4 flex-none">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-amber-a3 flex items-center justify-center group-hover:bg-amber-a4 transition-colors">
-                      <item.icon className="w-6 h-6 sm:w-7 sm:h-7 text-amber-9" />
+                <div>
+                  <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-amber-a3 flex items-center justify-center group-hover:bg-amber-a4 transition-colors flex-shrink-0">
+                      <item.icon className="w-4 h-4 sm:w-6 sm:h-6 text-amber-9" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-amber-a2 text-amber-11 border-amber-a4 px-2 py-0 h-5 text-[10px] font-bold uppercase tracking-wider">
-                            {item.tag}
-                          </Badge>
-                          {(item as any).isNew && (
-                            <Badge className="bg-amber-9 text-white border-none px-2 py-0 h-5 text-[10px] font-black uppercase tracking-tighter">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        {profileLoaded && item.requiresProfile && !hasProfile && (
-                          <Badge variant="outline" size="sm" className="text-[10px] opacity-70 border-dashed">
-                            Profile needed
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="bg-amber-a2 text-amber-11 border-amber-a4 px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider">
+                          {item.tag}
+                        </Badge>
+                        {(item as any).isNew && (
+                          <Badge className="bg-amber-9 text-white border-none px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] font-black uppercase tracking-tighter">
+                            New
                           </Badge>
                         )}
                       </div>
+                      {profileLoaded && item.requiresProfile && !hasProfile && (
+                        <Badge variant="outline" size="sm" className="text-[8px] sm:text-[10px] opacity-70 border-dashed px-1 py-0 h-3.5 sm:h-4">
+                          Need profile
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  <CardTitle className="text-4 sm:text-[1.15rem] mt-4 sm:mt-5">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 sm:p-6 lg:p-7 pt-0 mt-auto">
-                  <p className="text-2 sm:text-[0.85rem] text-gray-11 leading-relaxed">{item.description}</p>
-                </CardContent>
+                  <h3 className="text-xs sm:text-base font-bold text-zinc-100 mt-2 sm:mt-3 leading-snug line-clamp-1">
+                    {item.title}
+                  </h3>
+                </div>
+                <p className="text-[11px] sm:text-xs text-zinc-400 leading-snug line-clamp-2 mt-1 sm:mt-2">
+                  {item.description}
+                </p>
               </Card>
             ))}
           </div>

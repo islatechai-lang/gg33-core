@@ -112,18 +112,14 @@ export default function Compatibility() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-compatibility">
-        <div className="container mx-auto max-w-4xl space-y-8">
+      <main className="pt-16 sm:pt-20 pb-20 lg:pb-12 px-3 sm:px-4 min-h-screen" data-testid="page-compatibility">
+        <div className="container mx-auto max-w-3xl space-y-6">
           <div className="text-center">
-            <Badge variant="outline" className="mb-4">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Energy Matching
-            </Badge>
-            <h1 className="text-6 md:text-7 font-semibold mb-4">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
               Compatibility <span className="gradient-text">Analysis</span>
             </h1>
-            <p className="text-gray-11 text-3 max-w-2xl mx-auto">
-              Discover how your energy aligns with the people in your life.
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Discover how your energetic blueprint aligns with anyone.
             </p>
           </div>
 
@@ -134,25 +130,26 @@ export default function Compatibility() {
               userFullName={profile.fullName}
             />
           ) : (
-            <Card variant="frosted" className="text-center" data-testid="card-compatibility-locked">
-              <CardContent className="py-12">
-                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-amber-8 to-amber-9 flex items-center justify-center mb-6">
-                  <Lock className="w-8 h-8 text-white" />
+            <Card variant="frosted" className="text-center rounded-3xl border border-zinc-800/80 bg-zinc-950/70" data-testid="card-compatibility-locked">
+              <CardContent className="py-10">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400 shadow-lg shadow-amber-500/10">
+                  <Lock className="w-6 h-6" />
                 </div>
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Crown className="w-5 h-5 text-amber-9" />
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Crown className="w-4 h-4 text-amber-400" />
                   <Badge variant="secondary" size="sm">Pro Feature</Badge>
                 </div>
-                <h2 className="text-5 font-semibold mb-4">
-                  Compatibility Analysis
+                <h2 className="text-lg font-bold mb-2 text-zinc-100">
+                  Unlock Full Compatibility Analysis
                 </h2>
-                <p className="text-gray-11 text-2 mb-6 max-w-md mx-auto">
-                  Unlock compatibility analysis to discover how your energy aligns with the people in your life.
+                <p className="text-zinc-400 text-xs sm:text-sm mb-6 max-w-md mx-auto leading-relaxed">
+                  Discover deep multi-dimensional energy alignment, life path synergy, and relationship dynamics.
                 </p>
                 <Button
                   variant="gold"
-                  size="lg"
+                  size="default"
                   onClick={() => setShowUpgradeModal(true)}
+                  className="rounded-xl font-bold"
                   data-testid="button-unlock-compatibility"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />

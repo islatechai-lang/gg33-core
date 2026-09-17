@@ -190,30 +190,13 @@ export function CompatibilityChecker({ userBirthDate, userName, userFullName }: 
   };
 
   return (
-    <Card variant="frosted" className="overflow-hidden relative" data-testid="card-compatibility">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-a2 to-transparent pointer-events-none" />
-      
-      <CardHeader className="relative">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-8 to-amber-9 flex items-center justify-center">
-            <Users className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <CardTitle className="text-4">Compatibility Analysis</CardTitle>
-            <CardDescription className="text-2 text-gray-11">
-              Deep multi-dimensional energy analysis
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6 relative">
-        {/* Input Form */}
-        <div className="space-y-4 p-4 rounded-lg bg-gray-a2 border border-gray-a4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="targetName" className="text-2">Their Full Name</Label>
-              <Input
+    <div className="space-y-6" data-testid="card-compatibility">
+      {/* Input Form Card */}
+      <div className="p-4 sm:p-6 rounded-3xl bg-zinc-950/70 backdrop-blur-xl border border-zinc-800/80 shadow-2xl space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="targetName" className="text-xs font-semibold text-zinc-300">Their Full Name</Label>
+            <Input
                 id="targetName"
                 variant="frosted"
                 placeholder="Enter their full name"
@@ -547,7 +530,6 @@ export function CompatibilityChecker({ userBirthDate, userName, userFullName }: 
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

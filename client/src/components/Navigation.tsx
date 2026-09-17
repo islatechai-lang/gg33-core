@@ -220,7 +220,7 @@ export function Navigation() {
           >
             <div className="relative">
               <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1.5 -right-3.5 px-1.5 py-[1px] rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-[8px] font-black text-white uppercase tracking-tight leading-none shadow-sm shadow-red-500/50">
+              <span className="absolute -top-1 left-full ml-0.5 px-1 py-[1px] rounded-full bg-rose-500 text-[7px] font-black text-white uppercase tracking-wider leading-none shadow-xs ring-1 ring-zinc-950 pointer-events-none">
                 HOT
               </span>
             </div>
@@ -262,7 +262,7 @@ export function Navigation() {
           >
             <div className="relative">
               <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1.5 -right-3.5 px-1.5 py-[1px] rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-[8px] font-black text-white uppercase tracking-tight leading-none shadow-sm shadow-emerald-500/40">
+              <span className="absolute -top-1 left-full ml-0.5 px-1 py-[1px] rounded-full bg-emerald-500 text-[7px] font-black text-white uppercase tracking-wider leading-none shadow-xs ring-1 ring-zinc-950 pointer-events-none">
                 NEW
               </span>
             </div>
