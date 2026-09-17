@@ -53,7 +53,7 @@ interface MembershipInfo {
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/explore', label: 'Explore', icon: Compass },
-  { to: '/corechats', label: 'CoreChats', icon: MessageCircle },
+  { to: '/cuechats', label: 'CoreChats', icon: MessageCircle },
   { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
   { to: '/compatibility', label: 'Compatibility', icon: Users },
   { to: '/cues', label: 'Cues Database', icon: Database },
@@ -87,7 +87,7 @@ export function Navigation() {
   // Active state calculations for bottom nav
   const isDashboardActive = location === '/';
   const isExploreActive = location.startsWith('/explore');
-  const isCoreChatsActive = location.startsWith('/corechats') || location.startsWith('/cuechats');
+  const isCoreChatsActive = location.startsWith('/corechat') || location.startsWith('/cuechat');
   const isBirthChartActive = location.startsWith('/birth-chart');
   const isMoreActive =
     moreOpen ||
@@ -123,12 +123,12 @@ export function Navigation() {
                   data-testid={`link-${item.label.toLowerCase().replace(/\s/g, '-')}`}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {item.label}
-                    {(item.to === '/explore' || item.to === '/birth-chart') && (
-                      <Badge className="bg-red-9 text-white border-none px-1 py-0 h-3.5 text-[8px] font-black uppercase tracking-tighter shadow-sm shadow-red-9/20">
+                    {item.to === '/explore' && (
+                      <span className="px-1.5 py-[1px] rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white text-[8px] font-black uppercase tracking-wider leading-none shadow-xs shadow-red-500/40">
                         Hot
-                      </Badge>
+                      </span>
                     )}
                   </div>
                 </NavLink>
@@ -221,7 +221,7 @@ export function Navigation() {
             )}
             <div className="relative">
               <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-red-600 text-[7px] font-black text-white leading-tight shadow-xs">
+              <span className="absolute -top-1.5 -right-3.5 px-1.5 py-[1px] rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-[8px] font-black text-white uppercase tracking-tight leading-none shadow-sm shadow-red-500/50">
                 HOT
               </span>
             </div>
@@ -232,7 +232,7 @@ export function Navigation() {
 
           {/* 3. CoreChats (Center Hero Tab) */}
           <Link
-            href="/corechats"
+            href="/cuechats"
             className={cn(
               "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
               isCoreChatsActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
@@ -267,12 +267,7 @@ export function Navigation() {
             {isBirthChartActive && (
               <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
             )}
-            <div className="relative">
-              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-red-600 text-[7px] font-black text-white leading-tight shadow-xs">
-                HOT
-              </span>
-            </div>
+            <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
             <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
               BirthChart
             </span>
@@ -310,15 +305,10 @@ export function Navigation() {
           </div>
 
           <div className="px-5 pb-8 pt-2 space-y-4">
-            <SheetHeader className="text-left space-y-1">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-base font-bold text-zinc-100">
-                  More Features
-                </SheetTitle>
-                <SheetClose className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer">
-                  <X className="w-4 h-4" />
-                </SheetClose>
-              </div>
+            <SheetHeader className="text-left space-y-1 pr-8">
+              <SheetTitle className="text-base font-bold text-zinc-100">
+                More Features
+              </SheetTitle>
               <SheetDescription className="text-xs text-zinc-400">
                 Explore esoteric tools, master database, and account options
               </SheetDescription>
