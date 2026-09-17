@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
+import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { ManageSubscriptionModal } from '@/components/ManageSubscriptionModal';
@@ -14,6 +15,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+} from '@/components/ui/sheet';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -24,13 +33,15 @@ import {
   MessageCircle,
   BookOpen,
   Sparkles,
-  Menu,
+  MoreHorizontal,
   X,
   Crown,
   LogOut,
-  Share2
+  Share2,
+  ChevronRight,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface MembershipInfo {
   hasMembership: boolean;
@@ -41,22 +52,22 @@ interface MembershipInfo {
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/explore', label: 'Explore', icon: Compass },
+  { to: '/corechats', label: 'CoreChats', icon: MessageCircle },
+  { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
   { to: '/compatibility', label: 'Compatibility', icon: Users },
   { to: '/cues', label: 'Cues Database', icon: Database },
-  { to: '/explore', label: 'Explore', icon: Compass },
-  { to: '/cuechats', label: 'CoreChats', icon: MessageCircle },
   { to: '/learn', label: 'Study Zone', icon: BookOpen },
-  { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
 ];
 
 export function Navigation() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const { logout, user, dbUser } = useAuth();
-  const navRef = useRef<HTMLElement>(null);
+  const [location] = useLocation();
 
   const { data: membership } = useQuery<MembershipInfo>({
     queryKey: ['/api/membership'],
@@ -70,43 +81,28 @@ export function Navigation() {
 
   const handleUpgradeClick = () => {
     setShowUpgradeModal(true);
-    setMobileOpen(false);
+    setMoreOpen(false);
   };
 
-  // Close mobile dropdown when clicking outside the nav component
-  useEffect(() => {
-    if (!mobileOpen) return;
-
-    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setMobileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('touchstart', handleOutsideClick);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      document.removeEventListener('touchstart', handleOutsideClick);
-    };
-  }, [mobileOpen]);
+  // Active state calculations for bottom nav
+  const isDashboardActive = location === '/';
+  const isExploreActive = location.startsWith('/explore');
+  const isCoreChatsActive = location.startsWith('/corechats') || location.startsWith('/cuechats');
+  const isBirthChartActive = location.startsWith('/birth-chart');
+  const isMoreActive =
+    moreOpen ||
+    location.startsWith('/compatibility') ||
+    location.startsWith('/cues') ||
+    location.startsWith('/learn') ||
+    location.startsWith('/course');
 
   return (
     <>
-      {/* Backdrop overlay to dismiss dropdown when clicking outside on mobile */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass" data-testid="navigation">
+      {/* Top Header Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 glass" data-testid="navigation">
         <div className="w-full px-4">
           <div className="flex items-center justify-between h-14 gap-4">
-            {/* Logo Section - properly aligned */}
+            {/* Logo Section */}
             <NavLink to="/" className="flex items-center gap-2.5 group flex-shrink-0" data-testid="link-logo">
               <div className="w-9 h-9 rounded-lg overflow-hidden shadow-md group-hover:shadow-glow transition-shadow">
                 <img src="/images/logo.png?v=1" alt="GG33" className="w-full h-full object-cover" />
@@ -116,7 +112,7 @@ export function Navigation() {
               </div>
             </NavLink>
 
-            {/* Navigation Links */}
+            {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
               {navItems.map((item) => (
                 <NavLink
@@ -153,20 +149,20 @@ export function Navigation() {
               ) : (
                 <Button
                   onClick={handleUpgradeClick}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-8 px-3.5 rounded-lg shadow-sm shadow-amber-500/20"
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-8 px-3.5 rounded-lg shadow-sm shadow-amber-500/20 cursor-pointer"
                   data-testid="button-upgrade"
                 >
                   Upgrade to Pro
                 </Button>
               )}
 
-              {/* Desktop Share Button */}
+              {/* Share Button (Desktop & Mobile) */}
               <button
                 onClick={() => setShowShareModal(true)}
-                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
                 title="Share GG33 CORE"
                 aria-label="Share GG33 CORE"
-                data-testid="button-desktop-share"
+                data-testid="button-header-share"
               >
                 <Share2 className="w-4 h-4" />
               </button>
@@ -182,128 +178,342 @@ export function Navigation() {
                   <LogOut className="w-4 h-4" />
                 </button>
               )}
-
-              {/* Mobile Header Share Icon Button */}
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
-                title="Share GG33 CORE"
-                aria-label="Share GG33 CORE"
-                data-testid="button-mobile-header-share"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden"
-                data-testid="button-mobile-menu"
-              >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          {mobileOpen && (
-            <div className="lg:hidden py-4 border-t border-gray-5/50 animate-fade-in">
-              <div className="flex flex-col gap-1">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className="px-4 py-3 rounded-md text-gray-11 hover:text-gray-12 hover:bg-gray-a3 transition-colors flex items-center gap-3"
-                    activeClassName="text-amber-11 bg-amber-a3"
-                    onClick={() => setMobileOpen(false)}
-                    data-testid={`mobile-link-${item.label.toLowerCase().replace(/\s/g, '-')}`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <div className="flex items-center gap-2">
-                      <span>{item.label}</span>
-                      {(item.to === '/explore' || item.to === '/birth-chart') && (
-                        <Badge className="bg-red-9 text-white border-none px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter">
-                          Hot
-                        </Badge>
-                      )}
-                    </div>
-                  </NavLink>
-                ))}
-
-                {/* Mobile Drawer Share Button */}
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setShowShareModal(true);
-                  }}
-                  className="px-4 py-3 rounded-md text-gray-11 hover:text-gray-12 hover:bg-gray-a3 transition-colors flex items-center justify-between w-full text-left cursor-pointer"
-                  data-testid="mobile-link-share"
-                >
-                  <div className="flex items-center gap-3">
-                    <Share2 className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-medium">Share App</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-500 font-medium">Invite friends</span>
-                </button>
-
-                {isPro ? (
-                  <div className="flex items-center justify-between mt-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-amber-400" />
-                      <span className="text-xs font-bold text-amber-300">Pro Member</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setMobileOpen(false);
-                        setShowManageModal(true);
-                      }}
-                      className="text-[11px] font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors cursor-pointer"
-                    >
-                      Manage subscription
-                    </button>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleUpgradeClick}
-                    className="mt-3 w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-10 rounded-xl shadow-md shadow-amber-500/20"
-                    data-testid="button-mobile-upgrade"
-                  >
-                    Upgrade to Pro
-                  </Button>
-                )}
-
-                {/* Mobile User Info & Right-Side Logout Button */}
-                {user && (
-                  <div className="mt-3 pt-3 border-t border-zinc-800/80 flex items-center justify-between px-3 py-1">
-                    <div className="flex flex-col min-w-0 pr-2">
-                      <span className="text-xs font-bold text-zinc-200 truncate">
-                        {dbUser?.fullName || user.displayName || user.email || 'Logged In'}
-                      </span>
-                      <span className="text-[10px] text-zinc-500 truncate">
-                        {user.email || 'GG33 Member'}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-zinc-400 hover:text-red-400 hover:bg-red-500/10 flex items-center gap-1.5 px-3 py-1.5 h-8 rounded-xl transition-colors flex-shrink-0 cursor-pointer ml-auto"
-                      onClick={() => {
-                        setMobileOpen(false);
-                        setShowLogoutConfirm(true);
-                      }}
-                      data-testid="button-mobile-logout"
-                    >
-                      <span className="text-xs font-semibold">Logout</span>
-                      <LogOut className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </nav>
+
+      {/* Modern 5-Item Bottom Navigation Bar (Mobile & Tablet) */}
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]"
+        data-testid="bottom-navigation"
+      >
+        <div className="grid grid-cols-5 h-16 max-w-lg mx-auto px-1 items-center">
+          {/* 1. Dashboard */}
+          <Link
+            href="/"
+            className={cn(
+              "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
+              isDashboardActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
+            )}
+            data-testid="bottom-link-dashboard"
+          >
+            {isDashboardActive && (
+              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+            )}
+            <LayoutDashboard className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.3px]")} />
+            <span className={cn("text-[10px] tracking-tight", isDashboardActive ? "font-bold text-amber-300" : "font-medium")}>
+              Dashboard
+            </span>
+          </Link>
+
+          {/* 2. Explore */}
+          <Link
+            href="/explore"
+            className={cn(
+              "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
+              isExploreActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
+            )}
+            data-testid="bottom-link-explore"
+          >
+            {isExploreActive && (
+              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+            )}
+            <div className="relative">
+              <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
+              <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-red-600 text-[7px] font-black text-white leading-tight shadow-xs">
+                HOT
+              </span>
+            </div>
+            <span className={cn("text-[10px] tracking-tight", isExploreActive ? "font-bold text-amber-300" : "font-medium")}>
+              Explore
+            </span>
+          </Link>
+
+          {/* 3. CoreChats (Center Hero Tab) */}
+          <Link
+            href="/corechats"
+            className={cn(
+              "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
+              isCoreChatsActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
+            )}
+            data-testid="bottom-link-corechats"
+          >
+            {isCoreChatsActive && (
+              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+            )}
+            <div className={cn(
+              "w-7 h-7 rounded-full flex items-center justify-center transition-all",
+              isCoreChatsActive
+                ? "bg-amber-500/20 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                : "text-zinc-400 group-hover:text-zinc-200"
+            )}>
+              <MessageCircle className={cn("w-5 h-5 transition-transform group-active:scale-90", isCoreChatsActive && "stroke-[2.3px]")} />
+            </div>
+            <span className={cn("text-[10px] tracking-tight", isCoreChatsActive ? "font-bold text-amber-300" : "font-medium")}>
+              CoreChats
+            </span>
+          </Link>
+
+          {/* 4. BirthChart */}
+          <Link
+            href="/birth-chart"
+            className={cn(
+              "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
+              isBirthChartActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
+            )}
+            data-testid="bottom-link-birthchart"
+          >
+            {isBirthChartActive && (
+              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+            )}
+            <div className="relative">
+              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
+              <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-red-600 text-[7px] font-black text-white leading-tight shadow-xs">
+                HOT
+              </span>
+            </div>
+            <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
+              BirthChart
+            </span>
+          </Link>
+
+          {/* 5. More */}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={cn(
+              "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group cursor-pointer",
+              isMoreActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
+            )}
+            data-testid="bottom-link-more"
+          >
+            {isMoreActive && (
+              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+            )}
+            <MoreHorizontal className={cn("w-5 h-5 transition-transform group-active:scale-90", isMoreActive && "stroke-[2.3px]")} />
+            <span className={cn("text-[10px] tracking-tight", isMoreActive ? "font-bold text-amber-300" : "font-medium")}>
+              More
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Modern Slide-Up "More" Bottom Sheet */}
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800 p-0 max-h-[88vh] overflow-y-auto z-50"
+        >
+          {/* Drag Handle Indicator */}
+          <div className="pt-3 pb-1 flex justify-center">
+            <div className="w-12 h-1.5 rounded-full bg-zinc-700/60" />
+          </div>
+
+          <div className="px-5 pb-8 pt-2 space-y-4">
+            <SheetHeader className="text-left space-y-1">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="text-base font-bold text-zinc-100">
+                  More Features
+                </SheetTitle>
+                <SheetClose className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer">
+                  <X className="w-4 h-4" />
+                </SheetClose>
+              </div>
+              <SheetDescription className="text-xs text-zinc-400">
+                Explore esoteric tools, master database, and account options
+              </SheetDescription>
+            </SheetHeader>
+
+            {/* User Profile / Status Summary */}
+            {user && (
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 text-amber-400 font-bold text-sm">
+                    {(dbUser?.fullName || user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold text-zinc-100 truncate">
+                      {dbUser?.fullName || user.displayName || 'Member'}
+                    </span>
+                    <span className="text-xs text-zinc-400 truncate">
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+                {isPro ? (
+                  <Badge className="bg-amber-500/15 border border-amber-500/30 text-amber-400 font-extrabold text-[10px] px-2.5 py-1 flex items-center gap-1">
+                    <Crown className="w-3 h-3 text-amber-400" />
+                    PRO
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      setShowUpgradeModal(true);
+                    }}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-7 px-3 rounded-lg shadow-sm cursor-pointer"
+                  >
+                    Upgrade
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Primary Features List */}
+            <div className="space-y-2">
+              {/* Compatibility */}
+              <Link
+                href="/compatibility"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-800/80 hover:border-amber-500/30 transition-all group cursor-pointer"
+                data-testid="more-link-compatibility"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-zinc-100 group-hover:text-amber-300 transition-colors">
+                      Compatibility
+                    </span>
+                    <span className="text-xs text-zinc-400">
+                      Match numbers & astrology chemistry
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 transition-colors" />
+              </Link>
+
+              {/* Cues Database */}
+              <Link
+                href="/cues"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-800/80 hover:border-amber-500/30 transition-all group cursor-pointer"
+                data-testid="more-link-cues"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-zinc-100 group-hover:text-amber-300 transition-colors">
+                      Cues Database
+                    </span>
+                    <span className="text-xs text-zinc-400">
+                      Searchable master vibration index
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 transition-colors" />
+              </Link>
+
+              {/* Study Zone */}
+              <Link
+                href="/learn"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-800/80 hover:border-amber-500/30 transition-all group cursor-pointer"
+                data-testid="more-link-learn"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-zinc-100 group-hover:text-amber-300 transition-colors">
+                      Study Zone
+                    </span>
+                    <span className="text-xs text-zinc-400">
+                      In-depth courses & masterclasses
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 transition-colors" />
+              </Link>
+
+              {/* Share App */}
+              <button
+                onClick={() => {
+                  setMoreOpen(false);
+                  setShowShareModal(true);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-800/80 hover:border-amber-500/30 transition-all group text-left cursor-pointer"
+                data-testid="more-link-share"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-zinc-100 group-hover:text-amber-300 transition-colors">
+                      Share GG33 CORE
+                    </span>
+                    <span className="text-xs text-zinc-400">
+                      Invite friends and share your results
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 transition-colors" />
+              </button>
+            </div>
+
+            {/* Subscription Card */}
+            {isPro ? (
+              <button
+                onClick={() => {
+                  setMoreOpen(false);
+                  setShowManageModal(true);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 transition-colors cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Crown className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-amber-300">Pro Membership Active</span>
+                    <span className="text-[11px] text-amber-400/80">Manage your subscription & billing</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-amber-400">Manage</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setMoreOpen(false);
+                  setShowUpgradeModal(true);
+                }}
+                className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/30 hover:border-amber-500/50 transition-all cursor-pointer text-left flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <Crown className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-amber-300">Upgrade to Pro</span>
+                    <span className="text-[11px] text-zinc-400">Unlock CoreChats AI, deep charts & all tools</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-zinc-950 bg-amber-400 hover:bg-amber-300 px-3 py-1 rounded-lg">
+                  Upgrade
+                </span>
+              </button>
+            )}
+
+            {/* Logout Option */}
+            {user && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMoreOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
+                className="w-full h-11 rounded-2xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-zinc-800/80 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer"
+                data-testid="more-button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </Button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Compact Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>

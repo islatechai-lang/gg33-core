@@ -474,3 +474,11 @@
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--amber-7)) hsl(var(--gray-3));
 }
+
+/* Ensure mobile pages have sufficient bottom padding for bottom navigation bar */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
