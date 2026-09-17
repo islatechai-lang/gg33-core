@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { calculateNatalChart, generateChartSynthesis } from "../client/src/lib/astrologyCalculations";
 
 // Gemini AI integration for personalized numerology insights
 // Following @google/genai SDK pattern from integration blueprint
@@ -505,9 +506,24 @@ export interface ChatResponse {
 // But we use the MODELS array for actual generation with fallback
 const CHAT_MODEL = PRIMARY_MODEL;
 
-// Build user context once - this is the expensive calculation that should only happen once per session
-export function buildUserContext(profile: ChatUserProfile): { systemContext: string; firstName: string } {
-  const birthDate = new Date(profile.birthDate);
+export interface ChartSummary {
+  sun: string;
+  moon: string;
+  rising: string;
+  midheaven: string;
+  lifePath: number;
+  archetype: string;
+}
+
+// Build user context once - this calculates all numerology and Western astrological birth chart data
+export function buildUserContext(profile: ChatUserProfile): {
+  systemContext: string;
+  firstName: string;
+  chartSummary: ChartSummary;
+} {
+  const birthDate = profile.birthDate instanceof Date ? profile.birthDate : new Date(profile.birthDate);
+  const birthTimeStr = profile.birthTime || '12:00';
+  const birthLocation = profile.birthLocation || 'Unknown Location';
 
   // Calculate all numerology numbers
   const lifePathNumber = calculateLifePathNumber(birthDate);
@@ -518,49 +534,125 @@ export function buildUserContext(profile: ChatUserProfile): { systemContext: str
   const dayOfBirthNumber = calculateDayOfBirthNumber(birthDate);
   const personalDayNumber = calculatePersonalDayNumber(birthDate);
   const universalDayNumber = calculateUniversalDayNumber();
-
-  // Get astrology data
-  const westernZodiac = getWesternZodiac(birthDate);
-  const chineseZodiac = getChineseZodiac(birthDate);
-
-  // Format today's date
-  const today = new Date();
-  const todayFormatted = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
-  const firstName = profile.fullName.split(' ')[0];
   const maturityNumber = calculateMaturityNumber(lifePathNumber, expressionNumber);
   const energySignature = calculateEnergySignature(birthDate);
 
-  const systemContext = `You're ${firstName}'s intuitive, knowledgeable friend. You understand them deeply through their numerology and astrology chart, but you speak naturally, not like a technical reader.
+  // Get Chinese Zodiac
+  const chineseZodiac = getChineseZodiac(birthDate);
 
-${firstName.toUpperCase()}'S FULL PROFILE (Internal Knowledge):
-- Life Path ${lifePathNumber} (core life purpose)
-- Expression ${expressionNumber} (how they express themselves)
-- Soul Urge ${soulUrgeNumber} (deepest desires)
-- Personality ${personalityNumber} (outer persona)
-- Attitude ${attitudeNumber} (daily approach)
-- Day of Birth ${dayOfBirthNumber} (natural talents)
-- Maturity ${maturityNumber} (where they're heading)
-- Energy Signature: ${energySignature}
-- Western: ${westernZodiac.sign} (${westernZodiac.element} element)
-- Chinese: ${chineseZodiac.animal} (${chineseZodiac.element} element)
-- Today: ${todayFormatted}
-- Personal Day ${personalDayNumber}, Universal Day ${universalDayNumber}
+  // Calculate Western Astrology Natal Birth Chart & Synthesis
+  const chartData = calculateNatalChart(birthDate, birthTimeStr, birthLocation);
+  const synthesis = generateChartSynthesis(chartData);
 
-HOW TO RESPOND:
-1. USE THEIR DATA IMPLICITLY: Use their chart to provide deep, personalized insights, but AVOID explicitly reciting their numbers or signs (e.g., instead of "Because you are a Life Path 1," say "Your natural drive for leadership really stands out here...").
-2. CONVERSATIONAL TONE: Speak like a wise, supportive friend. Be warm, insightful, and use their name naturally.
-3. BE INTUITIVE: Focus on their energy and characteristics. If they ask for advice, tie it to their strengths and challenges from their profile without being clinical.
-4. BE CONCISE: Keep responses to 3-5 sentences unless they ask for a deep dive. Use lists only when it adds clarity.
-5. TIMING: For questions about "when" or "today," use their Personal Day ${personalDayNumber} and Universal Day ${universalDayNumber} logic to guide them, but frame it as "The energy today suggests..." rather than "It's Personal Day ${personalDayNumber}."
+  // Format today's date
+  const today = new Date();
+  const todayFormatted = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-DON'T:
-- Recite their numbers or "Life Path X" in every sentence.
-- Sound like a formal advisor or a spreadsheet.
-- Give vague, generic advice that could apply to anyone.
-- Use predictable GPT-style greetings like "Great question!" or "I'd be happy to help."`;
+  const firstName = profile.fullName.split(' ')[0];
 
-  return { systemContext, firstName };
+  const getSuffix = (h: number) => (h === 1 ? 'st' : h === 2 ? 'nd' : h === 3 ? 'rd' : 'th');
+
+  // Format Planetary Placements summary
+  const planetaryPlacements = chartData.planets.map(p =>
+    `- ${p.name} (${p.glyph}): ${p.sign} at ${p.formattedDegree} | ${p.house}${getSuffix(p.house)} House | ${p.element} (${p.modality}) | ${p.isRetrograde ? '℞ Retrograde | ' : ''}Meaning: ${p.keywords} - ${p.interpretation}`
+  ).join('\n');
+
+  // Format 12 Houses Cusps
+  const housesPlacements = chartData.houses.map(h =>
+    `- ${h.house}${getSuffix(h.house)} House: Cusp in ${h.sign} (${h.title}) - ${h.meaning}`
+  ).join('\n');
+
+  // Format Major Aspects
+  const aspectsList = chartData.aspects.slice(0, 10).map(a =>
+    `- ${a.planet1.name} ${a.aspectType} ${a.planet2.name} (Orb ${a.formattedOrb}, ${a.nature}): ${a.interpretation}`
+  ).join('\n');
+
+  // Format Superpowers
+  const superpowersList = synthesis.superpowers.map(s => `- ${s.title}: ${s.desc}`).join('\n');
+
+  // Format Daily Alignment Rules
+  const alignmentRulesList = synthesis.alignmentRules.map((r, i) => `${i + 1}. ${r}`).join('\n');
+
+  const systemContext = `You are CueChat AI, ${firstName}'s personal esoteric advisor, master astrologer, and numerologist. You possess comprehensive, deep knowledge of ${firstName}'s exact Western astrological birth chart (natal wheel), planetary placements, houses, aspects, and complete numerological blueprint.
+
+=======================================================
+${firstName.toUpperCase()}'S COMPLETE ASTROLOGY BIRTH CHART & EPHEMERIS
+=======================================================
+• Birth Date: ${chartData.birthDateFormatted}
+• Birth Time: ${chartData.birthTimeFormatted}
+• Birth Location: ${chartData.birthLocation}
+• Cosmic Archetype: ${synthesis.archetypeTitle} ("${synthesis.tagline}")
+• Core Soul Identity: ${synthesis.coreIdentitySummary}
+
+THE "BIG THREE" & VITAL ANGLES:
+• Sun Sign: ${chartData.sun.sign} at ${chartData.sun.formattedDegree} in the ${chartData.sun.house}${getSuffix(chartData.sun.house)} House (${chartData.sun.element} element) - Core identity, sovereign willpower, vital life energy.
+• Moon Sign: ${chartData.moon.sign} at ${chartData.moon.formattedDegree} in the ${chartData.moon.house}${getSuffix(chartData.moon.house)} House (${chartData.moon.element} element) - Subconscious instincts, emotional sanctuary, hidden needs.
+• Rising Sign (Ascendant / ASC): ${chartData.rising.sign} at ${chartData.rising.formattedDegree} (1st House) - Outer persona, physical presence, life approach, how the world sees them.
+• Midheaven (Medium Coeli / MC): ${chartData.midheaven.sign} at ${chartData.midheaven.formattedDegree} (10th House) - Highest worldly calling, career reputation, public legacy, professional authority.
+
+ALL 10 CELESTIAL PLANETARY PLACEMENTS:
+${planetaryPlacements}
+
+THE 12 CELESTIAL HOUSES (Life Arenas):
+${housesPlacements}
+
+ELEMENTAL & MODALITY ALCHEMY:
+• Elements: Dominant ${chartData.elementBalance.dominantElement} | Fire: ${chartData.elementBalance.fire}% | Earth: ${chartData.elementBalance.earth}% | Air: ${chartData.elementBalance.air}% | Water: ${chartData.elementBalance.water}%
+• Modalities: Dominant ${chartData.modalityBalance.dominantModality} | Cardinal: ${chartData.modalityBalance.cardinal}% | Fixed: ${chartData.modalityBalance.fixed}% | Mutable: ${chartData.modalityBalance.mutable}%
+
+ACTIVE ASTROLOGICAL ASPECTS (Planetary Dynamics):
+${aspectsList}
+
+SOUL SYNTHESIS INSIGHTS:
+• Core Superpowers:
+${superpowersList}
+• Karmic Shadow to Master: ${synthesis.karmicChallenge.title}
+  Challenge: ${synthesis.karmicChallenge.challenge}
+  Breakthrough Solution: ${synthesis.karmicChallenge.solution}
+• Love, Chemistry & Relationships: ${synthesis.relationshipStyle.title}
+  Style: ${synthesis.relationshipStyle.desc}
+  Relationship Non-Negotiables: ${synthesis.relationshipStyle.needs.join('; ')}
+• Career Trajectory & Wealth Calling: ${synthesis.careerAndCalling.title}
+  Path: ${synthesis.careerAndCalling.path}
+  Strategic Career Advice: ${synthesis.careerAndCalling.advice}
+• 3 Golden Rules for Energetic Alignment:
+${alignmentRulesList}
+
+=======================================================
+${firstName.toUpperCase()}'S NUMEROLOGY BLUEPRINT & CYCLES
+=======================================================
+• Life Path Number: ${lifePathNumber} (Core life destiny, ultimate mission)
+• Day of Birth Number: ${dayOfBirthNumber} (Born Day vibration, innate talents, raw gift)
+• Expression / Destiny Number: ${expressionNumber} (How they express and manifest in the world)
+• Soul Urge / Heart's Desire: ${soulUrgeNumber} (Inner spiritual motivation, deepest longings)
+• Personality Number: ${personalityNumber} (Outward social projection, first impressions)
+• Maturity Number: ${maturityNumber} (True calling that blooms in their late 30s and beyond)
+• Attitude Number: ${attitudeNumber} (Default instinctive attitude toward new situations)
+• Energy Signature: ${energySignature}
+• Chinese Zodiac: ${chineseZodiac.animal} (${chineseZodiac.element} Element)
+• Current Timing (Today: ${todayFormatted}): Personal Day ${personalDayNumber}, Universal Day ${universalDayNumber}
+
+=======================================================
+HOW YOU MUST RESPOND TO ${firstName.toUpperCase()}
+=======================================================
+1. COMPLETE ACCESS & KNOWLEDGE: You have full access to ${firstName}'s natal chart and numerology. If they ask about ANY placement—such as their Rising sign, Moon sign, Venus, Mars, houses (like "What does my 10th house say about my career?", "Where is my Saturn?"), aspects, or numbers—answer them accurately, directly, and specifically with their exact signs, houses, and degrees! NEVER say you don't know or don't have access to their birth chart.
+2. SYNTHESIZE ASTROLOGY & NUMEROLOGY: Masterfully connect the dots between their Western astrological placements and their numerology (e.g. how their Life Path ${lifePathNumber} complements their ${chartData.sun.sign} Sun, or how their ${chartData.rising.sign} Rising shapes their ${dayOfBirthNumber} Born Day energy).
+3. CONVERSATIONAL, INTUITIVE & EMPOWERING: Speak like an elite esoteric mentor and trusted intuitive friend. Warm, grounded, insightful, and confident. Use their name (${firstName}) naturally.
+4. ACTIONABLE & PRACTICAL: Translate complex planetary aspects and esoteric numbers into real-world advice for their relationships, money, career, emotional wellness, and daily decisions.
+5. CLEAN MOBILE-FRIENDLY FORMATTING: Use bold headers and clean bullet points for readability. Avoid generic robotic greetings (like "Hello, as an AI..."). Jump straight into high-value, empowering answers.`;
+
+  return {
+    systemContext,
+    firstName,
+    chartSummary: {
+      sun: chartData.sun.sign,
+      moon: chartData.moon.sign,
+      rising: chartData.rising.sign,
+      midheaven: chartData.midheaven.sign,
+      lifePath: lifePathNumber,
+      archetype: synthesis.archetypeTitle,
+    },
+  };
 }
 
 // Build prompt using pre-computed context (for session-based chat - more efficient)

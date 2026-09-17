@@ -20,13 +20,21 @@ interface ChatMessage {
 interface ChatSession {
   systemContext: string;
   firstName: string;
+  chartSummary?: {
+    sun: string;
+    moon: string;
+    rising: string;
+    midheaven: string;
+    lifePath: number;
+    archetype: string;
+  };
 }
 
 const exampleMessages: ChatMessage[] = [
-  { role: 'user', content: "What energy should I expect today?" },
-  { role: 'assistant', content: "Your Personal Day 7 is calling for reflection and inner work. Combined with your Life Path's need for structure, today is perfect for planning rather than action." },
-  { role: 'user', content: "How compatible am I with someone born March 15?" },
-  { role: 'assistant', content: "A Pisces! Their water energy flows beautifully with your earth grounding. Their Life Path would complement your stability with creativity." },
+  { role: 'user', content: "What does my Rising sign say about my outer aura?" },
+  { role: 'assistant', content: "Your Rising sign dictates your outward persona, first impressions, and physical presence. People intuitively perceive this energy before you even speak." },
+  { role: 'user', content: "What is my career calling based on my Midheaven & Life Path?" },
+  { role: 'assistant', content: "Your Midheaven in the 10th House reveals your highest worldly legacy and professional authority. Combined with your Life Path vibration, you excel where you can lead with strategic vision." },
 ];
 
 function MarkdownContent({ content, className }: { content: string; className?: string }) {
@@ -205,7 +213,7 @@ export default function CueChats() {
       return;
     }
     
-    const odisId = localStorage.getItem('gg33-odis-id');
+    const odisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
     
     if (!odisId) {
       setError('Please create your profile first to use CueChats');
@@ -229,6 +237,7 @@ export default function CueChats() {
         setChatSession({
           systemContext: data.systemContext,
           firstName: data.firstName,
+          chartSummary: data.chartSummary,
         });
         setShowPreview(false);
         setTimeout(() => inputRef.current?.focus(), 100);
@@ -342,9 +351,25 @@ export default function CueChats() {
                     <Bot className="w-5 h-5 text-gray-1" />
                   </div>
                   <div>
-                    <CardTitle className="text-4">CueChat AI</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-4">CueChat AI</CardTitle>
+                      {chatSession?.chartSummary && (
+                        <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                          Birth Chart Synced
+                        </span>
+                      )}
+                    </div>
                     <CardDescription className="text-2 text-gray-11">
-                      {chatSession ? `Chatting with ${chatSession.firstName}` : 'Powered by your energy profile'}
+                      {chatSession?.chartSummary ? (
+                        <span>
+                          ☀️ {chatSession.chartSummary.sun} · 🌙 {chatSession.chartSummary.moon} · ↗️ {chatSession.chartSummary.rising} · 🔢 Life Path {chatSession.chartSummary.lifePath}
+                        </span>
+                      ) : chatSession ? (
+                        `Chatting with ${chatSession.firstName}`
+                      ) : (
+                        'Powered by your birth chart & numerology blueprint'
+                      )}
                     </CardDescription>
                   </div>
                 </div>
@@ -416,9 +441,43 @@ export default function CueChats() {
                 ) : (
                   <>
                     {!hasMessages && (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-11">
-                        <Bot className="w-12 h-12 text-amber-9 mb-4" />
-                        <p className="text-3">Ask me anything</p>
+                      <div className="h-full flex flex-col items-center justify-center text-center py-6 px-4 space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
+                          <Bot className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1 max-w-md">
+                          <h3 className="text-sm font-bold text-zinc-100">
+                            Ask me anything about yourself
+                          </h3>
+                          <p className="text-xs text-zinc-400">
+                            I know your full Western birth chart, planetary houses, aspects, and numerology blueprint.
+                          </p>
+                        </div>
+
+                        {/* Quick Starter Question Chips */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg pt-2 text-left">
+                          {[
+                            "What are my core superpowers in my birth chart?",
+                            "What does my Rising sign say about my outer aura?",
+                            "Explain my Moon sign and what I need in love",
+                            "What is my Midheaven (MC) and career calling?",
+                            "What is my biggest karmic shadow & breakthrough?",
+                            "How does my Life Path interact with my Sun sign?",
+                          ].map((promptText, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setInputValue(promptText);
+                                inputRef.current?.focus();
+                              }}
+                              className="p-2.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 hover:border-amber-500/40 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group"
+                            >
+                              <span className="truncate pr-2">{promptText}</span>
+                              <Sparkles className="w-3 h-3 text-zinc-600 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                     
@@ -465,7 +524,7 @@ export default function CueChats() {
                     <Input
                       ref={inputRef}
                       variant="frosted"
-                      placeholder="Ask about your energy, compatibility, decisions..."
+                      placeholder="Ask about your birth chart, planetary houses, life path, career calling..."
                       className="flex-1"
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}

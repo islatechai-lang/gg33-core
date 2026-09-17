@@ -386,9 +386,16 @@ export async function registerRoutes(
     }
   });
 
-  // CueChats - Initialize chat session (builds user context once)
-  app.post("/api/chat/init", async (req, res) => {
-    const { odisId } = req.body;
+  // CueChats - Initialize chat session (builds user context once with full birth chart)
+  app.post("/api/chat/init", async (req: any, res) => {
+    let { odisId } = req.body;
+
+    if (!odisId && req.user?.uid) {
+      const userByFb = await storage.getUserByFirebaseUid(req.user.uid);
+      if (userByFb) {
+        odisId = userByFb.odisId;
+      }
+    }
 
     if (!odisId) {
       return res.status(400).json({ error: "Missing odisId" });
@@ -400,8 +407,8 @@ export async function registerRoutes(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Build the user context once - this does all the expensive calculations
-      const { systemContext, firstName } = buildUserContext({
+      // Build the user context once - this does all the calculations including birth chart
+      const { systemContext, firstName, chartSummary } = buildUserContext({
         fullName: user.fullName,
         birthDate: user.birthDate,
         birthTime: user.birthTime || undefined,
@@ -412,7 +419,8 @@ export async function registerRoutes(
         success: true,
         systemContext,
         firstName,
-        message: `Chat initialized for ${firstName}. Your profile context is now loaded.`
+        chartSummary,
+        message: `Chat initialized for ${firstName}. Your profile and birth chart context are now loaded.`
       });
     } catch (error) {
       console.error("Error initializing chat:", error);
