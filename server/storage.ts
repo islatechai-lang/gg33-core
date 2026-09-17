@@ -7,6 +7,22 @@ export interface LessonProgress {
   completed: boolean;
 }
 
+export interface DBChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  image?: string;
+  timestamp?: number;
+}
+
+export interface DBChatThread {
+  id: string;
+  odisId: string;
+  title: string;
+  messages: DBChatMessage[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IStorage {
   // User operations
   getUserByOdisId(odisId: string): Promise<DBUser | null>;
@@ -35,6 +51,12 @@ export interface IStorage {
   // Course Progress operations (in-memory)
   getCourseProgress(courseId: string): Promise<LessonProgress[]>;
   markLessonComplete(courseId: string, lessonId: string): Promise<void>;
+
+  // Chat History operations
+  getChatThreads(odisId: string): Promise<DBChatThread[]>;
+  getChatThread(threadId: string): Promise<DBChatThread | null>;
+  saveChatThread(data: { id: string; odisId: string; title: string; messages: DBChatMessage[]; createdAt?: Date }): Promise<DBChatThread>;
+  deleteChatThread(threadId: string, odisId: string): Promise<boolean>;
 }
 
 function generateOdisId(): string {
@@ -96,6 +118,7 @@ function mapUserDoc(docId: string, data: any): DBUser {
 export class FirestoreStorage implements IStorage {
   private initialized = false;
   private progressStore: Map<string, Set<string>> = new Map();
+  private chatThreadStore: Map<string, DBChatThread> = new Map();
 
   private async ensureConnected(): Promise<boolean> {
     if (!this.initialized) {
@@ -499,6 +522,127 @@ export class FirestoreStorage implements IStorage {
       this.progressStore.set(courseId, new Set());
     }
     this.progressStore.get(courseId)!.add(lessonId);
+  }
+
+  // Chat History operations
+  async getChatThreads(odisId: string): Promise<DBChatThread[]> {
+    const isConnected = await this.ensureConnected();
+    if (!isConnected) {
+      return Array.from(this.chatThreadStore.values())
+        .filter(t => t.odisId === odisId)
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
+
+    try {
+      const snapshot = await db.collection("chatThreads").where("odisId", "==", odisId).get();
+      const threads: DBChatThread[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          odisId: data.odisId,
+          title: data.title || "Conversation",
+          messages: data.messages || [],
+          createdAt: toDate(data.createdAt),
+          updatedAt: toDate(data.updatedAt),
+        };
+      });
+
+      threads.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      threads.forEach(t => this.chatThreadStore.set(t.id, t));
+
+      return threads;
+    } catch (error) {
+      console.error("Error getting chat threads from Firestore:", error);
+      return Array.from(this.chatThreadStore.values())
+        .filter(t => t.odisId === odisId)
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
+  }
+
+  async getChatThread(threadId: string): Promise<DBChatThread | null> {
+    const isConnected = await this.ensureConnected();
+    if (!isConnected) {
+      return this.chatThreadStore.get(threadId) || null;
+    }
+
+    try {
+      const doc = await db.collection("chatThreads").doc(threadId).get();
+      if (!doc.exists) {
+        return this.chatThreadStore.get(threadId) || null;
+      }
+      const data = doc.data()!;
+      const thread: DBChatThread = {
+        id: doc.id,
+        odisId: data.odisId,
+        title: data.title || "Conversation",
+        messages: data.messages || [],
+        createdAt: toDate(data.createdAt),
+        updatedAt: toDate(data.updatedAt),
+      };
+      this.chatThreadStore.set(thread.id, thread);
+      return thread;
+    } catch (error) {
+      console.error("Error getting chat thread from Firestore:", error);
+      return this.chatThreadStore.get(threadId) || null;
+    }
+  }
+
+  async saveChatThread(data: { id: string; odisId: string; title: string; messages: DBChatMessage[]; createdAt?: Date }): Promise<DBChatThread> {
+    const now = new Date();
+    // Sanitize messages to avoid overflowing document size limits (e.g., large base64 image strings)
+    const sanitizedMessages = (data.messages || []).map(m => ({
+      role: m.role,
+      content: m.content,
+      image: m.image && m.image.length > 50000 ? "[Image Attached]" : m.image,
+      timestamp: m.timestamp || Date.now(),
+    }));
+
+    const threadObj: DBChatThread = {
+      id: data.id,
+      odisId: data.odisId,
+      title: data.title || "Conversation",
+      messages: sanitizedMessages,
+      createdAt: data.createdAt ? toDate(data.createdAt) : now,
+      updatedAt: now,
+    };
+
+    this.chatThreadStore.set(threadObj.id, threadObj);
+
+    const isConnected = await this.ensureConnected();
+    if (isConnected) {
+      try {
+        await db.collection("chatThreads").doc(threadObj.id).set({
+          id: threadObj.id,
+          odisId: threadObj.odisId,
+          title: threadObj.title,
+          messages: sanitizedMessages,
+          createdAt: threadObj.createdAt,
+          updatedAt: threadObj.updatedAt,
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error saving chat thread to Firestore:", error);
+      }
+    }
+
+    return threadObj;
+  }
+
+  async deleteChatThread(threadId: string, odisId: string): Promise<boolean> {
+    this.chatThreadStore.delete(threadId);
+    const isConnected = await this.ensureConnected();
+    if (isConnected) {
+      try {
+        const docRef = db.collection("chatThreads").doc(threadId);
+        const doc = await docRef.get();
+        if (doc.exists && doc.data()?.odisId === odisId) {
+          await docRef.delete();
+          return true;
+        }
+      } catch (error) {
+        console.error("Error deleting chat thread from Firestore:", error);
+      }
+    }
+    return true;
   }
 }
 

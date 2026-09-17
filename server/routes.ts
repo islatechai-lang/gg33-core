@@ -465,6 +465,87 @@ export async function registerRoutes(
     }
   });
 
+  // CoreChats - Get all chat threads for a user
+  app.get("/api/chat/threads", async (req: any, res) => {
+    let odisId = req.query.odisId as string;
+    if (!odisId && req.user?.uid) {
+      const userByFb = await storage.getUserByFirebaseUid(req.user.uid);
+      if (userByFb) odisId = userByFb.odisId;
+    }
+
+    if (!odisId) {
+      return res.status(400).json({ error: "Missing odisId" });
+    }
+
+    try {
+      const threads = await storage.getChatThreads(odisId);
+      res.json({ success: true, threads });
+    } catch (error) {
+      console.error("Error fetching chat threads:", error);
+      res.status(500).json({ error: "Failed to fetch chat threads" });
+    }
+  });
+
+  // CoreChats - Get a specific chat thread
+  app.get("/api/chat/threads/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const thread = await storage.getChatThread(id);
+      if (!thread) {
+        return res.status(404).json({ error: "Thread not found" });
+      }
+      res.json({ success: true, thread });
+    } catch (error) {
+      console.error("Error fetching chat thread:", error);
+      res.status(500).json({ error: "Failed to fetch chat thread" });
+    }
+  });
+
+  // CoreChats - Save or update a chat thread
+  app.post("/api/chat/threads", async (req, res) => {
+    const { id, odisId, title, messages, createdAt } = req.body;
+    if (!id || !odisId || !messages) {
+      return res.status(400).json({ error: "Missing required fields: id, odisId, messages" });
+    }
+
+    try {
+      const savedThread = await storage.saveChatThread({
+        id,
+        odisId,
+        title: title || "Conversation",
+        messages,
+        createdAt: createdAt ? new Date(createdAt) : undefined,
+      });
+      res.json({ success: true, thread: savedThread });
+    } catch (error) {
+      console.error("Error saving chat thread:", error);
+      res.status(500).json({ error: "Failed to save chat thread" });
+    }
+  });
+
+  // CoreChats - Delete a chat thread
+  app.delete("/api/chat/threads/:id", async (req: any, res) => {
+    const { id } = req.params;
+    let odisId = (req.query.odisId || req.body?.odisId) as string;
+
+    if (!odisId && req.user?.uid) {
+      const userByFb = await storage.getUserByFirebaseUid(req.user.uid);
+      if (userByFb) odisId = userByFb.odisId;
+    }
+
+    if (!odisId) {
+      return res.status(400).json({ error: "Missing odisId" });
+    }
+
+    try {
+      const success = await storage.deleteChatThread(id, odisId);
+      res.json({ success });
+    } catch (error) {
+      console.error("Error deleting chat thread:", error);
+      res.status(500).json({ error: "Failed to delete chat thread" });
+    }
+  });
+
   // CueChats - Legacy AI Chat endpoint (kept for backward compatibility)
   app.post("/api/chat", async (req, res) => {
     const { odisId, message, conversationHistory } = req.body;

@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { useAuth } from '@/context/AuthContext';
-import { MessageCircle, Send, Bot, User, AlertCircle, RotateCcw, Sparkles, Plus, Play, Lock, Crown, Image as ImageIcon, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { MessageCircle, Send, Bot, User, AlertCircle, RotateCcw, Sparkles, Plus, Play, Lock, Crown, Image as ImageIcon, X, History, Trash2, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ChatMessage {
@@ -16,6 +17,32 @@ interface ChatMessage {
   content: string;
   image?: string;
   error?: boolean;
+}
+
+interface ChatThread {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  updatedAt: string | number | Date;
+  createdAt?: string | number | Date;
+}
+
+function formatRelativeTime(dateInput: string | number | Date): string {
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "Recently";
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHour < 24) return `${diffHour}h ago`;
+  if (diffDay === 1) return "Yesterday";
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 interface ChatSession {
@@ -190,6 +217,10 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
 export default function CueChats() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{
     file: File;
     previewUrl: string;
@@ -222,6 +253,99 @@ export default function CueChats() {
     scrollToBottom();
   }, [messages]);
 
+  // Load chat threads from local storage & sync with server
+  useEffect(() => {
+    if (!savedOdisId) return;
+
+    // 1. Instant load from local storage
+    try {
+      const localData = localStorage.getItem(`corechat_threads_${savedOdisId}`);
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        if (Array.isArray(parsed)) {
+          setThreads(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to parse local chat threads:", e);
+    }
+
+    // 2. Fetch from backend to sync
+    setIsLoadingHistory(true);
+    fetch(`/api/chat/threads?odisId=${savedOdisId}`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.threads)) {
+          setThreads(data.threads);
+          try {
+            localStorage.setItem(`corechat_threads_${savedOdisId}`, JSON.stringify(data.threads));
+          } catch (e) {
+            console.warn("Failed to update local chat threads:", e);
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching chat threads:", err);
+      })
+      .finally(() => {
+        setIsLoadingHistory(false);
+      });
+  }, [savedOdisId]);
+
+  const persistThread = (threadId: string, title: string, updatedMessages: ChatMessage[]) => {
+    const activeOdisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
+    const now = new Date().toISOString();
+
+    setThreads(prev => {
+      const existingIdx = prev.findIndex(t => t.id === threadId);
+      let updatedList: ChatThread[];
+      if (existingIdx >= 0) {
+        const existing = prev[existingIdx];
+        const updatedThread: ChatThread = {
+          ...existing,
+          title: title || existing.title,
+          messages: updatedMessages,
+          updatedAt: now,
+        };
+        updatedList = [updatedThread, ...prev.filter(t => t.id !== threadId)];
+      } else {
+        const newThread: ChatThread = {
+          id: threadId,
+          title: title || "New Conversation",
+          messages: updatedMessages,
+          createdAt: now,
+          updatedAt: now,
+        };
+        updatedList = [newThread, ...prev];
+      }
+
+      if (activeOdisId) {
+        try {
+          localStorage.setItem(`corechat_threads_${activeOdisId}`, JSON.stringify(updatedList));
+        } catch (e) {
+          console.warn("Failed to save to localStorage:", e);
+        }
+      }
+      return updatedList;
+    });
+
+    if (activeOdisId) {
+      fetch('/api/chat/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: threadId,
+          odisId: activeOdisId,
+          title,
+          messages: updatedMessages,
+        }),
+        credentials: 'include',
+      }).catch(err => {
+        console.error("Failed to sync thread with server:", err);
+      });
+    }
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -250,6 +374,34 @@ export default function CueChats() {
       URL.revokeObjectURL(selectedImage.previewUrl);
     }
     setSelectedImage(null);
+  };
+
+  const initChatSessionSilent = async (): Promise<ChatSession | null> => {
+    if (chatSession) return chatSession;
+    const odisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
+    if (!odisId) return null;
+
+    try {
+      const response = await fetch('/api/chat/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ odisId }),
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (data.success && data.systemContext) {
+        const session: ChatSession = {
+          systemContext: data.systemContext,
+          firstName: data.firstName,
+          chartSummary: data.chartSummary,
+        };
+        setChatSession(session);
+        return session;
+      }
+    } catch (e) {
+      console.error("Silent chat init error:", e);
+    }
+    return null;
   };
 
   const startChat = async () => {
@@ -299,22 +451,92 @@ export default function CueChats() {
     }
   };
 
+  const selectThread = async (thread: ChatThread) => {
+    setCurrentThreadId(thread.id);
+    setMessages(thread.messages || []);
+    setShowPreview(false);
+    setIsHistoryOpen(false);
+    setError(null);
+    removeSelectedImage();
+    if (!chatSession) {
+      initChatSessionSilent();
+    }
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const deleteThread = async (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const activeOdisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
+
+    setThreads(prev => {
+      const filtered = prev.filter(t => t.id !== threadId);
+      if (activeOdisId) {
+        try {
+          localStorage.setItem(`corechat_threads_${activeOdisId}`, JSON.stringify(filtered));
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+      return filtered;
+    });
+
+    if (currentThreadId === threadId) {
+      setCurrentThreadId(null);
+      setMessages([]);
+    }
+
+    if (activeOdisId) {
+      try {
+        await fetch(`/api/chat/threads/${threadId}?odisId=${activeOdisId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+      } catch (err) {
+        console.error("Error deleting thread:", err);
+      }
+    }
+  };
+
   const sendMessage = async () => {
-    if (!chatSession || (!inputValue.trim() && !selectedImage)) return;
+    if (!inputValue.trim() && !selectedImage) return;
+
+    let activeSession = chatSession;
+    if (!activeSession) {
+      activeSession = await initChatSessionSilent();
+      if (!activeSession) {
+        setError('Please start a chat session first.');
+        return;
+      }
+    }
 
     const userMessage = inputValue.trim();
     const currentImage = selectedImage;
     setInputValue('');
     setSelectedImage(null);
     setError(null);
-    
+
+    let threadId = currentThreadId;
+    let threadTitle = "";
+    if (!threadId) {
+      threadId = `thread_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      threadTitle = userMessage.slice(0, 45) + (userMessage.length > 45 ? '...' : '');
+      if (!threadTitle && currentImage) threadTitle = "Image Analysis";
+      setCurrentThreadId(threadId);
+    } else {
+      const existing = threads.find(t => t.id === threadId);
+      threadTitle = existing?.title || userMessage.slice(0, 45);
+    }
+
     const newUserMessage: ChatMessage = { 
       role: 'user', 
       content: userMessage || (currentImage ? 'Analyzing uploaded image...' : ''),
       image: currentImage?.previewUrl,
     };
-    setMessages(prev => [...prev, newUserMessage]);
+    const messagesWithUser = [...messages, newUserMessage];
+    setMessages(messagesWithUser);
     setIsLoading(true);
+
+    persistThread(threadId, threadTitle, messagesWithUser);
 
     try {
       const conversationHistory = messages
@@ -329,8 +551,8 @@ export default function CueChats() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage || 'Please analyze this image based on my energy blueprint and profile.',
-          systemContext: chatSession.systemContext,
-          firstName: chatSession.firstName,
+          systemContext: activeSession.systemContext,
+          firstName: activeSession.firstName,
           conversationHistory,
           image: currentImage ? {
             mimeType: currentImage.mimeType,
@@ -344,7 +566,9 @@ export default function CueChats() {
       
       if (data.response) {
         const assistantMessage: ChatMessage = { role: 'assistant', content: data.response };
-        setMessages(prev => [...prev, assistantMessage]);
+        const finalMessages = [...messagesWithUser, assistantMessage];
+        setMessages(finalMessages);
+        persistThread(threadId, threadTitle, finalMessages);
       } else {
         throw new Error(data.error || 'No response received');
       }
@@ -372,11 +596,16 @@ export default function CueChats() {
 
   const startNewChat = async () => {
     removeSelectedImage();
+    setCurrentThreadId(null);
     setMessages([]);
     setInputValue('');
     setError(null);
-    setChatSession(null);
-    await startChat();
+    setIsHistoryOpen(false);
+    setShowPreview(false);
+    if (!chatSession) {
+      await startChat();
+    }
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const hasMessages = messages.length > 0;
@@ -417,33 +646,50 @@ export default function CueChats() {
                     </CardDescription>
                   </div>
                 </div>
-                {!showPreview && (
+                <div className="flex items-center gap-2">
                   <Button
-                    variant="gold"
+                    variant="outline"
                     size="sm"
-                    onClick={startNewChat}
-                    disabled={isLoading || isInitializing}
-                    data-testid="button-new-chat"
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="border-zinc-700/80 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-amber-300 text-xs gap-1.5"
+                    data-testid="button-chat-history"
                   >
-                    {isInitializing ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          className="mr-1"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                        </motion.div>
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-1" />
-                        New Chat
-                      </>
+                    <History className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">History</span>
+                    {threads.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-semibold">
+                        {threads.length}
+                      </span>
                     )}
                   </Button>
-                )}
+                  {!showPreview && (
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      onClick={startNewChat}
+                      disabled={isLoading || isInitializing}
+                      data-testid="button-new-chat"
+                    >
+                      {isInitializing ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="mr-1"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                          </motion.div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-1" />
+                          New Chat
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -481,6 +727,42 @@ export default function CueChats() {
                         )}
                       </Button>
                     </div>
+
+                    {threads.length > 0 && (
+                      <div className="pt-6 max-w-md mx-auto w-full text-left border-t border-zinc-800/60 mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                            <History className="w-3.5 h-3.5 text-amber-400" />
+                            Recent Conversations
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setIsHistoryOpen(true)}
+                            className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors"
+                          >
+                            View all ({threads.length})
+                          </button>
+                        </div>
+                        <div className="space-y-1.5">
+                          {threads.slice(0, 3).map(thread => (
+                            <button
+                              key={thread.id}
+                              type="button"
+                              onClick={() => selectThread(thread)}
+                              className="w-full p-2.5 rounded-lg bg-zinc-900/70 hover:bg-zinc-800/90 border border-zinc-800 hover:border-amber-500/30 flex items-center justify-between text-left group transition-all"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <MessageSquare className="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
+                                <span className="text-xs text-zinc-200 truncate group-hover:text-amber-200 transition-colors">{thread.title}</span>
+                              </div>
+                              <span className="text-[10px] text-zinc-500 flex-shrink-0 ml-2">
+                                {formatRelativeTime(thread.updatedAt)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -636,6 +918,86 @@ export default function CueChats() {
           </Card>
         </div>
       </main>
+
+      <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <SheetContent side="left" className="w-full sm:max-w-md bg-zinc-950 border-r border-zinc-800 p-0 flex flex-col z-50">
+          <SheetHeader className="p-4 border-b border-zinc-800 flex flex-row items-center justify-between space-y-0">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-amber-400" />
+              <SheetTitle className="text-base font-semibold text-zinc-100">Chat History</SheetTitle>
+            </div>
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={startNewChat}
+              className="text-xs h-8"
+              data-testid="button-drawer-new-chat"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              New Chat
+            </Button>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+            {isLoadingHistory && threads.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-2 text-zinc-500">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                </motion.div>
+                <p className="text-xs text-zinc-400">Loading your conversations...</p>
+              </div>
+            ) : threads.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 text-zinc-500">
+                <MessageSquare className="w-10 h-10 stroke-1 text-zinc-600" />
+                <div>
+                  <p className="text-sm font-medium text-zinc-400">No chat history yet</p>
+                  <p className="text-xs text-zinc-600 mt-1">Start a conversation with CoreChat AI and your chats will be saved here automatically.</p>
+                </div>
+              </div>
+            ) : (
+              threads.map(thread => {
+                const isActive = thread.id === currentThreadId;
+                return (
+                  <div
+                    key={thread.id}
+                    onClick={() => selectThread(thread)}
+                    className={`group w-full p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                      isActive
+                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-200'
+                        : 'bg-zinc-900/50 hover:bg-zinc-900 border-zinc-800/80 hover:border-zinc-700 text-zinc-300'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-amber-400' : 'text-zinc-500'}`} />
+                        <span className="text-xs font-medium truncate block text-zinc-100">
+                          {thread.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                        <span>{formatRelativeTime(thread.updatedAt)}</span>
+                        <span>•</span>
+                        <span>{thread.messages?.length || 0} messages</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => deleteThread(thread.id, e)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all"
+                      title="Delete chat"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
     </>
