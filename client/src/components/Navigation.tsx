@@ -33,7 +33,7 @@ import {
   MessageCircle,
   BookOpen,
   Sparkles,
-  MoreHorizontal,
+  Menu,
   X,
   Crown,
   LogOut,
@@ -130,6 +130,11 @@ export function Navigation() {
                         Hot
                       </span>
                     )}
+                    {item.to === '/birth-chart' && (
+                      <span className="px-1.5 py-[1px] rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[8px] font-black uppercase tracking-wider leading-none shadow-xs shadow-emerald-500/40">
+                        New
+                      </span>
+                    )}
                   </div>
                 </NavLink>
               ))}
@@ -198,9 +203,6 @@ export function Navigation() {
             )}
             data-testid="bottom-link-dashboard"
           >
-            {isDashboardActive && (
-              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
-            )}
             <LayoutDashboard className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.3px]")} />
             <span className={cn("text-[10px] tracking-tight", isDashboardActive ? "font-bold text-amber-300" : "font-medium")}>
               Dashboard
@@ -216,9 +218,6 @@ export function Navigation() {
             )}
             data-testid="bottom-link-explore"
           >
-            {isExploreActive && (
-              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
-            )}
             <div className="relative">
               <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
               <span className="absolute -top-1.5 -right-3.5 px-1.5 py-[1px] rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-[8px] font-black text-white uppercase tracking-tight leading-none shadow-sm shadow-red-500/50">
@@ -239,9 +238,6 @@ export function Navigation() {
             )}
             data-testid="bottom-link-corechats"
           >
-            {isCoreChatsActive && (
-              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
-            )}
             <div className={cn(
               "w-7 h-7 rounded-full flex items-center justify-center transition-all",
               isCoreChatsActive
@@ -264,10 +260,12 @@ export function Navigation() {
             )}
             data-testid="bottom-link-birthchart"
           >
-            {isBirthChartActive && (
-              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
-            )}
-            <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
+            <div className="relative">
+              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
+              <span className="absolute -top-1.5 -right-3.5 px-1.5 py-[1px] rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-[8px] font-black text-white uppercase tracking-tight leading-none shadow-sm shadow-emerald-500/40">
+                NEW
+              </span>
+            </div>
             <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
               BirthChart
             </span>
@@ -282,10 +280,7 @@ export function Navigation() {
             )}
             data-testid="bottom-link-more"
           >
-            {isMoreActive && (
-              <span className="absolute -top-1 w-8 h-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
-            )}
-            <MoreHorizontal className={cn("w-5 h-5 transition-transform group-active:scale-90", isMoreActive && "stroke-[2.3px]")} />
+            <Menu className={cn("w-5 h-5 transition-transform group-active:scale-90", isMoreActive && "stroke-[2.3px]")} />
             <span className={cn("text-[10px] tracking-tight", isMoreActive ? "font-bold text-amber-300" : "font-medium")}>
               More
             </span>
