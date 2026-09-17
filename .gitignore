@@ -10,3 +10,4 @@ vite.config.ts.*
 .vercel
 .next
 gg33-core-firebase-adminsdk.json
+*.tsbuildinfo

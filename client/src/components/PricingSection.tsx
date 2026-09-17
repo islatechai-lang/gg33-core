@@ -19,7 +19,7 @@ const tiers = [
     popular: false,
   },
   {
-    name: 'CueChats',
+    name: 'CoreChats',
     price: 28,
     period: 'month',
     description: 'AI-powered personalized guidance',

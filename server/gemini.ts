@@ -714,22 +714,46 @@ export async function generateChatResponse(
   throw lastError || new Error("All models failed for chat response");
 }
 
-// Session-based chat - uses pre-computed context (more efficient)
+export interface ChatImageAttachment {
+  mimeType: string;
+  data: string;
+}
+
+// Session-based chat - uses pre-computed context (more efficient) with multimodal image support
 export async function generateChatResponseWithContext(
   userMessage: string,
   systemContext: string,
   firstName: string,
-  conversationHistory: ChatMessage[]
+  conversationHistory: ChatMessage[],
+  image?: ChatImageAttachment
 ): Promise<ChatResponse> {
   const prompt = buildChatPromptWithContext(userMessage, systemContext, firstName, conversationHistory);
   let lastError: any;
+
+  // Prepare contents payload: if an image is attached, provide multimodal inlineData
+  let contentsPayload: any = prompt;
+  if (image && image.data && image.mimeType) {
+    const cleanBase64 = image.data.includes(';base64,')
+      ? image.data.split(';base64,')[1]
+      : image.data;
+
+    contentsPayload = [
+      {
+        inlineData: {
+          mimeType: image.mimeType,
+          data: cleanBase64,
+        },
+      },
+      prompt,
+    ];
+  }
 
   for (const model of MODELS) {
     try {
       console.log(`Chat (session): Attempting with model ${model}...`);
       const response = await ai.models.generateContent({
         model: model,
-        contents: prompt,
+        contents: contentsPayload,
       });
 
       const rawText = response.text || "";

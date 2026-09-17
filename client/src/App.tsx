@@ -55,6 +55,9 @@ function Router() {
       <Route path="/cuechats">
         {!user ? <Redirect to="/login" /> : <CueChats />}
       </Route>
+      <Route path="/corechats">
+        {!user ? <Redirect to="/login" /> : <CueChats />}
+      </Route>
       <Route path="/learn">
         {!user ? <Redirect to="/login" /> : <Learn />}
       </Route>

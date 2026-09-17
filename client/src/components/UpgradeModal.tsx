@@ -18,7 +18,7 @@ const benefits = [
   { icon: Users, label: 'Compatibility Analysis', description: 'Discover relationship dynamics & matching' },
   { icon: Database, label: 'Cues Database', description: '22,000+ comprehensive numerology cues' },
   { icon: Compass, label: 'Explore Modules', description: 'Access all advanced numerology calculators' },
-  { icon: MessageCircle, label: 'CueChats AI', description: '24/7 personalized AI guidance & readings' },
+  { icon: MessageCircle, label: 'CoreChats AI', description: '24/7 personalized AI guidance & readings' },
   { icon: GraduationCap, label: 'All Courses', description: 'Complete esoteric learning library' },
   { icon: Hash, label: 'Core & Name Numbers', description: 'Full interpretations for life path & destiny' },
   { icon: Sun, label: 'Daily Energy Readings', description: 'Personalized daily frequencies' },

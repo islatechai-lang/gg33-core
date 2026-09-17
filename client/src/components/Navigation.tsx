@@ -44,7 +44,7 @@ const navItems = [
   { to: '/compatibility', label: 'Compatibility', icon: Users },
   { to: '/cues', label: 'Cues Database', icon: Database },
   { to: '/explore', label: 'Explore', icon: Compass },
-  { to: '/cuechats', label: 'CueChats', icon: MessageCircle },
+  { to: '/cuechats', label: 'CoreChats', icon: MessageCircle },
   { to: '/learn', label: 'Study Zone', icon: BookOpen },
   { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
 ];

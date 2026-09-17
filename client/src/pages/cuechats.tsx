@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { useAuth } from '@/context/AuthContext';
-import { MessageCircle, Send, Bot, User, AlertCircle, RotateCcw, Sparkles, Plus, Play, Lock, Crown } from 'lucide-react';
+import { MessageCircle, Send, Bot, User, AlertCircle, RotateCcw, Sparkles, Plus, Play, Lock, Crown, Image as ImageIcon, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  image?: string;
   error?: boolean;
 }
 
@@ -166,6 +167,15 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
               : 'bg-gray-a3 rounded-tl-sm'
         }`}
       >
+        {msg.image && (
+          <div className="mb-2">
+            <img
+              src={msg.image}
+              alt="Uploaded attachment"
+              className="rounded-md max-h-60 max-w-full object-contain bg-black/40 border border-amber-500/20"
+            />
+          </div>
+        )}
         <MarkdownContent content={msg.content} className={`text-2 ${msg.error ? 'text-red-400' : ''}`} />
       </div>
       {msg.role === 'user' && (
@@ -180,6 +190,12 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
 export default function CueChats() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [selectedImage, setSelectedImage] = useState<{
+    file: File;
+    previewUrl: string;
+    base64: string;
+    mimeType: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,6 +204,7 @@ export default function CueChats() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { dbUser } = useAuth();
   const savedOdisId = dbUser?.odisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
@@ -205,6 +222,36 @@ export default function CueChats() {
     scrollToBottom();
   }, [messages]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setSelectedImage({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        base64,
+        mimeType: file.type || 'image/jpeg',
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const removeSelectedImage = () => {
+    if (selectedImage?.previewUrl) {
+      URL.revokeObjectURL(selectedImage.previewUrl);
+    }
+    setSelectedImage(null);
+  };
+
   const startChat = async () => {
     if (isInitializing) return;
     
@@ -216,7 +263,7 @@ export default function CueChats() {
     const odisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
     
     if (!odisId) {
-      setError('Please create your profile first to use CueChats');
+      setError('Please create your profile first to use CoreChats');
       return;
     }
 
@@ -253,13 +300,19 @@ export default function CueChats() {
   };
 
   const sendMessage = async () => {
-    if (!chatSession || !inputValue.trim()) return;
+    if (!chatSession || (!inputValue.trim() && !selectedImage)) return;
 
     const userMessage = inputValue.trim();
+    const currentImage = selectedImage;
     setInputValue('');
+    setSelectedImage(null);
     setError(null);
     
-    const newUserMessage: ChatMessage = { role: 'user', content: userMessage };
+    const newUserMessage: ChatMessage = { 
+      role: 'user', 
+      content: userMessage || (currentImage ? 'Analyzing uploaded image...' : ''),
+      image: currentImage?.previewUrl,
+    };
     setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
 
@@ -275,10 +328,14 @@ export default function CueChats() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage,
+          message: userMessage || 'Please analyze this image based on my energy blueprint and profile.',
           systemContext: chatSession.systemContext,
           firstName: chatSession.firstName,
           conversationHistory,
+          image: currentImage ? {
+            mimeType: currentImage.mimeType,
+            data: currentImage.base64,
+          } : undefined,
         }),
         credentials: 'include',
       });
@@ -289,7 +346,7 @@ export default function CueChats() {
         const assistantMessage: ChatMessage = { role: 'assistant', content: data.response };
         setMessages(prev => [...prev, assistantMessage]);
       } else {
-        throw new Error('No response received');
+        throw new Error(data.error || 'No response received');
       }
     } catch (err) {
       console.error('Chat error:', err);
@@ -314,6 +371,7 @@ export default function CueChats() {
   };
 
   const startNewChat = async () => {
+    removeSelectedImage();
     setMessages([]);
     setInputValue('');
     setError(null);
@@ -336,7 +394,7 @@ export default function CueChats() {
               AI Guidance
             </Badge>
             <h1 className="text-6 md:text-7 font-semibold mb-4">
-              <span className="gradient-text">CueChats</span>
+              <span className="gradient-text">CoreChats</span>
             </h1>
             <p className="text-gray-11 text-3 max-w-2xl mx-auto">
               Get personalized guidance based on your unique energy signature and current cosmic cycles.
@@ -352,24 +410,10 @@ export default function CueChats() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <CardTitle className="text-4">CueChat AI</CardTitle>
-                      {chatSession?.chartSummary && (
-                        <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                          <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                          Birth Chart Synced
-                        </span>
-                      )}
+                      <CardTitle className="text-4">CoreChat AI</CardTitle>
                     </div>
                     <CardDescription className="text-2 text-gray-11">
-                      {chatSession?.chartSummary ? (
-                        <span>
-                          ☀️ {chatSession.chartSummary.sun} · 🌙 {chatSession.chartSummary.moon} · ↗️ {chatSession.chartSummary.rising} · 🔢 Life Path {chatSession.chartSummary.lifePath}
-                        </span>
-                      ) : chatSession ? (
-                        `Chatting with ${chatSession.firstName}`
-                      ) : (
-                        'Powered by your birth chart & numerology blueprint'
-                      )}
+                      {chatSession ? 'Online' : 'Powered by your energy blueprint'}
                     </CardDescription>
                   </div>
                 </div>
@@ -457,12 +501,11 @@ export default function CueChats() {
                         {/* Quick Starter Question Chips */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg pt-2 text-left">
                           {[
-                            "What are my core superpowers in my birth chart?",
-                            "What does my Rising sign say about my outer aura?",
-                            "Explain my Moon sign and what I need in love",
-                            "What is my Midheaven (MC) and career calling?",
-                            "What is my biggest karmic shadow & breakthrough?",
-                            "How does my Life Path interact with my Sun sign?",
+                            "What energy should I focus on today?",
+                            "How can I align my career with my natural strengths?",
+                            "What does my energy say about my relationship dynamics?",
+                            "What are my greatest gifts and hidden blind spots?",
+                            "What major cycle or lessons am I navigating right now?",
                           ].map((promptText, idx) => (
                             <button
                               key={idx}
@@ -520,11 +563,47 @@ export default function CueChats() {
 
               {!showPreview && (
                 <div className="p-4 border-t border-gray-5/50 bg-gray-a2">
-                  <div className="flex gap-3">
+                  {selectedImage && (
+                    <div className="relative inline-block mb-3">
+                      <img
+                        src={selectedImage.previewUrl}
+                        alt="Upload preview"
+                        className="w-16 h-16 object-cover rounded-lg border border-amber-500/50 shadow-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeSelectedImage}
+                        className="absolute -top-2 -right-2 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white rounded-full p-0.5 shadow transition-colors"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelect}
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading}
+                      className="text-gray-11 hover:text-amber-400 flex-shrink-0"
+                      title="Attach image"
+                    >
+                      <ImageIcon className="w-5 h-5" />
+                    </Button>
                     <Input
                       ref={inputRef}
                       variant="frosted"
-                      placeholder="Ask about your birth chart, planetary houses, life path, career calling..."
+                      placeholder="Ask about your energy, compatibility, decisions..."
                       className="flex-1"
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
@@ -536,7 +615,7 @@ export default function CueChats() {
                       variant="gold" 
                       size="icon" 
                       onClick={sendMessage}
-                      disabled={isLoading || !inputValue.trim()}
+                      disabled={isLoading || (!inputValue.trim() && !selectedImage)}
                       data-testid="button-send-message"
                     >
                       {isLoading ? (

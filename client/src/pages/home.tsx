@@ -59,7 +59,7 @@ export default function Home() {
           if (data.success) {
             toast({
               title: 'Welcome to GG33 Pro!',
-              description: 'You now have full access to Cues Database, Explore, and CueChats!',
+              description: 'You now have full access to Cues Database, Explore, and CoreChats!',
             });
             await refreshDbUser();
             await Promise.all([

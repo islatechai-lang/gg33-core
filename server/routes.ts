@@ -428,9 +428,9 @@ export async function registerRoutes(
     }
   });
 
-  // CueChats - Session-based chat (uses pre-computed context - more efficient)
+  // CoreChats - Session-based chat (uses pre-computed context - more efficient with image support)
   app.post("/api/chat/session", async (req, res) => {
-    const { message, systemContext, firstName, conversationHistory } = req.body;
+    const { message, systemContext, firstName, conversationHistory, image } = req.body;
 
     if (!message || !systemContext || !firstName) {
       return res.status(400).json({ error: "Missing required data. Please start a new chat." });
@@ -454,7 +454,8 @@ export async function registerRoutes(
         message,
         systemContext,
         firstName,
-        normalizedHistory
+        normalizedHistory,
+        image
       );
 
       res.json({ response: response.message });
