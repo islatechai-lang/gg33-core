@@ -397,14 +397,18 @@ function calculateDayOfBirthNumber(birthDate: Date): number {
 
 function calculatePersonalDayNumber(birthDate: Date): number {
   const today = new Date();
-  const month = today.getUTCMonth() + 1;
-  const day = today.getUTCDate();
-  const year = today.getUTCFullYear();
+  const birthMonth = birthDate.getUTCMonth() + 1;
+  const birthDay = birthDate.getUTCDate();
+  const currentYear = today.getUTCFullYear();
+  const currentMonth = today.getUTCMonth() + 1;
+  const currentDay = today.getUTCDate();
 
-  const lifePathNumber = calculateLifePathNumber(birthDate);
-  const universalDayNumber = reduceToSingleDigit(month + day + reduceToSingleDigit(year.toString().split('').reduce((sum, d) => sum + parseInt(d), 0), false), false);
-
-  return reduceToSingleDigit(lifePathNumber + universalDayNumber, true);
+  // Personal Year = Birth Month + Birth Day + Current Year
+  const personalYear = reduceToSingleDigit(birthMonth + birthDay + currentYear, true);
+  // Personal Month = Personal Year + Current Month
+  const personalMonth = reduceToSingleDigit(personalYear + currentMonth, true);
+  // Personal Day = Personal Month + Current Day
+  return reduceToSingleDigit(personalMonth + currentDay, true);
 }
 
 function calculateUniversalDayNumber(): number {
