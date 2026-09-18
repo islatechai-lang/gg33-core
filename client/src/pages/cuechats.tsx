@@ -497,6 +497,27 @@ export default function CueChats() {
     }
   };
 
+  const clearAllThreads = async () => {
+    if (!window.confirm("Are you sure you want to delete all chat history?")) return;
+    const activeOdisId = savedOdisId || (typeof window !== 'undefined' ? localStorage.getItem('gg33-odis-id') : null);
+
+    setThreads([]);
+    setCurrentThreadId(null);
+    setMessages([]);
+
+    if (activeOdisId) {
+      try {
+        localStorage.removeItem(`corechat_threads_${activeOdisId}`);
+        await fetch(`/api/chat/threads?odisId=${activeOdisId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+      } catch (err) {
+        console.warn("Failed to clear threads from server:", err);
+      }
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputValue.trim() && !selectedImage) return;
 
@@ -615,22 +636,16 @@ export default function CueChats() {
       <StarField />
       <Navigation />
       
-      <main className="pt-16 sm:pt-20 pb-20 lg:pb-10 px-2 sm:px-4 min-h-[calc(100vh-4rem)] flex flex-col" data-testid="page-cuechats">
-        <div className="container mx-auto max-w-4xl flex-1 flex flex-col rounded-3xl bg-zinc-950/70 backdrop-blur-2xl border border-zinc-800/80 shadow-2xl overflow-hidden min-h-[75vh]">
-          {/* Header Bar */}
-          <div className="flex items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3.5 border-b border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md flex-shrink-0">
+      <main className="pt-16 min-h-screen flex flex-col relative w-full bg-transparent" data-testid="page-cuechats">
+        {/* Full-width sticky top bar directly beneath navigation */}
+        <div className="sticky top-16 z-20 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">
                 <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h2 className="text-sm sm:text-base font-bold text-zinc-100">CoreChat AI</h2>
-                  <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Online
-                  </span>
-                </div>
+                <h2 className="text-sm sm:text-base font-bold text-zinc-100">CoreChat AI</h2>
                 <p className="text-[11px] text-zinc-400 hidden sm:block">
                   Blueprint-aligned cosmic intelligence
                 </p>
@@ -683,124 +698,130 @@ export default function CueChats() {
               )}
             </div>
           </div>
+        </div>
 
-          {/* Chat Canvas Body */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-6 space-y-4">
-            {showPreview ? (
-              <>
-                {exampleMessages.map((msg, i) => (
-                  <ChatBubble key={i} msg={msg} index={i} isExample />
-                ))}
-                
-                <div className="flex justify-center pt-4">
-                  <Button
-                    variant="gold"
-                    size="lg"
-                    onClick={startChat}
-                    disabled={isInitializing}
-                    data-testid="button-start-chat"
-                  >
-                    {isInitializing ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          className="mr-2"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                        </motion.div>
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        Start Chat
-                      </>
-                    )}
-                  </Button>
+        {/* Message Canvas Area - Full Coverage, directly belonging to page */}
+        <div className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 pb-40 lg:pb-32 space-y-4">
+          {showPreview ? (
+            <>
+              {exampleMessages.map((msg, i) => (
+                <ChatBubble key={i} msg={msg} index={i} isExample />
+              ))}
+              
+              <div className="flex justify-center pt-4">
+                <Button
+                  variant="gold"
+                  size="lg"
+                  onClick={startChat}
+                  disabled={isInitializing}
+                  data-testid="button-start-chat"
+                >
+                  {isInitializing ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="mr-2"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </motion.div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Start Chat
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {!hasMessages && (
+                <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center py-6 px-4 space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
+                    <Bot className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1 max-w-md">
+                    <h3 className="text-sm font-bold text-zinc-100">
+                      Ask me anything about yourself
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      I know your full Western birth chart, planetary houses, aspects, and numerology blueprint.
+                    </p>
+                  </div>
+
+                  {/* Quick Starter Question Chips */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg pt-2 text-left">
+                    {[
+                      "What energy should I focus on today?",
+                      "How can I align my career with my natural strengths?",
+                      "What does my energy say about my relationship dynamics?",
+                      "What are my greatest gifts and hidden blind spots?",
+                      "What major cycle or lessons am I navigating right now?",
+                    ].map((promptText, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setInputValue(promptText);
+                          inputRef.current?.focus();
+                        }}
+                        className="p-2.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 hover:border-amber-500/40 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group"
+                      >
+                        <span className="truncate pr-2">{promptText}</span>
+                        <Sparkles className="w-3 h-3 text-zinc-600 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </>
-            ) : (
-              <>
-                {!hasMessages && (
-                  <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center py-6 px-4 space-y-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-                      <Bot className="w-6 h-6" />
+              )}
+              
+              {messages.map((msg, i) => (
+                <div key={i}>
+                  <ChatBubble msg={msg} index={i} />
+                  {msg.error && (
+                    <div className="flex gap-3 justify-start mt-1">
+                      <div className="w-8" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-400"
+                        onClick={() => {
+                          setMessages(prev => prev.filter((_, idx) => idx !== i));
+                          setError(null);
+                        }}
+                        data-testid={`button-retry-${i}`}
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Dismiss
+                      </Button>
                     </div>
-                    <div className="space-y-1 max-w-md">
-                      <h3 className="text-sm font-bold text-zinc-100">
-                        Ask me anything about yourself
-                      </h3>
-                      <p className="text-xs text-zinc-400">
-                        I know your full Western birth chart, planetary houses, aspects, and numerology blueprint.
-                      </p>
-                    </div>
+                  )}
+                </div>
+              ))}
 
-                    {/* Quick Starter Question Chips */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg pt-2 text-left">
-                      {[
-                        "What energy should I focus on today?",
-                        "How can I align my career with my natural strengths?",
-                        "What does my energy say about my relationship dynamics?",
-                        "What are my greatest gifts and hidden blind spots?",
-                        "What major cycle or lessons am I navigating right now?",
-                      ].map((promptText, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setInputValue(promptText);
-                            inputRef.current?.focus();
-                          }}
-                          className="p-2.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 hover:border-amber-500/40 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group"
-                        >
-                          <span className="truncate pr-2">{promptText}</span>
-                          <Sparkles className="w-3 h-3 text-zinc-600 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {messages.map((msg, i) => (
-                  <div key={i}>
-                    <ChatBubble msg={msg} index={i} />
-                    {msg.error && (
-                      <div className="flex gap-3 justify-start mt-1">
-                        <div className="w-8" />
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-400"
-                          onClick={() => {
-                            setMessages(prev => prev.filter((_, idx) => idx !== i));
-                            setError(null);
-                          }}
-                          data-testid={`button-retry-${i}`}
-                        >
-                          <RotateCcw className="w-3 h-3 mr-1" />
-                          Dismiss
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {isLoading && <CosmicLoadingAnimation />}
-                
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </div>
-
-          {error && (
-            <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20">
-              <p className="text-xs text-red-400" data-testid="text-chat-error">{error}</p>
-            </div>
+              {isLoading && <CosmicLoadingAnimation />}
+              
+              <div ref={messagesEndRef} />
+            </>
           )}
+        </div>
 
-          {!showPreview && (
-            <div className="p-2.5 sm:p-4 border-t border-zinc-800/80 bg-zinc-900/50 backdrop-blur-md flex-shrink-0">
+        {/* Error Banner */}
+        {error && (
+          <div className="fixed bottom-[calc(4rem+64px+env(safe-area-inset-bottom,0px))] lg:bottom-[70px] left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
+            <div className="max-w-md w-full px-4 py-2 bg-red-950/95 border border-red-500/40 rounded-xl shadow-xl backdrop-blur-md pointer-events-auto">
+              <p className="text-xs text-red-300 text-center" data-testid="text-chat-error">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Fixed Bottom Input Bar: Rock-solid docked to bottom on desktop, and docked right above bottom nav on mobile */}
+        {!showPreview && (
+          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]">
+            <div className="max-w-4xl mx-auto px-3 py-2.5 sm:px-6 sm:py-3.5">
               {selectedImage && (
                 <div className="relative inline-block mb-2">
                   <img
@@ -833,16 +854,16 @@ export default function CueChats() {
                   size="icon"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-9 w-9"
+                  className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10"
                   title="Attach image or file"
                 >
-                  <Paperclip className="w-4 h-4" />
+                  <Paperclip className="w-5 h-5" />
                 </Button>
                 <Input
                   ref={inputRef}
                   variant="frosted"
                   placeholder="Ask CoreChat anything..."
-                  className="flex-1 bg-zinc-900/70 border-zinc-700/80 focus:border-amber-500/60 text-sm h-10 rounded-xl"
+                  className="flex-1 bg-zinc-900/80 border-zinc-700/80 focus:border-amber-500/60 text-sm h-11 rounded-xl"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -854,7 +875,7 @@ export default function CueChats() {
                   size="icon" 
                   onClick={sendMessage}
                   disabled={isLoading || (!inputValue.trim() && !selectedImage)}
-                  className="h-10 w-10 rounded-xl flex-shrink-0"
+                  className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
                   data-testid="button-send-message"
                 >
                   {isLoading ? (
@@ -870,27 +891,28 @@ export default function CueChats() {
                 </Button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
       <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <SheetContent side="left" className="w-full sm:max-w-md bg-zinc-950 border-r border-zinc-800 p-0 flex flex-col z-50">
-          <SheetHeader className="p-4 border-b border-zinc-800 flex flex-row items-center justify-between space-y-0">
+          <SheetHeader className="p-4 border-b border-zinc-800 flex flex-row items-center justify-between space-y-0 pr-12">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-amber-400" />
               <SheetTitle className="text-base font-semibold text-zinc-100">Chat History</SheetTitle>
             </div>
-            <Button
-              variant="gold"
-              size="sm"
-              onClick={startNewChat}
-              className="text-xs h-8"
-              data-testid="button-drawer-new-chat"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              New Chat
-            </Button>
+            {threads.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAllThreads}
+                className="text-xs text-zinc-400 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer py-1 px-2 rounded-md hover:bg-red-500/10"
+                title="Clear all chat history"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear All</span>
+              </button>
+            )}
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
@@ -919,7 +941,7 @@ export default function CueChats() {
                   <div
                     key={thread.id}
                     onClick={() => selectThread(thread)}
-                    className={`group w-full p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                    className={`group w-full p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-2.5 ${
                       isActive
                         ? 'bg-amber-500/10 border-amber-500/40 text-amber-200'
                         : 'bg-zinc-900/50 hover:bg-zinc-900 border-zinc-800/80 hover:border-zinc-700 text-zinc-300'
@@ -941,10 +963,11 @@ export default function CueChats() {
                     <button
                       type="button"
                       onClick={(e) => deleteThread(thread.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all"
+                      className="p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/15 active:bg-red-500/25 transition-colors cursor-pointer flex-shrink-0"
                       title="Delete chat"
+                      aria-label="Delete chat"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 );

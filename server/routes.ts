@@ -546,6 +546,31 @@ export async function registerRoutes(
     }
   });
 
+  // CoreChats - Delete all chat threads for user
+  app.delete("/api/chat/threads", async (req: any, res) => {
+    let odisId = (req.query.odisId || req.body?.odisId) as string;
+
+    if (!odisId && req.user?.uid) {
+      const userByFb = await storage.getUserByFirebaseUid(req.user.uid);
+      if (userByFb) odisId = userByFb.odisId;
+    }
+
+    if (!odisId) {
+      return res.status(400).json({ error: "Missing odisId" });
+    }
+
+    try {
+      const threads = await storage.getChatThreads(odisId);
+      for (const t of threads) {
+        await storage.deleteChatThread(t.id, odisId);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing chat threads:", error);
+      res.status(500).json({ error: "Failed to clear chat threads" });
+    }
+  });
+
   // CueChats - Legacy AI Chat endpoint (kept for backward compatibility)
   app.post("/api/chat", async (req, res) => {
     const { odisId, message, conversationHistory } = req.body;
