@@ -218,15 +218,15 @@ export function Navigation() {
             )}
             data-testid="bottom-link-explore"
           >
-            <div className="relative">
-              <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1 left-full ml-0.5 px-1 py-[1px] rounded-full bg-rose-500 text-[7px] font-black text-white uppercase tracking-wider leading-none shadow-xs ring-1 ring-zinc-950 pointer-events-none">
+            <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
+            <div className="flex items-center justify-center gap-1">
+              <span className={cn("text-[10px] tracking-tight", isExploreActive ? "font-bold text-amber-300" : "font-medium")}>
+                Explore
+              </span>
+              <span className="px-1 py-[0.5px] rounded bg-rose-500 text-[6.5px] font-black text-white uppercase tracking-wider leading-none shadow-xs">
                 HOT
               </span>
             </div>
-            <span className={cn("text-[10px] tracking-tight", isExploreActive ? "font-bold text-amber-300" : "font-medium")}>
-              Explore
-            </span>
           </Link>
 
           {/* 3. CoreChats (Center Hero Tab) */}
@@ -260,15 +260,15 @@ export function Navigation() {
             )}
             data-testid="bottom-link-birthchart"
           >
-            <div className="relative">
-              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
-              <span className="absolute -top-1 left-full ml-0.5 px-1 py-[1px] rounded-full bg-emerald-500 text-[7px] font-black text-white uppercase tracking-wider leading-none shadow-xs ring-1 ring-zinc-950 pointer-events-none">
+            <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
+            <div className="flex items-center justify-center gap-1">
+              <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
+                BirthChart
+              </span>
+              <span className="px-1 py-[0.5px] rounded bg-emerald-500 text-[6.5px] font-black text-white uppercase tracking-wider leading-none shadow-xs">
                 NEW
               </span>
             </div>
-            <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
-              BirthChart
-            </span>
           </Link>
 
           {/* 5. More */}

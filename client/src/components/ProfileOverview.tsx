@@ -173,37 +173,39 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
               </div>
             </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-xl bg-gradient-to-br from-gray-a3 to-gray-a2 border border-gray-a4">
-              <p className="text-1 text-gray-9 uppercase tracking-widest font-medium mb-1">Energy Signature</p>
-              <h3 className="text-4 sm:text-5 font-bold gradient-text" data-testid="text-energy-signature">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="flex flex-col justify-center text-center p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-gray-a3 to-gray-a2 border border-gray-a4">
+              <p className="text-[11px] text-gray-9 uppercase tracking-widest font-medium mb-1">Energy Signature</p>
+              <h3 className="text-lg sm:text-xl font-bold gradient-text" data-testid="text-energy-signature">
                 {fullProfile.energySignature}
               </h3>
             </div>
 
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-a3 border border-gray-a4">
-              <img
-                src={westernImage}
-                alt={fullProfile.westernZodiac.sign}
-                className="w-12 h-12 rounded-lg object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-1 text-gray-9 uppercase tracking-wider font-medium">Western Zodiac</p>
-                <p className="text-3 font-semibold text-gray-12">{fullProfile.westernZodiac.sign}</p>
-                <p className="text-2 text-gray-10">{fullProfile.westernZodiac.element} · {fullProfile.westernZodiac.modality}</p>
+            <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2.5 sm:gap-4">
+              <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-a3 border border-gray-a4 min-w-0">
+                <img
+                  src={westernImage}
+                  alt={fullProfile.westernZodiac.sign}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs text-gray-9 uppercase tracking-wider font-medium truncate">Western Zodiac</p>
+                  <p className="text-xs sm:text-sm font-bold text-gray-12 truncate">{fullProfile.westernZodiac.sign}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-10 truncate">{fullProfile.westernZodiac.element} · {fullProfile.westernZodiac.modality}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-a3 border border-gray-a4">
-              <img
-                src={chineseImage}
-                alt={fullProfile.chineseZodiac.animal}
-                className="w-12 h-12 rounded-lg object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-1 text-gray-9 uppercase tracking-wider font-medium">Chinese Zodiac</p>
-                <p className="text-3 font-semibold text-gray-12">{fullProfile.chineseZodiac.animal}</p>
-                <p className="text-2 text-gray-10">{fullProfile.chineseZodiac.element} · {fullProfile.chineseZodiac.yinYang}</p>
+              <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-a3 border border-gray-a4 min-w-0">
+                <img
+                  src={chineseImage}
+                  alt={fullProfile.chineseZodiac.animal}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs text-gray-9 uppercase tracking-wider font-medium truncate">Chinese Zodiac</p>
+                  <p className="text-xs sm:text-sm font-bold text-gray-12 truncate">{fullProfile.chineseZodiac.animal}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-10 truncate">{fullProfile.chineseZodiac.element} · {fullProfile.chineseZodiac.yinYang}</p>
+                </div>
               </div>
             </div>
           </div>

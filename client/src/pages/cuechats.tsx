@@ -707,34 +707,6 @@ export default function CueChats() {
               {exampleMessages.map((msg, i) => (
                 <ChatBubble key={i} msg={msg} index={i} isExample />
               ))}
-              
-              <div className="flex justify-center pt-4">
-                <Button
-                  variant="gold"
-                  size="lg"
-                  onClick={startChat}
-                  disabled={isInitializing}
-                  data-testid="button-start-chat"
-                >
-                  {isInitializing ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="mr-2"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                      </motion.div>
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Chat
-                    </>
-                  )}
-                </Button>
-              </div>
             </>
           ) : (
             <>
@@ -818,81 +790,109 @@ export default function CueChats() {
           </div>
         )}
 
-        {/* Fixed Bottom Input Bar: Rock-solid docked to bottom on desktop, and docked right above bottom nav on mobile */}
-        {!showPreview && (
-          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]">
-            <div className="max-w-4xl mx-auto px-3 py-2.5 sm:px-6 sm:py-3.5">
-              {selectedImage && (
-                <div className="relative inline-block mb-2">
-                  <img
-                    src={selectedImage.previewUrl}
-                    alt="Upload preview"
-                    className="w-14 h-14 object-cover rounded-lg border border-amber-500/50 shadow-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeSelectedImage}
-                    className="absolute -top-1.5 -right-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white rounded-full p-0.5 shadow transition-colors"
-                    title="Remove image"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageSelect}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10"
-                  title="Attach image or file"
-                >
-                  <Paperclip className="w-5 h-5" />
-                </Button>
-                <Input
-                  ref={inputRef}
-                  variant="frosted"
-                  placeholder="Ask CoreChat anything..."
-                  className="flex-1 bg-zinc-900/80 border-zinc-700/80 focus:border-amber-500/60 text-sm h-11 rounded-xl"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isLoading}
-                  data-testid="input-chat-message"
-                />
-                <Button 
-                  variant="gold" 
-                  size="icon" 
-                  onClick={sendMessage}
-                  disabled={isLoading || (!inputValue.trim() && !selectedImage)}
-                  className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
-                  data-testid="button-send-message"
-                >
-                  {isLoading ? (
+        {/* Fixed Bottom Action Bar: Always docked at bottom (on desktop: bottom-0, on mobile: above bottom nav) */}
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]">
+          <div className="max-w-4xl mx-auto px-3 py-2.5 sm:px-6 sm:py-3.5">
+            {showPreview ? (
+              <Button
+                variant="gold"
+                size="lg"
+                onClick={startChat}
+                disabled={isInitializing}
+                className="w-full h-12 rounded-xl font-bold text-sm sm:text-base shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                data-testid="button-start-chat"
+              >
+                {isInitializing ? (
+                  <>
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                     >
                       <Sparkles className="w-4 h-4" />
                     </motion.div>
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </Button>
+                    <span>Initializing CoreChat...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>Start Conversation</span>
+                  </>
+                )}
+              </Button>
+            ) : (
+              <div>
+                {selectedImage && (
+                  <div className="relative inline-block mb-2">
+                    <img
+                      src={selectedImage.previewUrl}
+                      alt="Upload preview"
+                      className="w-14 h-14 object-cover rounded-lg border border-amber-500/50 shadow-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeSelectedImage}
+                      className="absolute -top-1.5 -right-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white rounded-full p-0.5 shadow transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageSelect}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isLoading}
+                    className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10"
+                    title="Attach image or file"
+                  >
+                    <Paperclip className="w-5 h-5" />
+                  </Button>
+                  <Input
+                    ref={inputRef}
+                    variant="frosted"
+                    placeholder="Ask CoreChat anything..."
+                    className="flex-1 bg-zinc-900/80 border-zinc-700/80 focus:border-amber-500/60 text-sm h-11 rounded-xl"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isLoading}
+                    data-testid="input-chat-message"
+                  />
+                  <Button 
+                    variant="gold" 
+                    size="icon" 
+                    onClick={sendMessage}
+                    disabled={isLoading || (!inputValue.trim() && !selectedImage)}
+                    className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
+                    data-testid="button-send-message"
+                  >
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </motion.div>
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
 
       <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
