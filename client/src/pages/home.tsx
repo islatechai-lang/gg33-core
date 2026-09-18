@@ -154,7 +154,7 @@ export default function Home() {
       <StarField />
       <Navigation />
 
-      <main className="pt-16 pb-12 px-4 min-h-screen" data-testid="dashboard">
+      <main className="pt-16 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="dashboard">
         <div className="w-full max-w-6xl mx-auto space-y-6">
           <ProfileOverview profile={profile} whopUser={whopUser} isPro={isPro} />
 

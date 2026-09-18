@@ -636,9 +636,9 @@ export default function CueChats() {
       <StarField />
       <Navigation />
       
-      <main className="pt-16 min-h-screen flex flex-col relative w-full bg-transparent" data-testid="page-cuechats">
-        {/* Full-width sticky top bar directly beneath navigation */}
-        <div className="sticky top-16 z-20 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+      <main className="pt-0 lg:pt-16 min-h-screen flex flex-col relative w-full bg-transparent" data-testid="page-cuechats">
+        {/* Full-width sticky top bar directly beneath navigation (top-0 on mobile, top-16 on desktop) */}
+        <div className="sticky top-0 lg:top-16 z-20 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">

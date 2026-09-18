@@ -93,7 +93,7 @@ export default function BirthChartPage() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-16 px-4 min-h-screen">
+      <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-16 px-4 min-h-screen">
         <div className="w-full max-w-6xl mx-auto space-y-6">
           {/* Header Banner */}
           <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-zinc-950 via-zinc-900 to-amber-950/20 border border-zinc-800 shadow-2xl overflow-hidden">

@@ -71,7 +71,7 @@ export default function Compatibility() {
       <>
         <StarField />
         <Navigation />
-        <main className="pt-20 pb-12 px-4 min-h-screen">
+        <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen">
           <div className="container mx-auto max-w-4xl flex items-center justify-center">
             <div className="animate-pulse text-gray-11">Loading...</div>
           </div>
@@ -85,7 +85,7 @@ export default function Compatibility() {
       <>
         <StarField />
         <Navigation />
-        <main className="pt-20 pb-12 px-4 min-h-screen">
+        <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen">
           <div className="container mx-auto max-w-4xl">
             <Card variant="frosted" className="text-center">
               <CardContent className="py-12">
@@ -112,7 +112,7 @@ export default function Compatibility() {
       <StarField />
       <Navigation />
 
-      <main className="pt-16 sm:pt-20 pb-20 lg:pb-12 px-3 sm:px-4 min-h-screen" data-testid="page-compatibility">
+      <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-3 sm:px-4 min-h-screen" data-testid="page-compatibility">
         <div className="container mx-auto max-w-3xl space-y-6">
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">

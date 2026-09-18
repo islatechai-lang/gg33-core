@@ -56,7 +56,7 @@ export default function Lesson() {
       <>
         <StarField />
         <Navigation />
-        <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-lesson-not-found">
+        <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="page-lesson-not-found">
           <div className="container mx-auto max-w-4xl text-center">
             <h1 className="text-6 font-semibold mb-4">Lesson Not Found</h1>
             <p className="text-gray-11 mb-6">The lesson you're looking for doesn't exist.</p>
@@ -157,7 +157,7 @@ export default function Lesson() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-lesson">
+      <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="page-lesson">
         <div className="container mx-auto max-w-3xl space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link href={`${basePath}/course/${courseId}`}>

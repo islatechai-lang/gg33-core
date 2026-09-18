@@ -1180,7 +1180,7 @@ export default function Explore() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-explore">
+      <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="page-explore">
         <div className="container mx-auto max-w-6xl space-y-8">
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">

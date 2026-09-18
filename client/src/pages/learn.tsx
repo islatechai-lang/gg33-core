@@ -31,7 +31,7 @@ export default function Learn() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-12 px-4 min-h-screen" data-testid="page-learn">
+      <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="page-learn">
         <div className="container mx-auto max-w-6xl space-y-8">
           <div className="text-center">
             <Badge variant="outline" className="mb-4">

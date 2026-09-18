@@ -27,7 +27,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import {
   Compass,
-  LayoutDashboard,
+  Home,
   Users,
   Database,
   MessageCircle,
@@ -51,7 +51,7 @@ interface MembershipInfo {
 }
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Home', icon: Home },
   { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/cuechats', label: 'CoreChats', icon: MessageCircle },
   { to: '/birth-chart', label: 'Birth Chart', icon: Sparkles },
@@ -98,8 +98,8 @@ export function Navigation() {
 
   return (
     <>
-      {/* Top Header Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass" data-testid="navigation">
+      {/* Top Header Navigation (Always visible on desktop; on mobile, only on Home) */}
+      <nav className={cn("fixed top-0 left-0 right-0 z-50 glass", !isDashboardActive && "hidden lg:block")} data-testid="navigation">
         <div className="w-full px-4">
           <div className="flex items-center justify-between h-14 gap-4">
             {/* Logo Section */}
@@ -194,18 +194,18 @@ export function Navigation() {
         data-testid="bottom-navigation"
       >
         <div className="grid grid-cols-5 h-16 max-w-lg mx-auto px-1 items-center">
-          {/* 1. Dashboard */}
+          {/* 1. Home */}
           <Link
             href="/"
             className={cn(
               "flex flex-col items-center justify-center py-1 gap-1 transition-all relative group",
               isDashboardActive ? "text-amber-400" : "text-zinc-400 hover:text-zinc-200"
             )}
-            data-testid="bottom-link-dashboard"
+            data-testid="bottom-link-home"
           >
-            <LayoutDashboard className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.3px]")} />
+            <Home className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.3px]")} />
             <span className={cn("text-[10px] tracking-tight", isDashboardActive ? "font-bold text-amber-300" : "font-medium")}>
-              Dashboard
+              Home
             </span>
           </Link>
 
