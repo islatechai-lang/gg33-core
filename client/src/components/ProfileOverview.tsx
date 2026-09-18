@@ -158,30 +158,34 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-4 px-5 py-3 rounded-xl bg-gradient-to-br from-amber-a3 to-amber-a2 border border-amber-a4">
-                  <p className="text-0 text-amber-10 uppercase tracking-widest font-medium">Life Path</p>
-                  <span className="text-6 font-bold text-amber-11 leading-none" data-testid="text-life-path-number">
-                    {fullProfile.lifePathNumber}
-                  </span>
-                  <div className="text-left border-l border-amber-a4 pl-4">
-                    <p className="text-3 font-semibold text-gray-12 leading-tight">{lifePathMeaning.title}</p>
-                    <p className="text-1 text-gray-10">{lifePathMeaning.keywords[0]}</p>
-                  </div>
-                </div>
+            </div>
 
+            {/* 1. Life Path & Energy Signature Side by Side */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+              {/* Life Path */}
+              <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-amber-a3 to-amber-a2 border border-amber-a4 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 font-black text-xl sm:text-2xl shadow-inner flex-shrink-0" data-testid="text-life-path-number">
+                  {fullProfile.lifePathNumber}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs text-amber-10 uppercase tracking-widest font-semibold truncate">Life Path</p>
+                  <p className="text-xs sm:text-sm font-bold text-gray-12 truncate leading-tight">{lifePathMeaning.title}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-10 truncate">{lifePathMeaning.keywords[0]}</p>
+                </div>
+              </div>
+
+              {/* Energy Signature */}
+              <div className="flex flex-col justify-center p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-gray-a3 to-gray-a2 border border-gray-a4 min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-9 uppercase tracking-widest font-semibold truncate">Energy Signature</p>
+                <h3 className="text-xs sm:text-sm md:text-base font-bold gradient-text truncate leading-tight mt-0.5 sm:mt-1" data-testid="text-energy-signature">
+                  {fullProfile.energySignature}
+                </h3>
+                <p className="text-[10px] sm:text-xs text-gray-10 truncate mt-0.5">Core vibration</p>
               </div>
             </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            <div className="flex flex-col justify-center text-center p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-gray-a3 to-gray-a2 border border-gray-a4">
-              <p className="text-[11px] text-gray-9 uppercase tracking-widest font-medium mb-1">Energy Signature</p>
-              <h3 className="text-lg sm:text-xl font-bold gradient-text" data-testid="text-energy-signature">
-                {fullProfile.energySignature}
-              </h3>
-            </div>
-
-            <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2.5 sm:gap-4">
+            {/* 2. Western Zodiac & Chinese Zodiac Side by Side */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
               <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-a3 border border-gray-a4 min-w-0">
                 <img
                   src={westernImage}
@@ -208,7 +212,6 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                 </div>
               </div>
             </div>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-xl bg-gray-a2 border border-gray-a4 p-4 sm:p-5 relative">
