@@ -5,11 +5,10 @@ import { Loader2 } from 'lucide-react';
 
 interface Props {
   planId: string;
-  email?: string;
   onComplete?: (paymentId?: string) => void;
 }
 
-export default function WhopElementsCheckout({ planId, email, onComplete }: Props) {
+export default function WhopElementsCheckout({ planId, onComplete }: Props) {
   const [elements, setElements] = useState<any>(null);
 
   useEffect(() => {
@@ -52,7 +51,7 @@ export default function WhopElementsCheckout({ planId, email, onComplete }: Prop
           </div>
         }
       >
-        <CheckoutElement buyerEmail={email} />
+        <CheckoutElement />
       </Checkout>
     </WhopElements>
   );

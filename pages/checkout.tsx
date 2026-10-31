@@ -153,7 +153,6 @@ export default function CheckoutPage() {
               <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black/60 min-h-[440px] p-2">
                 <WhopElementsCheckout
                   planId={PLAN_ID}
-                  email={dbUser?.email || undefined}
                   onComplete={handleComplete}
                 />
               </div>
