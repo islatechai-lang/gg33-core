@@ -25,7 +25,9 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { dbUser, refreshDbUser, loading: authLoading } = useAuth();
   
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string>(DIRECT_CHECKOUT_URL);
+  const [loadingCheckout, setLoadingCheckout] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !dbUser) {
@@ -34,22 +36,43 @@ export default function CheckoutPage() {
     }
 
     if (dbUser) {
-      // Send notification email in background
-      apiRequest('POST', '/api/notify-upgrade-click', {
-        userId: dbUser.firebaseUid,
-        username: dbUser.fullName,
-        odisId: dbUser.odisId,
-        fullName: dbUser.fullName,
-        email: dbUser.email,
-      }).catch((err) => {
-        console.error('Failed to send notification email:', err);
-      });
+      const initCheckout = async () => {
+        setLoadingCheckout(true);
+        // Send notification email in background
+        apiRequest('POST', '/api/notify-upgrade-click', {
+          userId: dbUser.firebaseUid,
+          username: dbUser.fullName,
+          odisId: dbUser.odisId,
+          fullName: dbUser.fullName,
+          email: dbUser.email,
+        }).catch((err) => {
+          console.error('Failed to send notification email:', err);
+        });
+
+        // Create checkout session with Whop SDK
+        try {
+          const res = await apiRequest('POST', '/api/checkout/create', { odisId: dbUser.odisId });
+          const data = await res.json();
+          if (data.id) {
+            setSessionId(data.id);
+            if (data.url) {
+              setCheckoutUrl(data.url);
+            }
+          }
+        } catch (err) {
+          console.error('[Checkout] Session creation error:', err);
+        } finally {
+          setLoadingCheckout(false);
+        }
+      };
+
+      initCheckout();
     }
   }, [dbUser, authLoading, router]);
 
   const handleComplete = async (plan_id?: any, receipt_id?: any, result?: any) => {
     try {
-      const paymentId = receipt_id || result?.payment_id || 'whop_checkout_success';
+      const paymentId = receipt_id || result?.payment_id || sessionId || 'whop_checkout_success';
       await apiRequest('POST', '/api/upgrade-to-pro', {
         paymentId: paymentId,
         odisId: dbUser?.odisId,
@@ -139,19 +162,34 @@ export default function CheckoutPage() {
               </div>
 
               <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black/60 min-h-[440px]">
-                <WhopCheckoutEmbed
-                  planId={PLAN_ID}
-                  prefill={dbUser?.email ? { email: dbUser.email } : undefined}
-                  returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
-                  theme="dark"
-                  onComplete={handleComplete}
-                  fallback={
-                    <div className="h-96 flex flex-col items-center justify-center gap-4">
-                      <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                      <p className="text-sm font-medium text-zinc-400">Loading secure checkout...</p>
-                    </div>
-                  }
-                />
+                {loadingCheckout ? (
+                  <div className="h-96 flex flex-col items-center justify-center gap-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                    <p className="text-sm font-medium text-zinc-400">Loading secure checkout session...</p>
+                  </div>
+                ) : sessionId ? (
+                  <WhopCheckoutEmbed
+                    sessionId={sessionId}
+                    prefill={dbUser?.email ? { email: dbUser.email } : undefined}
+                    returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
+                    theme="dark"
+                    onComplete={handleComplete}
+                  />
+                ) : (
+                  <WhopCheckoutEmbed
+                    planId={PLAN_ID}
+                    prefill={dbUser?.email ? { email: dbUser.email } : undefined}
+                    returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
+                    theme="dark"
+                    onComplete={handleComplete}
+                    fallback={
+                      <div className="h-96 flex flex-col items-center justify-center gap-4">
+                        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                        <p className="text-sm font-medium text-zinc-400">Loading secure checkout...</p>
+                      </div>
+                    }
+                  />
+                )}
               </div>
             </div>
 

@@ -2884,7 +2884,7 @@ export async function registerRoutes(
       res.json({
         id: checkoutConfiguration.id,
         planId: checkoutConfiguration.plan?.id || planId,
-        url: (checkoutConfiguration as any).url || `https://whop.com/checkout/c/${checkoutConfiguration.id}`,
+        url: (checkoutConfiguration as any).purchase_url || (checkoutConfiguration as any).url || `https://whop.com/checkout/${checkoutConfiguration.id}/`,
       });
     } catch (error: any) {
       console.error("[Whop Checkout] Error creating checkout configuration:", error?.message || error);
