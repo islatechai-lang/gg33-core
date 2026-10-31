@@ -2867,7 +2867,7 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Whop SDK not initialized" });
       }
 
-      const planId = process.env.WHOP_PLAN_ID || "plan_vjG5tjRpldDkY";
+      const planId = process.env.WHOP_PLAN_ID || "plan_ZvsM7AIxX1o0j";
       
       // Pass user metadata so Whop associates it with this checkout session
       const checkoutConfiguration = await whopSdk.checkoutConfigurations.create({

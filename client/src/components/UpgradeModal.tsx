@@ -49,7 +49,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
       ? `${window.location.origin}/?status=success`
       : 'https://gg33-core.vercel.app/?status=success';
 
-    const checkoutUrl = new URL('https://whop.com/checkout/plan_vjG5tjRpldDkY');
+    const checkoutUrl = new URL('https://whop.com/checkout/plan_ZvsM7AIxX1o0j');
     if (dbUser?.email) {
       checkoutUrl.searchParams.set('email', dbUser.email);
     }

@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 
-const PLAN_ID = "plan_vjG5tjRpldDkY";
+const PLAN_ID = "plan_ZvsM7AIxX1o0j";
 
 const benefits = [
   { label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
