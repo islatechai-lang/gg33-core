@@ -44,6 +44,8 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@tanstack/react-query": "^5.60.5",
     "@whop/checkout": "^0.6.0",
+    "@whop/elements": "^1.9.0",
+    "@whop/elements-react": "^1.9.0",
     "@whop/iframe": "^0.0.3",
     "@whop/sdk": "^0.0.12",
     "class-variance-authority": "^0.7.1",
