@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 
-const PLAN_ID = "plan_vjG5tjRpldDkY";
+const PLAN_ID = "plan_ZvsM7AIxX1o0j";
 const DIRECT_CHECKOUT_URL = `https://whop.com/checkout/${PLAN_ID}`;
 
 // Dynamically import WhopElementsCheckout so that it only loads in browser
