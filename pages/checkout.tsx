@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Crown, Check, Lock, ArrowLeft, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Crown, Check, Lock, ArrowLeft, Loader2, ShieldCheck, Sparkles, ExternalLink } from 'lucide-react';
 import { WhopCheckoutEmbed } from "@whop/checkout/react";
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 
+const PLAN_ID = "plan_vjG5tjRpldDkY";
+const DIRECT_CHECKOUT_URL = `https://whop.com/checkout/${PLAN_ID}`;
+
 const benefits = [
+  { label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
   { label: 'Compatibility Analysis', description: 'Relationship dynamics & matching' },
   { label: 'Cues Database', description: '22,000+ comprehensive numerology cues' },
   { label: 'Explore Modules', description: 'All advanced numerology calculators' },
-  { label: 'CueChats AI', description: '24/7 personalized AI guidance & readings' },
+  { label: 'CoreChats AI', description: '24/7 personalized AI guidance & readings' },
   { label: 'All Courses', description: 'Complete esoteric learning library' },
   { label: 'Core & Name Numbers', description: 'Full life path & destiny interpretations' },
   { label: 'Daily Energy Readings', description: 'Personalized daily frequencies' },
@@ -20,12 +23,9 @@ const benefits = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const { dbUser, refreshDbUser, loading: authLoading } = useAuth();
   
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [loadingCheckout, setLoadingCheckout] = useState(true);
+  const [checkoutUrl, setCheckoutUrl] = useState<string>(DIRECT_CHECKOUT_URL);
 
   useEffect(() => {
     if (!authLoading && !dbUser) {
@@ -34,43 +34,32 @@ export default function CheckoutPage() {
     }
 
     if (dbUser) {
-      const initCheckout = async () => {
-        setLoadingCheckout(true);
-        try {
-          // Send notification email
-          try {
-            await apiRequest('POST', '/api/notify-upgrade-click', {
-              userId: dbUser.firebaseUid,
-              username: dbUser.fullName,
-              odisId: dbUser.odisId,
-              fullName: dbUser.fullName,
-              email: dbUser.email,
-            });
-          } catch (err) {
-            console.error('Failed to send notification email:', err);
-          }
-
-          const res = await apiRequest('POST', '/api/checkout/create', { odisId: dbUser.odisId });
-          const data = await res.json();
-          if (data.id) {
-            setSessionId(data.id);
-            setCheckoutUrl(data.url);
-          }
-        } catch (error: any) {
-          console.error('[Checkout] Error:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to initialize payment gateway. Please refresh or try again.',
-          });
-        } finally {
-          setLoadingCheckout(false);
-        }
-      };
-
-      initCheckout();
+      // Send notification email in background
+      apiRequest('POST', '/api/notify-upgrade-click', {
+        userId: dbUser.firebaseUid,
+        username: dbUser.fullName,
+        odisId: dbUser.odisId,
+        fullName: dbUser.fullName,
+        email: dbUser.email,
+      }).catch((err) => {
+        console.error('Failed to send notification email:', err);
+      });
     }
-  }, [dbUser, authLoading, router, toast]);
+  }, [dbUser, authLoading, router]);
+
+  const handleComplete = async (plan_id?: any, receipt_id?: any, result?: any) => {
+    try {
+      const paymentId = receipt_id || result?.payment_id || 'whop_checkout_success';
+      await apiRequest('POST', '/api/upgrade-to-pro', {
+        paymentId: paymentId,
+        odisId: dbUser?.odisId,
+      });
+      await refreshDbUser();
+      router.push('/?status=success');
+    } catch (e) {
+      router.push('/?status=success');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col relative selection:bg-amber-500/30">
@@ -149,48 +138,34 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {loadingCheckout && (
-                <div className="h-96 flex flex-col items-center justify-center gap-4">
-                  <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                  <p className="text-sm font-medium text-zinc-400">Loading secure checkout session...</p>
-                </div>
-              )}
-
-              {!loadingCheckout && sessionId && (
-                <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black/60 min-h-[420px]">
-                  <WhopCheckoutEmbed
-                    sessionId={sessionId}
-                    returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
-                    theme="dark"
-                    onComplete={async (paymentId: any) => {
-                      try {
-                        await apiRequest('POST', '/api/upgrade-to-pro', {
-                          paymentId: paymentId || sessionId || 'whop_checkout_success',
-                          odisId: dbUser?.odisId,
-                        });
-                        await refreshDbUser();
-                        router.push('/?status=success');
-                      } catch (e) {
-                        router.push('/?status=success');
-                      }
-                    }}
-                  />
-                </div>
-              )}
+              <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black/60 min-h-[440px]">
+                <WhopCheckoutEmbed
+                  planId={PLAN_ID}
+                  prefill={dbUser?.email ? { email: dbUser.email } : undefined}
+                  returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
+                  theme="dark"
+                  onComplete={handleComplete}
+                  fallback={
+                    <div className="h-96 flex flex-col items-center justify-center gap-4">
+                      <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                      <p className="text-sm font-medium text-zinc-400">Loading secure checkout...</p>
+                    </div>
+                  }
+                />
+              </div>
             </div>
 
-            {checkoutUrl && !loadingCheckout && (
-              <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center">
-                <a
-                  href={checkoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-zinc-400 hover:text-amber-400 transition-colors underline"
-                >
-                  Having trouble loading the form? Click here to pay directly on Whop
-                </a>
-              </div>
-            )}
+            <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center">
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-amber-400 transition-colors underline"
+              >
+                <span>Having trouble loading the form? Click here to pay directly on Whop</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
         </div>
       </main>
