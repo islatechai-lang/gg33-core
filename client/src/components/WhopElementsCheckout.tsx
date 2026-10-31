@@ -6,11 +6,10 @@ import { Loader2 } from 'lucide-react';
 interface Props {
   planId: string;
   email?: string;
-  onComplete?: () => void;
-  returnUrl?: string;
+  onComplete?: (paymentId?: string) => void;
 }
 
-export default function WhopElementsCheckout({ planId, email, onComplete, returnUrl }: Props) {
+export default function WhopElementsCheckout({ planId, email, onComplete }: Props) {
   const [elements, setElements] = useState<any>(null);
 
   useEffect(() => {
@@ -42,9 +41,9 @@ export default function WhopElementsCheckout({ planId, email, onComplete, return
     >
       <Checkout
         plan={planId}
-        returnUrl={returnUrl}
-        onComplete={() => {
-          onComplete?.();
+        onComplete={(completion: any) => {
+          const paymentId = completion?.paymentId || completion?.sessionId || 'whop_checkout_success';
+          onComplete?.(paymentId);
         }}
         fallback={
           <div className="h-96 flex flex-col items-center justify-center gap-4">

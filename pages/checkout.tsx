@@ -59,14 +59,10 @@ export default function CheckoutPage() {
     }
   }, [dbUser, authLoading, router]);
 
-  const returnUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/?status=success`
-    : 'https://gg33-core.vercel.app/?status=success';
-
-  const handleComplete = async () => {
+  const handleComplete = async (paymentId?: string) => {
     try {
       await apiRequest('POST', '/api/upgrade-to-pro', {
-        paymentId: 'whop_checkout_success',
+        paymentId: paymentId || 'whop_checkout_success',
         odisId: dbUser?.odisId,
       });
       await refreshDbUser();
@@ -158,7 +154,6 @@ export default function CheckoutPage() {
                 <WhopElementsCheckout
                   planId={PLAN_ID}
                   email={dbUser?.email || undefined}
-                  returnUrl={returnUrl}
                   onComplete={handleComplete}
                 />
               </div>
