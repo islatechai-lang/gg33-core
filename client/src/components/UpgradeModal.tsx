@@ -44,18 +44,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     }
 
     onOpenChange(false);
-
-    const returnUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/?status=success`
-      : 'https://gg33-core.vercel.app/?status=success';
-
-    const checkoutUrl = new URL('https://whop.com/checkout/plan_ZvsM7AIxX1o0j');
-    if (dbUser?.email) {
-      checkoutUrl.searchParams.set('email', dbUser.email);
-    }
-    checkoutUrl.searchParams.set('redirect_url', returnUrl);
-
-    window.location.href = checkoutUrl.toString();
+    router.push('/checkout');
   };
 
   return (

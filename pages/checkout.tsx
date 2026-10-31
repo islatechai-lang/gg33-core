@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Crown, Check, Lock, ArrowLeft, ShieldCheck, Sparkles, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Crown, Check, Lock, ArrowLeft, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
+import { WhopCheckoutEmbed } from "@whop/checkout/react";
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
-
-const PLAN_ID = "plan_ZvsM7AIxX1o0j";
 
 const benefits = [
   { label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
@@ -22,21 +21,12 @@ const benefits = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { dbUser, loading: authLoading } = useAuth();
-  const [redirecting, setRedirecting] = useState(false);
-
-  const getCheckoutUrl = () => {
-    const returnUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/?status=success`
-      : 'https://gg33-core.vercel.app/?status=success';
-
-    const url = new URL(`https://whop.com/checkout/${PLAN_ID}`);
-    if (dbUser?.email) {
-      url.searchParams.set('email', dbUser.email);
-    }
-    url.searchParams.set('redirect_url', returnUrl);
-    return url.toString();
-  };
+  const { toast } = useToast();
+  const { dbUser, refreshDbUser, loading: authLoading } = useAuth();
+  
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [loadingCheckout, setLoadingCheckout] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !dbUser) {
@@ -45,23 +35,43 @@ export default function CheckoutPage() {
     }
 
     if (dbUser) {
-      // Send notification email in background
-      apiRequest('POST', '/api/notify-upgrade-click', {
-        userId: dbUser.firebaseUid,
-        username: dbUser.fullName,
-        odisId: dbUser.odisId,
-        fullName: dbUser.fullName,
-        email: dbUser.email,
-      }).catch((err) => {
-        console.error('Failed to send notification email:', err);
-      });
-    }
-  }, [dbUser, authLoading, router]);
+      const initCheckout = async () => {
+        setLoadingCheckout(true);
+        try {
+          // Send notification email
+          try {
+            await apiRequest('POST', '/api/notify-upgrade-click', {
+              userId: dbUser.firebaseUid,
+              username: dbUser.fullName,
+              odisId: dbUser.odisId,
+              fullName: dbUser.fullName,
+              email: dbUser.email,
+            });
+          } catch (err) {
+            console.error('Failed to send notification email:', err);
+          }
 
-  const handleRedirect = () => {
-    setRedirecting(true);
-    window.location.href = getCheckoutUrl();
-  };
+          const res = await apiRequest('POST', '/api/checkout/create', { odisId: dbUser.odisId });
+          const data = await res.json();
+          if (data.id) {
+            setSessionId(data.id);
+            setCheckoutUrl(data.url);
+          }
+        } catch (error: any) {
+          console.error('[Checkout] Error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to initialize payment gateway. Please refresh or try again.',
+          });
+        } finally {
+          setLoadingCheckout(false);
+        }
+      };
+
+      initCheckout();
+    }
+  }, [dbUser, authLoading, router, toast]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col relative selection:bg-amber-500/30">
@@ -126,8 +136,8 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Secure Payment Column (7 cols) */}
-          <div className="lg:col-span-7 bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl min-h-[460px] flex flex-col justify-between">
+          {/* Embedded Payment Container Column (7 cols) */}
+          <div className="lg:col-span-7 bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl min-h-[520px] flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-6 border-b border-zinc-800/80 mb-6">
                 <div className="flex items-center gap-2">
@@ -136,62 +146,52 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-zinc-400">
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Whop Certified Checkout</span>
+                  <span>Whop Checkout</span>
                 </div>
               </div>
 
-              <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-zinc-900/90 via-zinc-900/40 to-amber-950/20 border border-amber-500/20 text-center space-y-5">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-                  <Crown className="w-7 h-7" />
+              {loadingCheckout && (
+                <div className="h-96 flex flex-col items-center justify-center gap-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                  <p className="text-sm font-medium text-zinc-400">Loading secure checkout session...</p>
                 </div>
+              )}
 
-                <div className="space-y-1.5">
-                  <h4 className="text-xl sm:text-2xl font-black text-zinc-100 tracking-tight">
-                    Upgrade to GG33 Pro
-                  </h4>
-                  <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                    You're one step away from unlimited access to all AI tools, complete courses, and the 22,000+ cues database.
-                  </p>
+              {!loadingCheckout && sessionId && (
+                <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black/60 min-h-[420px]">
+                  <WhopCheckoutEmbed
+                    sessionId={sessionId}
+                    returnUrl={typeof window !== "undefined" ? window.location.origin + "/?status=success" : undefined}
+                    theme="dark"
+                    onComplete={async (paymentId: any) => {
+                      try {
+                        await apiRequest('POST', '/api/upgrade-to-pro', {
+                          paymentId: paymentId || sessionId || 'whop_checkout_success',
+                          odisId: dbUser?.odisId,
+                        });
+                        await refreshDbUser();
+                        router.push('/?status=success');
+                      } catch (e) {
+                        router.push('/?status=success');
+                      }
+                    }}
+                  />
                 </div>
+              )}
+            </div>
 
-                <div className="py-2">
-                  <Button
-                    onClick={handleRedirect}
-                    disabled={redirecting}
-                    className="w-full h-14 sm:h-16 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none cursor-pointer"
-                  >
-                    {redirecting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Opening Whop Checkout...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5 fill-zinc-950/20" />
-                        <span>Proceed to Checkout — $35/mo</span>
-                        <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <p className="text-[11px] text-zinc-500">
-                  Supports Apple Pay, Google Pay, Credit/Debit cards & more via Whop
-                </p>
+            {checkoutUrl && !loadingCheckout && (
+              <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center">
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-zinc-400 hover:text-amber-400 transition-colors underline"
+                >
+                  Having trouble loading the form? Click here to pay directly on Whop
+                </a>
               </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center">
-              <a
-                href={getCheckoutUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-amber-400 transition-colors underline"
-              >
-                <span>Or open direct checkout page in a new window</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
+            )}
           </div>
         </div>
       </main>
