@@ -84,10 +84,7 @@ export default function CheckoutPage() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/30 flex-shrink-0">
                 <Sparkles className="w-5 h-5 text-amber-400" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-zinc-100">Secure Payment</h3>
-                <p className="text-xs text-amber-400 font-medium">GG33 Pro • 3-Day Free Trial, then $35/mo</p>
-              </div>
+              <h3 className="text-lg font-bold text-zinc-100">Secure Payment</h3>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-zinc-400">
               <Lock className="w-3.5 h-3.5 text-emerald-400" />

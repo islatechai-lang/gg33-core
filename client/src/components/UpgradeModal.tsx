@@ -66,10 +66,9 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               </div>
             </div>
             <div className="text-right">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 block text-center mb-1">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 block text-center">
                 PRO
               </span>
-              <span className="text-xs font-extrabold text-zinc-100">3 Days Free</span>
             </div>
           </div>
 
@@ -107,7 +106,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               </div>
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                <span>Encrypted 256-bit Whop payment processing</span>
+                <span>Secure Whop Payment</span>
               </div>
             </div>
           </div>
