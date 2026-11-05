@@ -65,8 +65,8 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             
             {/* Price Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-              <span className="text-sm font-extrabold text-amber-300">$35</span>
-              <span className="text-[11px] text-amber-400/80 font-medium">/ month</span>
+              <span className="text-sm font-extrabold text-amber-300">3 Days Free</span>
+              <span className="text-[11px] text-amber-400/80 font-medium">• then $35/mo</span>
             </div>
           </div>
           
@@ -106,14 +106,14 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none"
             >
               <Sparkles className="w-5 h-5 text-zinc-950 fill-zinc-950/20" />
-              <span>Upgrade to Pro — $35/mo</span>
+              <span>Start 3-Day Free Trial</span>
               <ArrowRight className="w-5 h-5 stroke-[2.5]" />
             </Button>
 
             <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 pt-1">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>30-Day Money Back Guarantee</span>
+                <span>3-Day Free Trial • Cancel Anytime</span>
               </div>
               <div className="flex items-center gap-1">
                 <Lock className="w-3 h-3 text-zinc-400" />

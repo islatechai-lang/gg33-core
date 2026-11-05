@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { StarField } from '@/components/StarField';
 
-const PLAN_ID = "plan_vjG5tjRpldDkY";
+const PLAN_ID = "plan_fIcwotlGpy6de";
 const DIRECT_CHECKOUT_URL = `https://whop.com/checkout/${PLAN_ID}`;
 
 // Dynamically import WhopElementsCheckout so that it only loads in browser
@@ -98,14 +98,14 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-zinc-100">GG33 Pro</h2>
-                  <p className="text-xs text-amber-400 font-medium">$35 / month • All-Access Pass</p>
+                  <p className="text-xs text-amber-400 font-medium">3-Day Free Trial • then $35/mo</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 block text-center mb-1">
                   PRO
                 </span>
-                <span className="text-xs font-extrabold text-zinc-100">$35/mo</span>
+                <span className="text-xs font-extrabold text-zinc-100">3 Days Free</span>
               </div>
             </div>
 
