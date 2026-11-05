@@ -31,10 +31,12 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      router.prefetch('/checkout');
+    } else {
       setIsNavigating(false);
     }
-  }, [open]);
+  }, [open, router]);
 
   const handleProceedToCheckout = () => {
     if (isNavigating) return;
@@ -52,8 +54,12 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
       });
     }
 
-    onOpenChange(false);
-    router.push('/checkout');
+    // Smooth transition: give brief tactile feedback before navigating to prefetched checkout
+    setTimeout(() => {
+      router.push('/checkout').finally(() => {
+        onOpenChange(false);
+      });
+    }, 450);
   };
 
   return (
@@ -101,7 +107,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             <Button
               onClick={handleProceedToCheckout}
               disabled={isNavigating}
-              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-150 transform hover:-translate-y-0.5 active:scale-[0.97] border-none cursor-pointer disabled:opacity-80"
+              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.96] border-none cursor-pointer disabled:opacity-90"
             >
               {isNavigating ? (
                 <>
@@ -117,15 +123,13 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               )}
             </Button>
 
-            <div className="space-y-2 pt-1 border-t border-zinc-800/80 text-xs text-zinc-400">
-              <div className="flex items-center gap-2">
+            <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-center gap-2 text-xs text-zinc-400 flex-wrap text-center">
+              <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                 <span>30-Day Money-Back Guarantee</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span>Cancel Anytime</span>
-              </div>
+              <span className="text-zinc-600">•</span>
+              <span>Cancel Anytime</span>
             </div>
           </div>
         </div>
