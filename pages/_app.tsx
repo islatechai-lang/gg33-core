@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
+import { PageTracker } from "@/components/PageTracker";
 import "@/index.css";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -12,6 +13,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          <PageTracker />
           <div className="dark min-h-screen bg-background">
             <Component {...pageProps} />
           </div>

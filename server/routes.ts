@@ -9,6 +9,15 @@ import { Resend } from 'resend';
 import { parseUTCDate } from '../shared/dateUtils';
 import { reduceToSingleDigit, getLifePath, getVedicNakshatra, pythagorean } from './exploreUtils';
 import { sendDailyEnergyResetNotifications, sendDailyEnergyReminders } from "./notifications";
+import {
+  recordPageView,
+  recordUpgradeIntent,
+  getAdminAnalyticsStats,
+  isAuthorizedAdmin,
+  ADMIN_PASSWORD,
+  ADMIN_TOKEN,
+  ADMIN_EMAIL,
+} from "./analytics";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -2900,6 +2909,11 @@ export async function registerRoutes(
     try {
       const { userId, username, profilePictureUrl, odisId, fullName, email } = req.body as any;
 
+      // Track intent in Firestore analytics
+      recordUpgradeIntent({ userId, odisId, fullName, email }).catch((e) =>
+        console.error("[Analytics] Upgrade intent track error:", e)
+      );
+
       const resendApiKey = process.env.RESEND_API_KEY;
       const notificationEmail = process.env.NOTIFICATION_EMAIL;
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
@@ -3401,6 +3415,68 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Test notification failed:", error);
       return res.status(500).json({ error: error?.message || "Failed" });
+    }
+  });
+
+  // Analytics page view tracking (excludes princederder44@gmail.com)
+  app.post("/api/analytics/track", async (req, res) => {
+    try {
+      const { path, referrer, sessionId, device, browser, os, userId, userEmail, isPro } = req.body || {};
+
+      if (req.headers["x-admin-exclude"] === "true") {
+        return res.json({ success: true, ignored: true });
+      }
+
+      await recordPageView({
+        path,
+        referrer,
+        sessionId,
+        device,
+        browser,
+        os,
+        userId,
+        userEmail,
+        isPro,
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[Analytics Track API Error]:", error);
+      res.status(500).json({ error: "Failed to record page view" });
+    }
+  });
+
+  // Admin authentication (hardcoded password: mikasa08)
+  app.post("/api/admin/auth", async (req, res) => {
+    try {
+      const { password } = req.body || {};
+      if (password === ADMIN_PASSWORD) {
+        return res.json({
+          success: true,
+          token: ADMIN_TOKEN,
+          adminEmail: ADMIN_EMAIL,
+        });
+      }
+      return res.status(401).json({ error: "Incorrect admin password" });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || "Auth failed" });
+    }
+  });
+
+  // Admin stats endpoint (protected by admin token)
+  app.get("/api/admin/stats", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || (req.headers["x-admin-key"] as string);
+      if (!isAuthorizedAdmin(authHeader)) {
+        return res.status(401).json({ error: "Unauthorized. Admin access required." });
+      }
+
+      const days = parseInt(req.query.days as string, 10) || 30;
+      const stats = await getAdminAnalyticsStats(days);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("[Admin Stats API Error]:", error);
+      res.status(500).json({ error: error?.message || "Failed to load admin stats" });
     }
   });
 
