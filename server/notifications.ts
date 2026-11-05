@@ -1,6 +1,7 @@
 import { storage } from "./storage";
 import { sendOneSignalNotification } from "./onesignal";
 import { format } from "date-fns";
+import { logPushNotification } from "./analytics";
 
 let lastResetNotificationDate: string | null = null;
 let lastReminderDate: string | null = null;
@@ -35,10 +36,22 @@ export async function sendDailyEnergyResetNotifications(force = false) {
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
       subtitle: format(new Date(), "EEEE, MMMM do"),
-      url: "https://gg33-core.vercel.app/",
+      url: `https://gg33-core.vercel.app/?from_push=1&push_type=daily_reset&push_date=${today}`,
       subscriptionIds: allPlayerIds,
       externalIds: allOdisIds,
     });
+
+    // Record delivery in Firestore analytics
+    logPushNotification({
+      id: result.data?.id,
+      type: "daily_reset",
+      title: "🌅 Your Daily Energy Has Reset!",
+      content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
+      targetDevicesCount: allPlayerIds.length,
+      targetUsersCount: allOdisIds.length,
+      status: result.success ? "delivered" : "failed",
+      dateStr: today,
+    }).catch((e) => console.error("[Notifications Log Error]:", e));
 
     if (result.success) {
       console.log(`[Notifications] Reset push sent successfully.`);
@@ -97,8 +110,20 @@ export async function sendDailyEnergyReminders(force = false) {
       title: "✨ Your Daily Energy is Still Waiting!",
       content: "You haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!",
       subtitle: "Tap to reveal your reading",
-      url: "https://gg33-core.vercel.app/",
+      url: `https://gg33-core.vercel.app/?from_push=1&push_type=daily_reminder&push_date=${today}`,
     });
+
+    // Record delivery in Firestore analytics
+    logPushNotification({
+      id: result.data?.id,
+      type: "daily_reminder",
+      title: "✨ Your Daily Energy is Still Waiting!",
+      content: "You haven't revealed your energy reading yet today. Don't miss out on your cosmic guidance!",
+      targetDevicesCount: missingSubscriptionIds.length,
+      targetUsersCount: missingExternalIds.length,
+      status: result.success ? "delivered" : "failed",
+      dateStr: today,
+    }).catch((e) => console.error("[Notifications Log Error]:", e));
 
     if (result.success) {
       console.log(`[Notifications] Reminders sent successfully.`);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import {
   Dialog,
@@ -29,30 +29,34 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const router = useRouter();
   const { dbUser } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
+  const notifiedRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       router.prefetch('/checkout');
+
+      // Send email notification only when clicking "Upgrade to Pro" to open this modal
+      if (dbUser && !notifiedRef.current) {
+        notifiedRef.current = true;
+        apiRequest('POST', '/api/notify-upgrade-click', {
+          userId: dbUser.firebaseUid,
+          username: dbUser.fullName,
+          odisId: dbUser.odisId,
+          fullName: dbUser.fullName,
+          email: dbUser.email,
+        }).catch((err) => {
+          console.error('Failed to send notification email:', err);
+        });
+      }
     } else {
       setIsNavigating(false);
+      notifiedRef.current = false;
     }
-  }, [open, router]);
+  }, [open, router, dbUser]);
 
   const handleProceedToCheckout = () => {
     if (isNavigating) return;
     setIsNavigating(true);
-
-    if (dbUser) {
-      apiRequest('POST', '/api/notify-upgrade-click', {
-        userId: dbUser.firebaseUid,
-        username: dbUser.fullName,
-        odisId: dbUser.odisId,
-        fullName: dbUser.fullName,
-        email: dbUser.email,
-      }).catch((err) => {
-        console.error('Failed to send notification email:', err);
-      });
-    }
 
     // Smooth transition: give brief tactile feedback before navigating to prefetched checkout
     setTimeout(() => {

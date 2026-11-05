@@ -23,6 +23,9 @@ import {
   ExternalLink,
   Trash2,
   Globe,
+  Bell,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -42,6 +45,7 @@ export default function AdminDashboardPage() {
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isSendingTestPush, setIsSendingTestPush] = useState(false);
 
   // Dashboard Data State
   const [loading, setLoading] = useState(false);
@@ -118,6 +122,31 @@ export default function AdminDashboardPage() {
       console.error('Error resetting analytics:', e);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleSendTestPush = async () => {
+    if (!window.confirm("Send a test daily reset push notification to all devices now?")) return;
+    setIsSendingTestPush(true);
+    try {
+      const token = sessionStorage.getItem('gg33_admin_token');
+      const res = await fetch('/api/admin/send-test-push', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Push notification sent successfully!");
+        fetchStats(daysRange);
+      } else {
+        alert("Failed to send push: " + (data.error || "Unknown error"));
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setIsSendingTestPush(false);
     }
   };
 
@@ -656,6 +685,82 @@ export default function AdminDashboardPage() {
               </p>
               <p className="text-[11px] text-zinc-500">PC / Laptop browser visits</p>
             </div>
+          </div>
+        </div>
+
+        {/* PUSH NOTIFICATIONS DELIVERY & CLICK TRACKER */}
+        <div className="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-amber-400" />
+                <span>Daily Push Notification Monitor</span>
+              </h3>
+              <p className="text-xs text-zinc-400">Track delivery to user devices & actual app opens from push</p>
+            </div>
+            <button
+              onClick={handleSendTestPush}
+              disabled={isSendingTestPush}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer disabled:opacity-50"
+            >
+              <Send className={`w-3.5 h-3.5 ${isSendingTestPush ? 'animate-spin' : ''}`} />
+              <span>{isSendingTestPush ? 'Sending Broadcast...' : 'Test Send Push Broadcast'}</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
+                  <th className="pb-3 pr-4">Notification Title</th>
+                  <th className="pb-3 px-4">Type</th>
+                  <th className="pb-3 px-4">Targeted Devices</th>
+                  <th className="pb-3 px-4">App Opens / Clicks</th>
+                  <th className="pb-3 px-4">Open Rate (CTR)</th>
+                  <th className="pb-3 pl-4">Sent At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {statsData?.pushLogs && statsData.pushLogs.length > 0 ? (
+                  statsData.pushLogs.map((log: any) => (
+                    <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3 pr-4">
+                        <div className="font-semibold text-zinc-200">{log.title}</div>
+                        <div className="text-[11px] text-zinc-500 truncate max-w-xs">{log.content}</div>
+                      </td>
+                      <td className="py-3 px-4 uppercase text-[10px] font-mono font-bold text-amber-400">
+                        {log.type?.replace('_', ' ')}
+                      </td>
+                      <td className="py-3 px-4 text-zinc-300 font-semibold">
+                        📱 {log.targetDevicesCount} devices
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold">
+                          {log.clicksCount} opens
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-emerald-400">
+                        {log.ctr}%
+                      </td>
+                      <td className="py-3 pl-4 text-zinc-400 text-xs">
+                        {new Date(log.sentAt).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: 'numeric',
+                        })}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-zinc-500">
+                      No push notifications dispatched yet today
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 

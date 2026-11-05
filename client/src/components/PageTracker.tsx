@@ -153,6 +153,32 @@ export function PageTracker() {
       lastTrackedPath.current = path;
       lastTrackedTime.current = now;
 
+      // Track push notification click / open if opened from notification
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('from_push') === '1' && !sessionStorage.getItem('gg33_push_click_tracked')) {
+          sessionStorage.setItem('gg33_push_click_tracked', 'true');
+          fetch('/api/analytics/track-push-click', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pushType: urlParams.get('push_type') || 'daily_reset',
+              pushDate: urlParams.get('push_date') || new Date().toISOString().split('T')[0],
+            }),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      } catch {}
+
+      // Detect if this is the start of a brand new visitor session
+      let isNewSession = false;
+      try {
+        if (!sessionStorage.getItem('gg33_session_started')) {
+          sessionStorage.setItem('gg33_session_started', 'true');
+          isNewSession = true;
+        }
+      } catch {}
+
       const { device, platform, isNativeApp } = getAppAndDeviceInfo();
 
       const payload = {
@@ -162,6 +188,7 @@ export function PageTracker() {
         device,
         platform,
         isNativeApp,
+        isNewSession,
         browser: getBrowserName(),
         os: getOSName(),
         userId: dbUser?.odisId || null,

@@ -14,6 +14,7 @@ import {
   recordUpgradeIntent,
   getAdminAnalyticsStats,
   resetAnalyticsData,
+  recordPushClick,
   isAuthorizedAdmin,
   ADMIN_PASSWORD,
   ADMIN_TOKEN,
@@ -2910,17 +2911,22 @@ export async function registerRoutes(
     try {
       const { userId, username, profilePictureUrl, odisId, fullName, email } = req.body as any;
 
+      // Don't email if the owner themselves clicked
+      if (email && email.trim().toLowerCase() === ADMIN_EMAIL) {
+        return res.json({ success: true, ignored: true });
+      }
+
       // Track intent in Firestore analytics
       recordUpgradeIntent({ userId, odisId, fullName, email }).catch((e) =>
         console.error("[Analytics] Upgrade intent track error:", e)
       );
 
       const resendApiKey = process.env.RESEND_API_KEY;
-      const notificationEmail = process.env.NOTIFICATION_EMAIL;
+      const notificationEmail = process.env.NOTIFICATION_EMAIL || 'princederder44@gmail.com';
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
 
-      if (!resendApiKey || !notificationEmail) {
-        console.error('[Notify] Missing RESEND_API_KEY or NOTIFICATION_EMAIL');
+      if (!resendApiKey) {
+        console.error('[Notify] Missing RESEND_API_KEY');
         return res.status(500).json({ error: 'Email notification not configured' });
       }
 
@@ -2935,7 +2941,7 @@ export async function registerRoutes(
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d4a33e; border-bottom: 2px solid #d4a33e; padding-bottom: 10px;">
-            Upgrade Button Clicked
+            Upgrade to Pro Button Clicked
           </h2>
           
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -2983,7 +2989,7 @@ export async function registerRoutes(
       const { data, error } = await resend.emails.send({
         from: fromEmail,
         to: notificationEmail,
-        subject: `GG33 Pro Upgrade Click - ${username || fullName || userId || 'Unknown User'}`,
+        subject: `⚡ Upgrade to Pro Clicked - ${username || fullName || email || 'User'}`,
         html: emailHtml,
       });
 
@@ -3419,10 +3425,107 @@ export async function registerRoutes(
     }
   });
 
+  let lastVisitorEmailSentAt = 0;
+
+  async function sendNewVisitorEmail(details: {
+    path: string;
+    device?: string;
+    platform?: string;
+    browser?: string;
+    os?: string;
+    userEmail?: string | null;
+    userId?: string | null;
+  }) {
+    const now = Date.now();
+    // Throttle: maximum 1 email every 60 seconds
+    if (now - lastVisitorEmailSentAt < 60 * 1000) {
+      return;
+    }
+    lastVisitorEmailSentAt = now;
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const notificationEmail = process.env.NOTIFICATION_EMAIL || 'princederder44@gmail.com';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
+
+    if (!resendApiKey) return;
+
+    try {
+      const resend = new Resend(resendApiKey);
+      const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        dateStyle: 'full',
+        timeStyle: 'medium',
+      });
+
+      const platformLabel = details.platform === 'android_app'
+        ? '📱 Google Play Store App (Median)'
+        : details.platform === 'ios_app'
+        ? '📱 iOS App (Median)'
+        : details.platform === 'mobile_web'
+        ? '🌐 Mobile Web Browser'
+        : '💻 Desktop Web Browser';
+
+      const clarityUrl = 'https://clarity.microsoft.com/projects/view/z93wd6ghdh/recordings';
+
+      const emailHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #09090b; color: #f4f4f5; border-radius: 16px; border: 1px solid #27272a;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h2 style="color: #fbbf24; margin: 0 0 8px 0; font-size: 22px;">🚨 New User Active on GG33 Core!</h2>
+            <p style="color: #a1a1aa; font-size: 13px; margin: 0;">A user has just opened the app. Watch their session live on Microsoft Clarity.</p>
+          </div>
+
+          <div style="background-color: #18181b; padding: 20px; border-radius: 12px; border: 1px solid #3f3f46; margin-bottom: 24px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 8px 0; color: #a1a1aa; width: 140px;"><strong>Platform:</strong></td>
+                <td style="padding: 8px 0; color: #34d399; font-weight: bold;">${platformLabel}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a1a1aa;"><strong>Entry Page:</strong></td>
+                <td style="padding: 8px 0; color: #fbbf24; font-family: monospace;">${details.path || '/'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a1a1aa;"><strong>User Identity:</strong></td>
+                <td style="padding: 8px 0; color: #e4e4e7;">${details.userEmail || 'Guest / New Visitor'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a1a1aa;"><strong>Device / Browser:</strong></td>
+                <td style="padding: 8px 0; color: #e4e4e7;">${details.browser || 'Browser'} • ${details.os || 'OS'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a1a1aa;"><strong>Time:</strong></td>
+                <td style="padding: 8px 0; color: #a1a1aa;">${timestamp}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 16px;">
+            <a href="${clarityUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: #09090b; font-weight: 800; font-size: 14px; padding: 14px 28px; border-radius: 10px; text-decoration: none; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">
+              ▶️ Watch Live Session in Clarity
+            </a>
+          </div>
+
+          <p style="text-align: center; color: #71717a; font-size: 11px; margin: 0;">
+            GG33 Core • Real-Time Visitor Monitoring
+          </p>
+        </div>
+      `;
+
+      await resend.emails.send({
+        from: fromEmail,
+        to: notificationEmail,
+        subject: `🚨 New Visitor on GG33 Core! (${platformLabel.split(' ')[1] || 'User'})`,
+        html: emailHtml,
+      });
+    } catch (err) {
+      console.error('[Visitor Email Error]:', err);
+    }
+  }
+
   // Analytics page view tracking (excludes princederder44@gmail.com)
   app.post("/api/analytics/track", async (req, res) => {
     try {
-      const { path, referrer, sessionId, device, browser, os, userId, userEmail, isPro } = req.body || {};
+      const { path, referrer, sessionId, device, platform, isNativeApp, browser, os, userId, userEmail, isPro, isNewSession } = req.body || {};
 
       if (req.headers["x-admin-exclude"] === "true") {
         return res.json({ success: true, ignored: true });
@@ -3433,6 +3536,8 @@ export async function registerRoutes(
         referrer,
         sessionId,
         device,
+        platform,
+        isNativeApp,
         browser,
         os,
         userId,
@@ -3440,10 +3545,35 @@ export async function registerRoutes(
         isPro,
       });
 
+      // Send live alert email for new visitor session
+      if (isNewSession && (!userEmail || userEmail.trim().toLowerCase() !== ADMIN_EMAIL)) {
+        sendNewVisitorEmail({
+          path,
+          device,
+          platform,
+          browser,
+          os,
+          userEmail,
+          userId,
+        }).catch((e) => console.error("[New Visitor Email Error]:", e));
+      }
+
       res.json({ success: true });
     } catch (error: any) {
       console.error("[Analytics Track API Error]:", error);
       res.status(500).json({ error: "Failed to record page view" });
+    }
+  });
+
+  // Track push notification click / app open from push
+  app.post("/api/analytics/track-push-click", async (req, res) => {
+    try {
+      const { pushType, pushDate } = req.body || {};
+      await recordPushClick(pushType, pushDate);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[Track Push Click API Error]:", error);
+      res.status(500).json({ error: "Failed to track push click" });
     }
   });
 
@@ -3494,6 +3624,22 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("[Admin Reset API Error]:", error);
       res.status(500).json({ error: error?.message || "Failed to reset analytics" });
+    }
+  });
+
+  // Admin send test push notification endpoint (protected by admin token)
+  app.post("/api/admin/send-test-push", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || (req.headers["x-admin-key"] as string);
+      if (!isAuthorizedAdmin(authHeader)) {
+        return res.status(401).json({ error: "Unauthorized. Admin access required." });
+      }
+
+      const result = await sendDailyEnergyResetNotifications(true);
+      res.json({ success: true, message: "Test broadcast push notification sent!", result });
+    } catch (error: any) {
+      console.error("[Admin Test Push Error]:", error);
+      res.status(500).json({ error: error?.message || "Failed to send test push" });
     }
   });
 

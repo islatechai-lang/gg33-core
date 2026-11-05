@@ -36,6 +36,73 @@ export interface UpgradeIntentEvent {
   email?: string | null;
 }
 
+export interface PushNotificationLog {
+  id?: string;
+  type: string;
+  title: string;
+  content: string;
+  targetDevicesCount: number;
+  targetUsersCount: number;
+  status: string;
+  sentAt?: Date;
+  dateStr?: string;
+  clicksCount?: number;
+}
+
+/**
+ * Record a push notification delivery event in Firestore.
+ */
+export async function logPushNotification(data: PushNotificationLog): Promise<boolean> {
+  try {
+    const now = new Date();
+    const dateStr = data.dateStr || now.toISOString().split("T")[0];
+
+    await db.collection("push_notification_logs").add({
+      id: data.id || `push_${Date.now()}`,
+      type: data.type || "daily_reset",
+      title: data.title || "",
+      content: data.content || "",
+      targetDevicesCount: data.targetDevicesCount || 0,
+      targetUsersCount: data.targetUsersCount || 0,
+      status: data.status || "delivered",
+      sentAt: Timestamp.now(),
+      dateStr,
+      clicksCount: 0,
+    });
+    return true;
+  } catch (error) {
+    console.error("[Analytics] Error logging push notification:", error);
+    return false;
+  }
+}
+
+/**
+ * Record a push notification click / open from user device.
+ */
+export async function recordPushClick(pushType = "daily_reset", pushDate?: string): Promise<boolean> {
+  try {
+    const todayStr = pushDate || new Date().toISOString().split("T")[0];
+    const snapshot = await db
+      .collection("push_notification_logs")
+      .where("dateStr", "==", todayStr)
+      .limit(5)
+      .get();
+
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const currentClicks = doc.data().clicksCount || 0;
+      await doc.ref.update({
+        clicksCount: currentClicks + 1,
+      });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("[Analytics] Error recording push click:", error);
+    return false;
+  }
+}
+
 /**
  * Record a page view event in Firestore, strictly excluding the admin account.
  */
@@ -312,6 +379,44 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       }
     });
 
+    // 4. Fetch Push Notification Delivery & Click Logs
+    let pushLogsSnapshot;
+    try {
+      pushLogsSnapshot = await db
+        .collection("push_notification_logs")
+        .orderBy("sentAt", "desc")
+        .limit(10)
+        .get();
+    } catch {
+      try {
+        pushLogsSnapshot = await db.collection("push_notification_logs").limit(10).get();
+      } catch {
+        pushLogsSnapshot = { docs: [] };
+      }
+    }
+
+    const pushLogs = pushLogsSnapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      const sentTime = data.sentAt?.toDate ? data.sentAt.toDate() : new Date();
+      const clicks = data.clicksCount || 0;
+      const targets = data.targetDevicesCount || 0;
+      const ctr = targets > 0 ? ((clicks / targets) * 100).toFixed(1) : "0.0";
+
+      return {
+        id: doc.id,
+        type: data.type,
+        title: data.title,
+        content: data.content,
+        targetDevicesCount: targets,
+        targetUsersCount: data.targetUsersCount || 0,
+        status: data.status,
+        sentAt: sentTime.toISOString(),
+        dateStr: data.dateStr,
+        clicksCount: clicks,
+        ctr,
+      };
+    });
+
     return {
       success: true,
       excludedAdminEmail: ADMIN_EMAIL,
@@ -343,6 +448,7 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       platformBreakdown: platformCounts,
       browserBreakdown: browserCounts,
       recentVisits,
+      pushLogs,
       recentUsers: usersList
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 50),
@@ -356,9 +462,10 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
 /**
  * Reset all analytics data (page views and upgrade intents) in Firestore to start fresh.
  */
-export async function resetAnalyticsData(): Promise<{ deletedPageViews: number; deletedUpgradeIntents: number }> {
+export async function resetAnalyticsData(): Promise<{ deletedPageViews: number; deletedUpgradeIntents: number; deletedPushLogs: number }> {
   let deletedPageViews = 0;
   let deletedUpgradeIntents = 0;
+  let deletedPushLogs = 0;
 
   try {
     const pageViewsSnapshot = await db.collection("page_views").get();
@@ -380,10 +487,19 @@ export async function resetAnalyticsData(): Promise<{ deletedPageViews: number; 
       deletedUpgradeIntents += chunk.length;
     }
 
-    console.log(`[Analytics Reset] Purged ${deletedPageViews} page views and ${deletedUpgradeIntents} upgrade intents.`);
+    const pushSnapshot = await db.collection("push_notification_logs").get();
+    for (let i = 0; i < pushSnapshot.docs.length; i += batchSize) {
+      const batch = db.batch();
+      const chunk = pushSnapshot.docs.slice(i, i + batchSize);
+      chunk.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      deletedPushLogs += chunk.length;
+    }
+
+    console.log(`[Analytics Reset] Purged ${deletedPageViews} page views, ${deletedUpgradeIntents} upgrade intents, and ${deletedPushLogs} push logs.`);
   } catch (error) {
     console.error("[Analytics] Error resetting analytics data:", error);
   }
 
-  return { deletedPageViews, deletedUpgradeIntents };
+  return { deletedPageViews, deletedUpgradeIntents, deletedPushLogs };
 }
