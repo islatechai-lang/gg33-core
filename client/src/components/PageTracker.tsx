@@ -4,21 +4,67 @@ import { useAuth } from '@/context/AuthContext';
 
 const ADMIN_EMAIL = 'princederder44@gmail.com';
 
-function getDeviceType(): 'mobile' | 'desktop' | 'tablet' {
-  if (typeof window === 'undefined') return 'desktop';
-  const ua = navigator.userAgent.toLowerCase();
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-    return 'tablet';
+export function getAppAndDeviceInfo(): {
+  device: 'mobile' | 'desktop' | 'tablet';
+  platform: 'android_app' | 'ios_app' | 'mobile_web' | 'desktop_web';
+  isNativeApp: boolean;
+} {
+  if (typeof window === 'undefined') {
+    return { device: 'desktop', platform: 'desktop_web', isNativeApp: false };
   }
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(navigator.userAgent)) {
-    return 'mobile';
+
+  const ua = navigator.userAgent || '';
+  const uaLower = ua.toLowerCase();
+  const win = window as any;
+
+  // 1. Median.co App & GoNative detection (Google Play Store wrapper)
+  const isMedianApp =
+    typeof win.median !== 'undefined' ||
+    typeof win.gonative !== 'undefined' ||
+    uaLower.includes('median') ||
+    uaLower.includes('gonative');
+
+  // 2. Android WebView detection
+  const isAndroid = uaLower.includes('android');
+  const isIOS = /iphone|ipad|ipod/.test(uaLower);
+  const isAndroidWebView = isAndroid && (uaLower.includes('; wv') || uaLower.includes('version/4.0'));
+  const isIOSWebView = isIOS && !uaLower.includes('safari') && uaLower.includes('applewebkit');
+
+  // If running inside the wrapped mobile app (e.g. Google Play installed app)
+  if (isMedianApp || isAndroidWebView || isIOSWebView) {
+    if (isAndroid || isAndroidWebView) {
+      return { device: 'mobile', platform: 'android_app', isNativeApp: true };
+    }
+    if (isIOS || isIOSWebView) {
+      return { device: 'mobile', platform: 'ios_app', isNativeApp: true };
+    }
+    return { device: 'mobile', platform: 'android_app', isNativeApp: true };
   }
-  return 'desktop';
+
+  // 3. Tablet detection
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(uaLower)) {
+    return { device: 'tablet', platform: 'mobile_web', isNativeApp: false };
+  }
+
+  // 4. Mobile Browser detection
+  if (
+    /mobile|android|iphone|ipod|iemobile|blackberry|opera mini/i.test(uaLower) ||
+    window.innerWidth < 768
+  ) {
+    return { device: 'mobile', platform: 'mobile_web', isNativeApp: false };
+  }
+
+  // 5. Desktop browser
+  return { device: 'desktop', platform: 'desktop_web', isNativeApp: false };
 }
 
 function getBrowserName(): string {
   if (typeof window === 'undefined') return 'Unknown';
   const ua = navigator.userAgent;
+  const win = window as any;
+  if (typeof win.median !== 'undefined' || ua.toLowerCase().includes('median')) {
+    return 'Google Play App (Median)';
+  }
   if (ua.includes('Firefox')) return 'Firefox';
   if (ua.includes('SamsungBrowser')) return 'Samsung Internet';
   if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
@@ -53,6 +99,16 @@ function getOrCreateSessionId(): string {
   }
 }
 
+function isDeviceExcluded(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (localStorage.getItem('gg33_admin_exclude') === 'true') return true;
+    if (document.cookie.includes('gg33_admin_exclude=true')) return true;
+    if (sessionStorage.getItem('gg33_admin_token')) return true;
+  } catch {}
+  return false;
+}
+
 export function PageTracker() {
   const router = useRouter();
   const { dbUser } = useAuth();
@@ -60,13 +116,14 @@ export function PageTracker() {
   const lastTrackedTime = useRef<number>(0);
 
   useEffect(() => {
-    // If the logged-in user is the owner, immediately flag localStorage so all future requests & sessions are excluded
+    // If the logged-in user is the owner, immediately lock cookies & storage
     if (dbUser?.email && dbUser.email.trim().toLowerCase() === ADMIN_EMAIL) {
       try {
         localStorage.setItem('gg33_admin_exclude', 'true');
+        document.cookie = 'gg33_admin_exclude=true; path=/; max-age=31536000; SameSite=Lax';
       } catch {}
 
-      // Identify to Microsoft Clarity as admin/excluded
+      // Identify to Microsoft Clarity as admin/owner
       if (typeof window !== 'undefined' && typeof (window as any).clarity === 'function') {
         (window as any).clarity('set', 'is_admin', 'true');
         (window as any).clarity('identify', 'admin_owner');
@@ -74,14 +131,13 @@ export function PageTracker() {
       return;
     }
 
-    // Function to track current path
     const trackCurrentPage = (path: string) => {
       if (typeof window === 'undefined') return;
 
       // Check admin exclusions
       const isExcluded =
+        isDeviceExcluded() ||
         dbUser?.email?.trim().toLowerCase() === ADMIN_EMAIL ||
-        localStorage.getItem('gg33_admin_exclude') === 'true' ||
         path.startsWith('/admin');
 
       if (isExcluded) {
@@ -97,11 +153,15 @@ export function PageTracker() {
       lastTrackedPath.current = path;
       lastTrackedTime.current = now;
 
+      const { device, platform, isNativeApp } = getAppAndDeviceInfo();
+
       const payload = {
         path,
         referrer: document.referrer || '',
         sessionId: getOrCreateSessionId(),
-        device: getDeviceType(),
+        device,
+        platform,
+        isNativeApp,
         browser: getBrowserName(),
         os: getOSName(),
         userId: dbUser?.odisId || null,
@@ -127,6 +187,7 @@ export function PageTracker() {
         } else {
           (window as any).clarity('set', 'user_type', 'guest');
         }
+        (window as any).clarity('set', 'platform', platform);
       }
     };
 

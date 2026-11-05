@@ -20,6 +20,8 @@ export interface PageViewEvent {
   referrer?: string;
   sessionId: string;
   device?: string;
+  platform?: string; // 'android_app' | 'ios_app' | 'mobile_web' | 'desktop_web'
+  isNativeApp?: boolean;
   browser?: string;
   os?: string;
   userId?: string | null;
@@ -55,6 +57,8 @@ export async function recordPageView(event: PageViewEvent): Promise<boolean> {
       referrer: event.referrer || "",
       sessionId: event.sessionId || "anonymous",
       device: event.device || "desktop",
+      platform: event.platform || (event.device === "mobile" ? "mobile_web" : "desktop_web"),
+      isNativeApp: Boolean(event.isNativeApp),
       browser: event.browser || "unknown",
       os: event.os || "unknown",
       userId: event.userId || null,
@@ -178,8 +182,15 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
     const pathCounts: Record<string, number> = {};
     const dailyViewsMap: Record<string, number> = {};
     const deviceCounts: Record<string, number> = { mobile: 0, desktop: 0, tablet: 0 };
+    const platformCounts: Record<string, number> = {
+      android_app: 0,
+      ios_app: 0,
+      mobile_web: 0,
+      desktop_web: 0,
+    };
     const browserCounts: Record<string, number> = {};
     const recentVisits: any[] = [];
+    let appVisitsCount = 0;
 
     // Pre-populate last N days in dailyViewsMap with 0
     for (let i = daysRange - 1; i >= 0; i--) {
@@ -222,6 +233,18 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       else if (dev.includes("tab")) deviceCounts.tablet = (deviceCounts.tablet || 0) + 1;
       else deviceCounts.desktop = (deviceCounts.desktop || 0) + 1;
 
+      // Platforms (Google Play App vs Mobile Web vs Desktop Web)
+      const plat = data.platform || (dev.includes("mob") ? "mobile_web" : "desktop_web");
+      if (platformCounts[plat] !== undefined) {
+        platformCounts[plat]++;
+      } else {
+        platformCounts[plat] = 1;
+      }
+
+      if (data.isNativeApp || plat === "android_app" || plat === "ios_app") {
+        appVisitsCount++;
+      }
+
       // Browsers
       const browser = data.browser || "Chrome";
       browserCounts[browser] = (browserCounts[browser] || 0) + 1;
@@ -233,6 +256,8 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
           id: doc.id,
           path: cleanPath,
           device: data.device || "desktop",
+          platform: plat,
+          isNativeApp: Boolean(data.isNativeApp || plat === "android_app" || plat === "ios_app"),
           browser: data.browser || "unknown",
           os: data.os || "unknown",
           isPro: Boolean(data.isPro),
@@ -310,10 +335,12 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
         uniqueVisitorsToday: uniqueSessionsToday.size,
         totalUpgradeClicks,
         upgradeClicksToday,
+        appVisitsCount,
       },
       topPages,
       dailyTrend,
       deviceBreakdown: deviceCounts,
+      platformBreakdown: platformCounts,
       browserBreakdown: browserCounts,
       recentVisits,
       recentUsers: usersList
@@ -324,4 +351,39 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
     console.error("[Analytics] Error generating admin stats:", error);
     throw error;
   }
+}
+
+/**
+ * Reset all analytics data (page views and upgrade intents) in Firestore to start fresh.
+ */
+export async function resetAnalyticsData(): Promise<{ deletedPageViews: number; deletedUpgradeIntents: number }> {
+  let deletedPageViews = 0;
+  let deletedUpgradeIntents = 0;
+
+  try {
+    const pageViewsSnapshot = await db.collection("page_views").get();
+    const batchSize = 300;
+    for (let i = 0; i < pageViewsSnapshot.docs.length; i += batchSize) {
+      const batch = db.batch();
+      const chunk = pageViewsSnapshot.docs.slice(i, i + batchSize);
+      chunk.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      deletedPageViews += chunk.length;
+    }
+
+    const upgradeSnapshot = await db.collection("upgrade_intents").get();
+    for (let i = 0; i < upgradeSnapshot.docs.length; i += batchSize) {
+      const batch = db.batch();
+      const chunk = upgradeSnapshot.docs.slice(i, i + batchSize);
+      chunk.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      deletedUpgradeIntents += chunk.length;
+    }
+
+    console.log(`[Analytics Reset] Purged ${deletedPageViews} page views and ${deletedUpgradeIntents} upgrade intents.`);
+  } catch (error) {
+    console.error("[Analytics] Error resetting analytics data:", error);
+  }
+
+  return { deletedPageViews, deletedUpgradeIntents };
 }

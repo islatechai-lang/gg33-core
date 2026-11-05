@@ -13,6 +13,7 @@ import {
   recordPageView,
   recordUpgradeIntent,
   getAdminAnalyticsStats,
+  resetAnalyticsData,
   isAuthorizedAdmin,
   ADMIN_PASSWORD,
   ADMIN_TOKEN,
@@ -3477,6 +3478,22 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("[Admin Stats API Error]:", error);
       res.status(500).json({ error: error?.message || "Failed to load admin stats" });
+    }
+  });
+
+  // Admin reset analytics endpoint (protected by admin token)
+  app.post("/api/admin/reset", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || (req.headers["x-admin-key"] as string);
+      if (!isAuthorizedAdmin(authHeader)) {
+        return res.status(401).json({ error: "Unauthorized. Admin access required." });
+      }
+
+      const result = await resetAnalyticsData();
+      res.json({ success: true, message: "Analytics data successfully reset", ...result });
+    } catch (error: any) {
+      console.error("[Admin Reset API Error]:", error);
+      res.status(500).json({ error: error?.message || "Failed to reset analytics" });
     }
   });
 

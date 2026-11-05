@@ -21,6 +21,8 @@ import {
   Layers,
   CheckCircle,
   ExternalLink,
+  Trash2,
+  Globe,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,6 +41,7 @@ export default function AdminDashboardPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Dashboard Data State
   const [loading, setLoading] = useState(false);
@@ -80,6 +83,7 @@ export default function AdminDashboardPage() {
       sessionStorage.setItem('gg33_admin_token', data.token);
       try {
         localStorage.setItem('gg33_admin_exclude', 'true');
+        document.cookie = 'gg33_admin_exclude=true; path=/; max-age=31536000; SameSite=Lax';
       } catch {}
 
       setIsAuthenticated(true);
@@ -89,6 +93,31 @@ export default function AdminDashboardPage() {
       setAuthError('Connection failed. Please try again.');
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleResetData = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to reset all analytics? This will purge page views and conversion metrics to start completely fresh.'
+    );
+    if (!confirmed) return;
+
+    setIsResetting(true);
+    try {
+      const token = sessionStorage.getItem('gg33_admin_token');
+      const res = await fetch('/api/admin/reset', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        await fetchStats(daysRange);
+      }
+    } catch (e) {
+      console.error('Error resetting analytics:', e);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -306,6 +335,17 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
+            {/* Reset Analytics */}
+            <button
+              onClick={handleResetData}
+              disabled={isResetting}
+              title="Reset Analytics Data to 0"
+              className="h-9 px-3 rounded-xl bg-red-950/30 hover:bg-red-950/60 border border-red-800/40 hover:border-red-500/50 text-red-400 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Trash2 className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Reset Data</span>
+            </button>
+
             {/* Refresh */}
             <button
               onClick={() => fetchStats()}
@@ -428,8 +468,13 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="pt-2 border-t border-zinc-800/80 text-[11px] text-zinc-400 flex items-center justify-between">
-              <span>Mobile: {statsData?.deviceBreakdown?.mobile ?? 0}</span>
-              <span>Desktop: {statsData?.deviceBreakdown?.desktop ?? 0}</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <Smartphone className="w-3 h-3" />
+                {statsData?.platformBreakdown?.android_app ?? 0} Play App
+              </span>
+              <span>
+                🌐 {(statsData?.platformBreakdown?.mobile_web ?? 0) + (statsData?.platformBreakdown?.desktop_web ?? 0)} Web
+              </span>
             </div>
           </div>
 
@@ -569,41 +614,47 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* DEVICE & PLATFORM BREAKDOWN */}
+        {/* PLATFORM & DEVICE BREAKDOWN */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-amber-400" />
+          <div className="p-4 rounded-2xl bg-zinc-900/50 border border-emerald-500/30 flex items-center gap-3 relative overflow-hidden">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs text-zinc-400">Mobile Visits</p>
-              <p className="text-lg font-bold text-zinc-100">
-                {statsData?.deviceBreakdown?.mobile ?? 0}
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-emerald-400">Google Play Store App</p>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <p className="text-xl font-black text-zinc-100">
+                {statsData?.platformBreakdown?.android_app ?? 0}
               </p>
+              <p className="text-[11px] text-zinc-500">Median.co Native Android Wrapper</p>
             </div>
           </div>
 
           <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Monitor className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+              <Globe className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <p className="text-xs text-zinc-400">Desktop Visits</p>
-              <p className="text-lg font-bold text-zinc-100">
-                {statsData?.deviceBreakdown?.desktop ?? 0}
+              <p className="text-xs text-zinc-400">Mobile Web Browser</p>
+              <p className="text-xl font-bold text-zinc-100">
+                {statsData?.platformBreakdown?.mobile_web ?? 0}
               </p>
+              <p className="text-[11px] text-zinc-500">Chrome, Safari on phones</p>
             </div>
           </div>
 
           <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-              <Tablet className="w-5 h-5 text-cyan-400" />
+            <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0">
+              <Monitor className="w-5 h-5 text-zinc-400" />
             </div>
             <div>
-              <p className="text-xs text-zinc-400">Tablet Visits</p>
-              <p className="text-lg font-bold text-zinc-100">
-                {statsData?.deviceBreakdown?.tablet ?? 0}
+              <p className="text-xs text-zinc-400">Desktop Web Browser</p>
+              <p className="text-xl font-bold text-zinc-100">
+                {statsData?.platformBreakdown?.desktop_web ?? 0}
               </p>
+              <p className="text-[11px] text-zinc-500">PC / Laptop browser visits</p>
             </div>
           </div>
         </div>
@@ -627,8 +678,8 @@ export default function AdminDashboardPage() {
                 <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
                   <th className="pb-3 pr-4">Timestamp</th>
                   <th className="pb-3 px-4">Page Route</th>
+                  <th className="pb-3 px-4">Platform</th>
                   <th className="pb-3 px-4">User Status</th>
-                  <th className="pb-3 px-4">Device</th>
                   <th className="pb-3 pl-4">Browser & OS</th>
                 </tr>
               </thead>
@@ -647,6 +698,21 @@ export default function AdminDashboardPage() {
                           {visit.path}
                         </td>
                         <td className="py-2.5 px-4">
+                          {visit.isNativeApp || visit.platform === 'android_app' ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold inline-flex items-center gap-1">
+                              <Smartphone className="w-3 h-3" /> Play Store App
+                            </span>
+                          ) : visit.platform === 'mobile_web' ? (
+                            <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 text-[10px]">
+                              Mobile Web
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px]">
+                              Desktop Web
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4">
                           {visit.isPro ? (
                             <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold">
                               PRO USER
@@ -658,9 +724,6 @@ export default function AdminDashboardPage() {
                           ) : (
                             <span className="text-zinc-500 text-[11px]">Guest Visitor</span>
                           )}
-                        </td>
-                        <td className="py-2.5 px-4 capitalize text-zinc-300">
-                          {visit.device}
                         </td>
                         <td className="py-2.5 pl-4 text-zinc-400">
                           {visit.browser} • {visit.os}
