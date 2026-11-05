@@ -4,7 +4,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, Check, Sparkles, Users, Database, Compass, MessageCircle, GraduationCap, Hash, Lock, Sun, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Crown, Check, Sparkles, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/context/AuthContext';
 
@@ -14,14 +14,14 @@ interface UpgradeModalProps {
 }
 
 const benefits = [
-  { icon: Sparkles, label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
-  { icon: Users, label: 'Compatibility Analysis', description: 'Discover relationship dynamics & matching' },
-  { icon: Database, label: 'Cues Database', description: '22,000+ comprehensive numerology cues' },
-  { icon: Compass, label: 'Explore Modules', description: 'Access all advanced numerology calculators' },
-  { icon: MessageCircle, label: 'CoreChats AI', description: '24/7 personalized AI guidance & readings' },
-  { icon: GraduationCap, label: 'All Courses', description: 'Complete esoteric learning library' },
-  { icon: Hash, label: 'Core & Name Numbers', description: 'Full interpretations for life path & destiny' },
-  { icon: Sun, label: 'Daily Energy Readings', description: 'Personalized daily frequencies' },
+  { label: 'Astrology Birth Chart', description: 'Interactive natal wheel, aspect chords & soul blueprint' },
+  { label: 'Compatibility Analysis', description: 'Relationship dynamics & matching' },
+  { label: 'Cues Database', description: '22,000+ comprehensive numerology cues' },
+  { label: 'Explore Modules', description: 'All advanced numerology calculators' },
+  { label: 'CoreChats AI', description: '24/7 personalized AI guidance & readings' },
+  { label: 'All Courses', description: 'Complete esoteric learning library' },
+  { label: 'Core & Name Numbers', description: 'Full life path & destiny interpretations' },
+  { label: 'Daily Energy Readings', description: 'Personalized daily frequencies' },
 ];
 
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
@@ -50,74 +50,64 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-[95vw] sm:max-w-2xl lg:max-w-3xl p-0 rounded-2xl border-amber-500/30 bg-zinc-950 overflow-hidden max-h-[92vh]" 
+        className="w-[95vw] sm:max-w-lg p-0 rounded-2xl border-amber-500/30 bg-zinc-950 overflow-hidden max-h-[92vh]" 
         data-testid="modal-upgrade"
       >
-        <div className="p-6 sm:p-8 flex flex-col bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 max-h-[92vh] overflow-y-auto">
+        <div className="p-6 sm:p-8 flex flex-col bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 max-h-[92vh] overflow-y-auto space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800/80">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                <Crown className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center justify-between pb-6 border-b border-zinc-800/80">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/30 flex-shrink-0">
+                <Crown className="w-5 h-5 text-amber-400" />
               </div>
-              <span className="text-xs font-extrabold text-amber-400 uppercase tracking-widest">GG33 Pro Access</span>
-            </div>
-            
-            {/* Price Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-              <span className="text-sm font-extrabold text-amber-300">3 Days Free</span>
-              <span className="text-[11px] text-amber-400/80 font-medium">• then $35/mo</span>
-            </div>
-          </div>
-          
-          <div className="text-center sm:text-left mb-6">
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 mb-2 tracking-tight">
-              Unlock Full Numerology Intelligence
-            </h3>
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              Elevate your understanding with unlimited access to all AI tools, complete learning courses, and 22,000+ cues.
-            </p>
-          </div>
-          
-          {/* Benefits Grid */}
-          <div className="grid sm:grid-cols-2 gap-3 mb-8">
-            {benefits.map((benefit) => (
-              <div 
-                key={benefit.label}
-                className="flex items-start gap-3 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-amber-500/30 transition-colors"
-                data-testid={`benefit-${benefit.label.toLowerCase().replace(/\s/g, '-')}`}
-              >
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 border border-amber-500/20 mt-0.5">
-                  <benefit.icon className="w-3.5 h-3.5 text-amber-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-zinc-200 leading-tight">{benefit.label}</p>
-                  <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">{benefit.description}</p>
-                </div>
-                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h2 className="text-lg font-bold text-zinc-100">GG33 Pro</h2>
+                <p className="text-xs text-amber-400 font-medium">3-Day Free Trial • then $35/mo</p>
               </div>
-            ))}
+            </div>
+            <div className="text-right">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 block text-center mb-1">
+                PRO
+              </span>
+              <span className="text-xs font-extrabold text-zinc-100">3 Days Free</span>
+            </div>
           </div>
 
-          {/* High-converting Upgrade Button with Price */}
-          <div className="space-y-3 pt-2">
+          {/* Feature Bullet Points */}
+          <div className="space-y-3">
+            <p className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider">What's Included:</p>
+            <div className="space-y-3">
+              {benefits.map((benefit) => (
+                <div key={benefit.label} className="flex items-start gap-3 text-xs">
+                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-zinc-200">{benefit.label}</span>
+                    <span className="text-zinc-400 text-[11px] block">{benefit.description}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Button & Guarantees */}
+          <div className="space-y-4 pt-2">
             <Button
               onClick={handleProceedToCheckout}
-              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none"
+              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none cursor-pointer"
             >
               <Sparkles className="w-5 h-5 text-zinc-950 fill-zinc-950/20" />
               <span>Start 3-Day Free Trial</span>
               <ArrowRight className="w-5 h-5 stroke-[2.5]" />
             </Button>
 
-            <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 pt-1">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>3-Day Free Trial • Cancel Anytime</span>
+            <div className="space-y-2 pt-1 border-t border-zinc-800/80 text-xs text-zinc-400">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>3-day free trial • Cancel anytime with 1 click</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Lock className="w-3 h-3 text-zinc-400" />
-                <span>Secure Whop Payment</span>
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                <span>Encrypted 256-bit Whop payment processing</span>
               </div>
             </div>
           </div>
