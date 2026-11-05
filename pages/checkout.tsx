@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { Lock, ArrowLeft, Loader2, Sparkles, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, Sparkles, ExternalLink } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/context/AuthContext';
 import { Navigation } from '@/components/Navigation';
@@ -79,17 +79,11 @@ export default function CheckoutPage() {
 
         {/* Focused Payment Container */}
         <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6">
-          <div className="flex items-center justify-between pb-6 border-b border-zinc-800/80">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/30 flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100">Secure Payment</h3>
+          <div className="flex items-center gap-3 pb-6 border-b border-zinc-800/80">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/30 flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-amber-400" />
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Whop Checkout</span>
-            </div>
+            <h3 className="text-lg font-bold text-zinc-100">Secure Payment</h3>
           </div>
 
           {/* Embedded Whop Element */}

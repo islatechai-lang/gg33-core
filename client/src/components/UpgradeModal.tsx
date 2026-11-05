@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, Check, Sparkles, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { Crown, Check, Sparkles, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/context/AuthContext';
 
@@ -27,20 +28,28 @@ const benefits = [
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const router = useRouter();
   const { dbUser } = useAuth();
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleProceedToCheckout = async () => {
+  useEffect(() => {
+    if (!open) {
+      setIsNavigating(false);
+    }
+  }, [open]);
+
+  const handleProceedToCheckout = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+
     if (dbUser) {
-      try {
-        await apiRequest('POST', '/api/notify-upgrade-click', {
-          userId: dbUser.firebaseUid,
-          username: dbUser.fullName,
-          odisId: dbUser.odisId,
-          fullName: dbUser.fullName,
-          email: dbUser.email,
-        });
-      } catch (err) {
+      apiRequest('POST', '/api/notify-upgrade-click', {
+        userId: dbUser.firebaseUid,
+        username: dbUser.fullName,
+        odisId: dbUser.odisId,
+        fullName: dbUser.fullName,
+        email: dbUser.email,
+      }).catch((err) => {
         console.error('Failed to send notification email:', err);
-      }
+      });
     }
 
     onOpenChange(false);
@@ -62,7 +71,6 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-zinc-100">GG33 Pro</h2>
-                <p className="text-xs text-amber-400 font-medium">3-Day Free Trial • then $35/mo</p>
               </div>
             </div>
             <div className="text-right">
@@ -92,21 +100,31 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           <div className="space-y-4 pt-2">
             <Button
               onClick={handleProceedToCheckout}
-              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border-none cursor-pointer"
+              disabled={isNavigating}
+              className="w-full h-14 sm:h-16 py-4 px-6 text-base sm:text-lg font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:via-amber-400 hover:to-amber-500 text-zinc-950 shadow-[0_4px_25px_rgba(245,158,11,0.35)] hover:shadow-[0_6px_30px_rgba(245,158,11,0.5)] rounded-2xl flex items-center justify-center gap-3 transition-all duration-150 transform hover:-translate-y-0.5 active:scale-[0.97] border-none cursor-pointer disabled:opacity-80"
             >
-              <Sparkles className="w-5 h-5 text-zinc-950 fill-zinc-950/20" />
-              <span>Start 3-Day Free Trial</span>
-              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+              {isNavigating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
+                  <span>Opening Checkout...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 text-zinc-950 fill-zinc-950/20" />
+                  <span>Start 3-Day Free Trial</span>
+                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+                </>
+              )}
             </Button>
 
             <div className="space-y-2 pt-1 border-t border-zinc-800/80 text-xs text-zinc-400">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span>3-day free trial • Cancel anytime with 1 click</span>
+                <span>30-Day Money-Back Guarantee</span>
               </div>
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                <span>Secure Whop Payment</span>
+                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Cancel Anytime</span>
               </div>
             </div>
           </div>
