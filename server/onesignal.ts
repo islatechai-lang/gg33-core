@@ -75,7 +75,6 @@ export async function sendOneSignalNotification(
     app_id: appId,
     headings: { en: options.title },
     contents: { en: options.content },
-    url: targetUrl,
     web_url: targetUrl,
     app_url: targetUrl,
     priority: 10,

@@ -3650,6 +3650,9 @@ export async function registerRoutes(
       }
 
       const result = await sendDailyEnergyResetNotifications(true);
+      if (!result.success) {
+        return res.status(500).json({ error: result.error || "Failed to dispatch via OneSignal", details: result });
+      }
       res.json({ success: true, message: "Test broadcast push notification sent!", result });
     } catch (error: any) {
       console.error("[Admin Test Push Error]:", error);
