@@ -33,19 +33,6 @@ export default function CheckoutPage() {
       router.replace('/login');
       return;
     }
-
-    if (dbUser) {
-      // Send notification email in background
-      apiRequest('POST', '/api/notify-upgrade-click', {
-        userId: dbUser.firebaseUid,
-        username: dbUser.fullName,
-        odisId: dbUser.odisId,
-        fullName: dbUser.fullName,
-        email: dbUser.email,
-      }).catch((err) => {
-        console.error('Failed to send notification email:', err);
-      });
-    }
   }, [dbUser, authLoading, router]);
 
   const handleComplete = async (paymentId?: string) => {

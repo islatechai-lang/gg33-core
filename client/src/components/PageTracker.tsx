@@ -177,10 +177,16 @@ export function PageTracker() {
       // Detect if this is the start of a brand new visitor session
       let isNewSession = false;
       try {
-        if (!sessionStorage.getItem('gg33_session_started')) {
+        const lastActiveStr = localStorage.getItem('gg33_last_active_time');
+        const lastActive = lastActiveStr ? parseInt(lastActiveStr, 10) : 0;
+        const sessionActive = sessionStorage.getItem('gg33_session_started');
+
+        // New session if session not yet marked, or if more than 15 minutes passed since last activity
+        if (!sessionActive || (lastActive > 0 && now - lastActive > 15 * 60 * 1000)) {
           sessionStorage.setItem('gg33_session_started', 'true');
           isNewSession = true;
         }
+        localStorage.setItem('gg33_last_active_time', now.toString());
       } catch {}
 
       const { device, platform, isNativeApp } = getAppAndDeviceInfo();

@@ -2911,12 +2911,9 @@ export async function registerRoutes(
     try {
       const { userId, username, profilePictureUrl, odisId, fullName, email } = req.body as any;
 
-      // Don't email if the owner themselves clicked
-      if (email && email.trim().toLowerCase() === ADMIN_EMAIL) {
-        return res.json({ success: true, ignored: true });
-      }
+      const isOwnerTest = Boolean(email && email.trim().toLowerCase() === ADMIN_EMAIL);
 
-      // Track intent in Firestore analytics
+      // Track intent in Firestore analytics (recordUpgradeIntent already handles admin exclusion from totals)
       recordUpgradeIntent({ userId, odisId, fullName, email }).catch((e) =>
         console.error("[Analytics] Upgrade intent track error:", e)
       );
@@ -2941,7 +2938,7 @@ export async function registerRoutes(
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d4a33e; border-bottom: 2px solid #d4a33e; padding-bottom: 10px;">
-            Upgrade to Pro Button Clicked
+            ${isOwnerTest ? '⚡ [Admin Test] Upgrade to Pro Clicked' : '⚡ Upgrade to Pro Button Clicked'}
           </h2>
           
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -2965,7 +2962,7 @@ export async function registerRoutes(
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;"><strong>Email:</strong></td>
-                <td style="padding: 8px 0; color: #333;">${email || 'N/A'}</td>
+                <td style="padding: 8px 0; color: #333;">${email || 'N/A'} ${isOwnerTest ? '(Owner Test)' : ''}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;"><strong>Timestamp:</strong></td>
@@ -2986,10 +2983,14 @@ export async function registerRoutes(
         </div>
       `;
 
+      const subject = isOwnerTest
+        ? `⚡ [Owner Test] Upgrade to Pro Clicked`
+        : `⚡ Upgrade to Pro Clicked - ${username || fullName || email || 'User'}`;
+
       const { data, error } = await resend.emails.send({
         from: fromEmail,
         to: notificationEmail,
-        subject: `⚡ Upgrade to Pro Clicked - ${username || fullName || email || 'User'}`,
+        subject,
         html: emailHtml,
       });
 
@@ -2997,6 +2998,9 @@ export async function registerRoutes(
         console.error('[Notify] Resend error:', error);
         return res.status(500).json({ error: 'Failed to send notification email' });
       }
+
+      console.log('[Notify] Upgrade button email sent successfully:', data?.id);
+      res.json({ success: true, messageId: data?.id });
 
       console.log('[Notify] Email sent successfully:', data?.id);
       res.json({ success: true, emailId: data?.id });
@@ -3437,8 +3441,8 @@ export async function registerRoutes(
     userId?: string | null;
   }) {
     const now = Date.now();
-    // Throttle: maximum 1 email every 60 seconds
-    if (now - lastVisitorEmailSentAt < 60 * 1000) {
+    // Throttle: maximum 1 email every 10 seconds to avoid spamming
+    if (now - lastVisitorEmailSentAt < 10 * 1000) {
       return;
     }
     lastVisitorEmailSentAt = now;
@@ -3447,7 +3451,10 @@ export async function registerRoutes(
     const notificationEmail = process.env.NOTIFICATION_EMAIL || 'princederder44@gmail.com';
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'support@send.gg33core.space';
 
-    if (!resendApiKey) return;
+    if (!resendApiKey) {
+      console.warn('[Visitor Email] Missing RESEND_API_KEY — skipping email.');
+      return;
+    }
 
     try {
       const resend = new Resend(resendApiKey);
@@ -3456,6 +3463,8 @@ export async function registerRoutes(
         dateStyle: 'full',
         timeStyle: 'medium',
       });
+
+      const isOwnerTest = Boolean(details.userEmail && details.userEmail.trim().toLowerCase() === ADMIN_EMAIL);
 
       const platformLabel = details.platform === 'android_app'
         ? '📱 Google Play Store App (Median)'
@@ -3470,7 +3479,9 @@ export async function registerRoutes(
       const emailHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #09090b; color: #f4f4f5; border-radius: 16px; border: 1px solid #27272a;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h2 style="color: #fbbf24; margin: 0 0 8px 0; font-size: 22px;">🚨 New User Active on GG33 Core!</h2>
+            <h2 style="color: #fbbf24; margin: 0 0 8px 0; font-size: 22px;">
+              ${isOwnerTest ? '🚨 [Owner Test] Active Session on GG33 Core!' : '🚨 New User Active on GG33 Core!'}
+            </h2>
             <p style="color: #a1a1aa; font-size: 13px; margin: 0;">A user has just opened the app. Watch their session live on Microsoft Clarity.</p>
           </div>
 
@@ -3486,7 +3497,7 @@ export async function registerRoutes(
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #a1a1aa;"><strong>User Identity:</strong></td>
-                <td style="padding: 8px 0; color: #e4e4e7;">${details.userEmail || 'Guest / New Visitor'}</td>
+                <td style="padding: 8px 0; color: #e4e4e7;">${details.userEmail ? (isOwnerTest ? `${details.userEmail} (Owner - Testing)` : details.userEmail) : 'Guest / New Visitor'}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #a1a1aa;"><strong>Device / Browser:</strong></td>
@@ -3511,18 +3522,28 @@ export async function registerRoutes(
         </div>
       `;
 
-      await resend.emails.send({
+      const subject = isOwnerTest
+        ? `🚨 [Owner Test] Active Session on GG33 Core! (${platformLabel})`
+        : `🚨 New Visitor on GG33 Core! (${platformLabel})`;
+
+      const { data, error } = await resend.emails.send({
         from: fromEmail,
         to: notificationEmail,
-        subject: `🚨 New Visitor on GG33 Core! (${platformLabel.split(' ')[1] || 'User'})`,
+        subject,
         html: emailHtml,
       });
+
+      if (error) {
+        console.error('[Visitor Email Resend Error]:', error);
+      } else {
+        console.log('[Visitor Email Sent Successfully]:', data?.id);
+      }
     } catch (err) {
       console.error('[Visitor Email Error]:', err);
     }
   }
 
-  // Analytics page view tracking (excludes princederder44@gmail.com)
+  // Analytics page view tracking (excludes princederder44@gmail.com from aggregate totals)
   app.post("/api/analytics/track", async (req, res) => {
     try {
       const { path, referrer, sessionId, device, platform, isNativeApp, browser, os, userId, userEmail, isPro, isNewSession } = req.body || {};
@@ -3546,7 +3567,7 @@ export async function registerRoutes(
       });
 
       // Send live alert email for new visitor session
-      if (isNewSession && (!userEmail || userEmail.trim().toLowerCase() !== ADMIN_EMAIL)) {
+      if (isNewSession) {
         sendNewVisitorEmail({
           path,
           device,
