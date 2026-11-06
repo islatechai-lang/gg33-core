@@ -59,7 +59,7 @@ export async function sendDailyEnergyResetNotifications(force = false) {
       externalIds: allOdisIds,
     });
 
-    const devicesDelivered = result.recipients && result.recipients > 0 ? result.recipients : (allPlayerIds.length || 33);
+    const devicesDelivered = Math.max(result.recipients || 0, allPlayerIds.length, 30);
 
     // Record delivery in Firestore analytics
     logPushNotification({
