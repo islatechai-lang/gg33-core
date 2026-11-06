@@ -61,6 +61,7 @@ if (typeof window !== "undefined") {
       }
     }
   };
+  win.gonative_onesignal_info = win.median_onesignal_info;
 
   // Median Native Push Notification Click / Open Handler
   const handlePushOpened = function (data: any) {
@@ -122,6 +123,17 @@ function syncMedianOneSignalUser(odisId?: string | null) {
       } else if (typeof win.gonative?.onesignal?.externalId?.set === "function") {
         win.gonative.onesignal.externalId.set({ externalId: odisId });
       }
+
+      // Median URL scheme bridge fallback for Android / iOS
+      try {
+        if (typeof window !== "undefined" && (win.median || win.gonative || navigator.userAgent.includes("median") || navigator.userAgent.includes("gonative"))) {
+          const bridgeIframe = document.createElement("iframe");
+          bridgeIframe.style.display = "none";
+          bridgeIframe.src = "median://onesignal/externalId/set?externalId=" + encodeURIComponent(odisId);
+          document.body.appendChild(bridgeIframe);
+          setTimeout(() => bridgeIframe.remove(), 1000);
+        }
+      } catch {}
     } else {
       if (typeof win.median?.onesignal?.logout === "function") {
         win.median.onesignal.logout();

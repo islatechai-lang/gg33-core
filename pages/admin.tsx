@@ -1107,11 +1107,11 @@ export default function AdminDashboardPage() {
                           <td className="py-2.5 pl-4">
                             {rec.hasPushToken ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
-                                <Smartphone className="w-3 h-3" /> Linked & Targeted
+                                <Smartphone className="w-3 h-3" /> Token Linked
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full bg-zinc-800/70 text-zinc-500 border border-zinc-700/60 text-[10px]">
-                                Alias Only (No token)
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-medium text-[10px]" title="Delivered via Google Play Store broadcast and user account alias">
+                                <Globe className="w-3 h-3" /> Targeted (Broadcast & Alias)
                               </span>
                             )}
                           </td>

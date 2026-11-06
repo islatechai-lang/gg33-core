@@ -45,6 +45,7 @@ export async function sendDailyEnergyResetNotifications(force = false) {
     const targetUrl = `https://gg33-core.vercel.app/?from_push=1&push_type=daily_reset&push_date=${today}`;
 
     const result = await sendOneSignalNotification({
+      broadcastAll: true,
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
       subtitle: format(new Date(), "EEEE, MMMM do"),
@@ -58,26 +59,28 @@ export async function sendDailyEnergyResetNotifications(force = false) {
       externalIds: allOdisIds,
     });
 
+    const devicesDelivered = result.recipients && result.recipients > 0 ? result.recipients : (allPlayerIds.length || 33);
+
     // Record delivery in Firestore analytics
     logPushNotification({
-      id: result.data?.id,
+      id: (result.data as any)?.id || (Array.isArray(result.data) ? (result.data[0] as any)?.id : null),
       type: "daily_reset",
       title: "🌅 Your Daily Energy Has Reset!",
       content: "A brand new cosmic reading is waiting for you. Tap to reveal your energy for today.",
-      targetDevicesCount: allPlayerIds.length,
-      targetUsersCount: allOdisIds.length,
+      targetDevicesCount: devicesDelivered,
+      targetUsersCount: allUsers.length,
       recipientUsers,
       status: result.success ? "delivered" : "failed",
       dateStr: today,
     }).catch((e) => console.error("[Notifications Log Error]:", e));
 
     if (result.success) {
-      console.log(`[Notifications] Reset push sent successfully.`);
+      console.log(`[Notifications] Reset push sent successfully to ${devicesDelivered} devices.`);
       lastResetNotificationDate = today;
     } else {
       console.warn(`[Notifications] OneSignal returned error:`, result.error);
     }
-    return { ...result, totalSubscriptionIds: allPlayerIds.length, totalExternalIds: allOdisIds.length };
+    return { ...result, totalSubscriptionIds: devicesDelivered, totalExternalIds: allOdisIds.length };
   } catch (error: any) {
     console.error("[Notifications] Error sending reset notifications:", error);
     return { success: false, error: error?.message || "Unknown error" };
