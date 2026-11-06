@@ -30,7 +30,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 if (typeof window !== "undefined") {
   const win = window as any;
+
+  // Mark app as Median native wrapper once bridge is detected or ready
+  const markAsMedianApp = () => {
+    try {
+      localStorage.setItem("gg33_is_median_app", "true");
+    } catch {}
+  };
+
+  win.median_library_ready = markAsMedianApp;
+  win.gonative_library_ready = markAsMedianApp;
+  window.addEventListener("medianReady", markAsMedianApp);
+  window.addEventListener("gonativeReady", markAsMedianApp);
+
   win.median_onesignal_info = function (info: any) {
+    markAsMedianApp();
     console.log("[Median OneSignal Info callback]:", JSON.stringify(info));
     // SDK v5+ may return: subscriptionId, oneSignalUserId, userId, pushToken, onesignalId
     const subId = info?.subscriptionId || info?.oneSignalUserId || info?.userId || info?.pushToken || info?.id;
@@ -47,6 +61,33 @@ if (typeof window !== "undefined") {
       }
     }
   };
+
+  // Median Native Push Notification Click / Open Handler
+  const handlePushOpened = function (data: any) {
+    markAsMedianApp();
+    console.log("[Median Push Opened callback]:", JSON.stringify(data));
+    try {
+      const addData = data?.notification?.additionalData || data?.additionalData || data?.data || data || {};
+      const pushType = addData.push_type || addData.pushType || "daily_reset";
+      const pushDate = addData.push_date || addData.pushDate || new Date().toISOString().split("T")[0];
+
+      // Dedup within 5 seconds for same notification
+      const clickKey = `gg33_push_opened_${pushType}_${pushDate}`;
+      if (!sessionStorage.getItem(clickKey)) {
+        sessionStorage.setItem(clickKey, "true");
+        fetch("/api/analytics/track-push-click", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pushType, pushDate }),
+        }).catch((e) => console.warn("[Push Click Track Failed]:", e));
+      }
+    } catch (e) {
+      console.warn("[Push Open Handler Error]:", e);
+    }
+  };
+
+  win.median_onesignal_push_opened = handlePushOpened;
+  win.gonative_onesignal_push_opened = handlePushOpened;
 }
 
 function syncMedianOneSignalUser(odisId?: string | null) {

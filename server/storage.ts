@@ -33,6 +33,7 @@ export interface IStorage {
   updateUser(odisId: string, data: { fullName?: string; birthDate?: Date; birthTime?: string; birthLocation?: string; isPro?: boolean; proPaymentReceiptId?: string | null; oneSignalPlayerId?: string | null }): Promise<DBUser | null>;
   getAllOneSignalPlayerIds(): Promise<string[]>;
   getAllOdisIds(): Promise<string[]>;
+  getAllUsers(): Promise<DBUser[]>;
   updateWhopProfile(whopUserId: string, data: { whopUsername?: string; whopProfilePictureUrl?: string; whopAccessLevel?: 'customer' | 'admin' | 'no_access' }): Promise<DBUser | null>;
   upgradeUserToPro(odisId: string, receiptId: string): Promise<DBUser | null>;
   syncProStatus(whopUserId: string, isPro: boolean, membershipId?: string | null): Promise<DBUser | null>;
@@ -451,6 +452,37 @@ export class FirestoreStorage implements IStorage {
       return Array.from(new Set(ids));
     } catch (error) {
       console.error("Error getting all odisIds:", error);
+      return [];
+    }
+  }
+
+  async getAllUsers(): Promise<DBUser[]> {
+    await this.ensureConnected();
+    try {
+      const snapshot = await db.collection("users").get();
+      return snapshot.docs.map(doc => {
+        const data = doc.data() || {};
+        return {
+          id: doc.id,
+          odisId: data.odisId || doc.id,
+          fullName: data.fullName || data.name || "Anonymous User",
+          birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : (data.birthDate ? new Date(data.birthDate) : new Date()),
+          birthTime: data.birthTime || null,
+          birthLocation: data.birthLocation || null,
+          whopUserId: data.whopUserId || null,
+          firebaseUid: data.firebaseUid || null,
+          email: data.email || null,
+          whopUsername: data.whopUsername || null,
+          whopProfilePictureUrl: data.whopProfilePictureUrl || null,
+          whopAccessLevel: data.whopAccessLevel || 'no_access',
+          isPro: Boolean(data.isPro),
+          proPaymentReceiptId: data.proPaymentReceiptId || null,
+          oneSignalPlayerId: data.oneSignalPlayerId || null,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+        } as DBUser;
+      });
+    } catch (error) {
+      console.error("Error getting all users:", error);
       return [];
     }
   }

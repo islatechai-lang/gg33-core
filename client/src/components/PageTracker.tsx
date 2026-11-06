@@ -4,6 +4,19 @@ import { useAuth } from '@/context/AuthContext';
 
 const ADMIN_EMAIL = 'princederder44@gmail.com';
 
+export function isDeviceMedianApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const win = window as any;
+    if (typeof win.median !== 'undefined' || typeof win.gonative !== 'undefined') return true;
+    if (localStorage.getItem('gg33_is_median_app') === 'true') return true;
+    if (localStorage.getItem('gg33-onesignal-player-id')) return true;
+    const ua = (navigator.userAgent || '').toLowerCase();
+    if (ua.includes('median') || ua.includes('gonative') || ua.includes('co.median.android')) return true;
+  } catch {}
+  return false;
+}
+
 export function getAppAndDeviceInfo(): {
   device: 'mobile' | 'desktop' | 'tablet';
   platform: 'android_app' | 'ios_app' | 'mobile_web' | 'desktop_web';
@@ -18,21 +31,22 @@ export function getAppAndDeviceInfo(): {
   const win = window as any;
 
   // 1. Median.co App & GoNative detection (Google Play Store wrapper)
-  const isMedianApp =
-    typeof win.median !== 'undefined' ||
-    typeof win.gonative !== 'undefined' ||
-    uaLower.includes('median') ||
-    uaLower.includes('gonative');
+  const isMedian = isDeviceMedianApp();
 
-  // 2. Android WebView detection
+  // 2. Android WebView & Mobile OS detection
   const isAndroid = uaLower.includes('android');
   const isIOS = /iphone|ipad|ipod/.test(uaLower);
-  const isAndroidWebView = isAndroid && (uaLower.includes('; wv') || uaLower.includes('version/4.0'));
+  const isAndroidWebView =
+    isAndroid &&
+    (uaLower.includes('; wv') ||
+      uaLower.includes('version/4.0') ||
+      isMedian ||
+      Boolean(win.median || win.gonative || win.Android));
   const isIOSWebView = isIOS && !uaLower.includes('safari') && uaLower.includes('applewebkit');
 
   // If running inside the wrapped mobile app (e.g. Google Play installed app)
-  if (isMedianApp || isAndroidWebView || isIOSWebView) {
-    if (isAndroid || isAndroidWebView) {
+  if (isMedian || isAndroidWebView || isIOSWebView) {
+    if (isAndroid || isAndroidWebView || isMedian) {
       return { device: 'mobile', platform: 'android_app', isNativeApp: true };
     }
     if (isIOS || isIOSWebView) {
@@ -60,11 +74,10 @@ export function getAppAndDeviceInfo(): {
 
 function getBrowserName(): string {
   if (typeof window === 'undefined') return 'Unknown';
-  const ua = navigator.userAgent;
-  const win = window as any;
-  if (typeof win.median !== 'undefined' || ua.toLowerCase().includes('median')) {
+  if (isDeviceMedianApp()) {
     return 'Google Play App (Median)';
   }
+  const ua = navigator.userAgent;
   if (ua.includes('Firefox')) return 'Firefox';
   if (ua.includes('SamsungBrowser')) return 'Samsung Internet';
   if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
@@ -99,16 +112,6 @@ function getOrCreateSessionId(): string {
   }
 }
 
-function isDeviceExcluded(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    if (localStorage.getItem('gg33_admin_exclude') === 'true') return true;
-    if (document.cookie.includes('gg33_admin_exclude=true')) return true;
-    if (sessionStorage.getItem('gg33_admin_token')) return true;
-  } catch {}
-  return false;
-}
-
 export function PageTracker() {
   const router = useRouter();
   const { dbUser } = useAuth();
@@ -116,31 +119,49 @@ export function PageTracker() {
   const lastTrackedTime = useRef<number>(0);
 
   useEffect(() => {
-    // If the logged-in user is the owner, immediately lock cookies & storage
-    if (dbUser?.email && dbUser.email.trim().toLowerCase() === ADMIN_EMAIL) {
-      try {
-        localStorage.setItem('gg33_admin_exclude', 'true');
-        document.cookie = 'gg33_admin_exclude=true; path=/; max-age=31536000; SameSite=Lax';
-      } catch {}
+    // Clean up any legacy permanent exclusions that muted the device
+    try {
+      localStorage.removeItem('gg33_admin_exclude');
+      document.cookie = 'gg33_admin_exclude=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } catch {}
 
-      // Identify to Microsoft Clarity as admin/owner
+    // Tag Microsoft Clarity for admin
+    if (dbUser?.email && dbUser.email.trim().toLowerCase() === ADMIN_EMAIL) {
       if (typeof window !== 'undefined' && typeof (window as any).clarity === 'function') {
         (window as any).clarity('set', 'is_admin', 'true');
         (window as any).clarity('identify', 'admin_owner');
       }
-      return;
     }
 
     const trackCurrentPage = (path: string) => {
       if (typeof window === 'undefined') return;
 
-      // Check admin exclusions
-      const isExcluded =
-        isDeviceExcluded() ||
-        dbUser?.email?.trim().toLowerCase() === ADMIN_EMAIL ||
-        path.startsWith('/admin');
+      // 1. ALWAYS track push notification click / open if opened via push link or intent
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('from_push') === '1') {
+          const pushType = urlParams.get('push_type') || 'daily_reset';
+          const pushDate = urlParams.get('push_date') || new Date().toISOString().split('T')[0];
+          const sessionKey = `gg33_push_click_${pushType}_${pushDate}`;
 
-      if (isExcluded) {
+          if (!sessionStorage.getItem(sessionKey)) {
+            sessionStorage.setItem(sessionKey, 'true');
+            // Mark device as Median app
+            try {
+              localStorage.setItem('gg33_is_median_app', 'true');
+            } catch {}
+
+            fetch('/api/analytics/track-push-click', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pushType, pushDate }),
+            }).catch(() => {});
+          }
+        }
+      } catch {}
+
+      // Exclude admin dashboard views from page visit tracking
+      if (path.startsWith('/admin')) {
         return;
       }
 
@@ -152,23 +173,6 @@ export function PageTracker() {
 
       lastTrackedPath.current = path;
       lastTrackedTime.current = now;
-
-      // Track push notification click / open if opened from notification
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('from_push') === '1' && !sessionStorage.getItem('gg33_push_click_tracked')) {
-          sessionStorage.setItem('gg33_push_click_tracked', 'true');
-          fetch('/api/analytics/track-push-click', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              pushType: urlParams.get('push_type') || 'daily_reset',
-              pushDate: urlParams.get('push_date') || new Date().toISOString().split('T')[0],
-            }),
-            keepalive: true,
-          }).catch(() => {});
-        }
-      } catch {}
 
       // Detect if this is the start of a brand new visitor session
       let isNewSession = false;
@@ -197,11 +201,11 @@ export function PageTracker() {
       };
 
       try {
+        // Standard reliable fetch without keepalive (avoids Android WebView keepalive bug)
         fetch('/api/analytics/track', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-          keepalive: true,
         }).catch(() => {});
       } catch {}
 

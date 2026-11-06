@@ -26,6 +26,7 @@ import {
   Bell,
   Send,
   CheckCircle2,
+  X,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -54,6 +55,20 @@ export default function AdminDashboardPage() {
   const [userSearch, setUserSearch] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'pro' | 'free'>('all');
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
+  const [selectedPushLog, setSelectedPushLog] = useState<any>(null);
+  const [recipientSearch, setRecipientSearch] = useState('');
+
+  const filteredRecipients = useMemo(() => {
+    if (!selectedPushLog?.recipientUsers) return [];
+    const q = recipientSearch.trim().toLowerCase();
+    if (!q) return selectedPushLog.recipientUsers;
+    return selectedPushLog.recipientUsers.filter((u: any) =>
+      (u.fullName || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.odisId || '').toLowerCase().includes(q) ||
+      (u.oneSignalPlayerId || '').toLowerCase().includes(q)
+    );
+  }, [selectedPushLog, recipientSearch]);
 
   useEffect(() => {
     setMounted(true);
@@ -86,8 +101,8 @@ export default function AdminDashboardPage() {
 
       sessionStorage.setItem('gg33_admin_token', data.token);
       try {
-        localStorage.setItem('gg33_admin_exclude', 'true');
-        document.cookie = 'gg33_admin_exclude=true; path=/; max-age=31536000; SameSite=Lax';
+        localStorage.removeItem('gg33_admin_exclude');
+        document.cookie = 'gg33_admin_exclude=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       } catch {}
 
       setIsAuthenticated(true);
@@ -688,83 +703,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* PUSH NOTIFICATIONS DELIVERY & CLICK TRACKER */}
-        <div className="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                <Bell className="w-4 h-4 text-amber-400" />
-                <span>Daily Push Notification Monitor</span>
-              </h3>
-              <p className="text-xs text-zinc-400">Track delivery to user devices & actual app opens from push</p>
-            </div>
-            <button
-              onClick={handleSendTestPush}
-              disabled={isSendingTestPush}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer disabled:opacity-50"
-            >
-              <Send className={`w-3.5 h-3.5 ${isSendingTestPush ? 'animate-spin' : ''}`} />
-              <span>{isSendingTestPush ? 'Sending Broadcast...' : 'Test Send Push Broadcast'}</span>
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
-                  <th className="pb-3 pr-4">Notification Title</th>
-                  <th className="pb-3 px-4">Type</th>
-                  <th className="pb-3 px-4">Targeted Devices</th>
-                  <th className="pb-3 px-4">App Opens / Clicks</th>
-                  <th className="pb-3 px-4">Open Rate (CTR)</th>
-                  <th className="pb-3 pl-4">Sent At</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {statsData?.pushLogs && statsData.pushLogs.length > 0 ? (
-                  statsData.pushLogs.map((log: any) => (
-                    <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3 pr-4">
-                        <div className="font-semibold text-zinc-200">{log.title}</div>
-                        <div className="text-[11px] text-zinc-500 truncate max-w-xs">{log.content}</div>
-                      </td>
-                      <td className="py-3 px-4 uppercase text-[10px] font-mono font-bold text-amber-400">
-                        {log.type?.replace('_', ' ')}
-                      </td>
-                      <td className="py-3 px-4 text-zinc-300 font-semibold">
-                        📱 {log.targetDevicesCount} devices
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold">
-                          {log.clicksCount} opens
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-bold text-emerald-400">
-                        {log.ctr}%
-                      </td>
-                      <td className="py-3 pl-4 text-zinc-400 text-xs">
-                        {new Date(log.sentAt).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: 'numeric',
-                        })}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-zinc-500">
-                      No push notifications dispatched yet today
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* RECENT LIVE VISITS FEED */}
+        {/* RECENT LIVE VISITS FEED (LIVE ACTIVITY STREAM ABOVE PUSH MONITOR) */}
         <div className="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -818,7 +757,11 @@ export default function AdminDashboardPage() {
                           )}
                         </td>
                         <td className="py-2.5 px-4">
-                          {visit.isPro ? (
+                          {visit.isAdminTest ? (
+                            <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-bold inline-flex items-center gap-1">
+                              👑 Owner Test (Excluded from totals)
+                            </span>
+                          ) : visit.isPro ? (
                             <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold">
                               PRO USER
                             </span>
@@ -840,6 +783,95 @@ export default function AdminDashboardPage() {
                   <tr>
                     <td colSpan={5} className="py-6 text-center text-zinc-500">
                       No visits recorded yet
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* PUSH NOTIFICATIONS DELIVERY & CLICK TRACKER */}
+        <div className="bg-zinc-900/70 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-amber-400" />
+                <span>Daily Push Notification Monitor</span>
+              </h3>
+              <p className="text-xs text-zinc-400">Track delivery to user devices & actual app opens from push</p>
+            </div>
+            <button
+              onClick={handleSendTestPush}
+              disabled={isSendingTestPush}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer disabled:opacity-50"
+            >
+              <Send className={`w-3.5 h-3.5 ${isSendingTestPush ? 'animate-spin' : ''}`} />
+              <span>{isSendingTestPush ? 'Sending Broadcast...' : 'Test Send Push Broadcast'}</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
+                  <th className="pb-3 pr-4">Notification Title</th>
+                  <th className="pb-3 px-4">Type</th>
+                  <th className="pb-3 px-4">Targeted Devices</th>
+                  <th className="pb-3 px-4">Recipients</th>
+                  <th className="pb-3 px-4">App Opens / Clicks</th>
+                  <th className="pb-3 px-4">Open Rate (CTR)</th>
+                  <th className="pb-3 pl-4">Sent At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {statsData?.pushLogs && statsData.pushLogs.length > 0 ? (
+                  statsData.pushLogs.map((log: any) => (
+                    <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3 pr-4">
+                        <div className="font-semibold text-zinc-200">{log.title}</div>
+                        <div className="text-[11px] text-zinc-500 truncate max-w-xs">{log.content}</div>
+                      </td>
+                      <td className="py-3 px-4 uppercase text-[10px] font-mono font-bold text-amber-400">
+                        {log.type?.replace('_', ' ')}
+                      </td>
+                      <td className="py-3 px-4 text-zinc-300 font-semibold">
+                        📱 {log.targetDevicesCount} devices
+                      </td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => {
+                            setSelectedPushLog(log);
+                            setRecipientSearch('');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-400 text-[11px] font-bold border border-zinc-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span>View {log.recipientUsers?.length || log.targetUsersCount || 0} Users</span>
+                        </button>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold">
+                          {log.clicksCount} opens
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-emerald-400">
+                        {log.ctr}%
+                      </td>
+                      <td className="py-3 pl-4 text-zinc-400 text-xs">
+                        {new Date(log.sentAt).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: 'numeric',
+                        })}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-zinc-500">
+                      No push notifications dispatched yet today
                     </td>
                   </tr>
                 )}
@@ -963,6 +995,126 @@ export default function AdminDashboardPage() {
             </table>
           </div>
         </div>
+
+        {/* PUSH NOTIFICATION RECIPIENTS MODAL */}
+        {selectedPushLog && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+              {/* Modal Header */}
+              <div className="p-5 border-b border-zinc-800/80 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-amber-400" />
+                    <h3 className="text-base font-bold text-zinc-100">
+                      Push Notification Recipients
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase">
+                      {selectedPushLog.type?.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {selectedPushLog.title} • {new Date(selectedPushLog.sentAt).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedPushLog(null)}
+                  className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Search Bar */}
+              <div className="p-4 border-b border-zinc-800/50 bg-zinc-950/40 flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={recipientSearch}
+                    onChange={(e) => setRecipientSearch(e.target.value)}
+                    placeholder="Search recipient by name, email, or ODIS ID..."
+                    className="w-full pl-9 pr-4 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+                <span className="text-xs text-zinc-400 font-mono whitespace-nowrap">
+                  {filteredRecipients.length} of {selectedPushLog.recipientUsers?.length || selectedPushLog.targetUsersCount || 0} users
+                </span>
+              </div>
+
+              {/* Modal Table */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 pr-4">User</th>
+                      <th className="pb-3 px-4">Plan</th>
+                      <th className="pb-3 px-4">ODIS ID</th>
+                      <th className="pb-3 pl-4">Push Device Link</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/40">
+                    {filteredRecipients.length > 0 ? (
+                      filteredRecipients.map((rec: any, idx: number) => (
+                        <tr key={rec.odisId || idx} className="hover:bg-zinc-800/30 transition-colors">
+                          <td className="py-2.5 pr-4">
+                            <div className="font-semibold text-zinc-200">{rec.fullName || 'Anonymous User'}</div>
+                            <div className="text-[11px] text-zinc-400">{rec.email || 'No email provided'}</div>
+                          </td>
+                          <td className="py-2.5 px-4">
+                            {rec.isPro ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold text-[10px]">
+                                <Crown className="w-3 h-3 text-amber-400" /> PRO
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px]">
+                                FREE
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-4 font-mono text-[11px] text-zinc-400">
+                            {rec.odisId}
+                          </td>
+                          <td className="py-2.5 pl-4">
+                            {rec.hasPushToken ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
+                                <Smartphone className="w-3 h-3" /> Linked & Targeted
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-zinc-800/70 text-zinc-500 border border-zinc-700/60 text-[10px]">
+                                Alias Only (No token)
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-zinc-500">
+                          {selectedPushLog.recipientUsers && selectedPushLog.recipientUsers.length > 0
+                            ? 'No users match your search criteria'
+                            : 'No detailed recipient records attached to this log'}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between">
+                <span className="text-[11px] text-zinc-500">
+                  Total Devices Targeted: <strong className="text-zinc-300">{selectedPushLog.targetDevicesCount}</strong> • App Opens: <strong className="text-emerald-400">{selectedPushLog.clicksCount} ({selectedPushLog.ctr}%)</strong>
+                </span>
+                <button
+                  onClick={() => setSelectedPushLog(null)}
+                  className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-zinc-700 transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

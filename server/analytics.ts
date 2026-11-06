@@ -36,6 +36,15 @@ export interface UpgradeIntentEvent {
   email?: string | null;
 }
 
+export interface PushRecipientInfo {
+  odisId: string;
+  fullName: string;
+  email: string;
+  isPro: boolean;
+  hasPushToken: boolean;
+  oneSignalPlayerId?: string | null;
+}
+
 export interface PushNotificationLog {
   id?: string;
   type: string;
@@ -43,6 +52,7 @@ export interface PushNotificationLog {
   content: string;
   targetDevicesCount: number;
   targetUsersCount: number;
+  recipientUsers?: PushRecipientInfo[];
   status: string;
   sentAt?: Date;
   dateStr?: string;
@@ -64,6 +74,7 @@ export async function logPushNotification(data: PushNotificationLog): Promise<bo
       content: data.content || "",
       targetDevicesCount: data.targetDevicesCount || 0,
       targetUsersCount: data.targetUsersCount || 0,
+      recipientUsers: data.recipientUsers || [],
       status: data.status || "delivered",
       sentAt: Timestamp.now(),
       dateStr,
@@ -78,24 +89,54 @@ export async function logPushNotification(data: PushNotificationLog): Promise<bo
 
 /**
  * Record a push notification click / open from user device.
+ * Resilient lookup: checks matching date & type, falls back to latest log.
  */
 export async function recordPushClick(pushType = "daily_reset", pushDate?: string): Promise<boolean> {
   try {
     const todayStr = pushDate || new Date().toISOString().split("T")[0];
-    const snapshot = await db
+    
+    // 1. Try finding log with matching dateStr and type
+    let snapshot = await db
       .collection("push_notification_logs")
       .where("dateStr", "==", todayStr)
-      .limit(5)
+      .where("type", "==", pushType)
+      .limit(1)
       .get();
+
+    // 2. If not found, try matching dateStr only
+    if (snapshot.empty) {
+      snapshot = await db
+        .collection("push_notification_logs")
+        .where("dateStr", "==", todayStr)
+        .limit(1)
+        .get();
+    }
+
+    // 3. If still not found, get the most recent push log overall
+    if (snapshot.empty) {
+      try {
+        snapshot = await db
+          .collection("push_notification_logs")
+          .orderBy("sentAt", "desc")
+          .limit(1)
+          .get();
+      } catch {
+        snapshot = await db.collection("push_notification_logs").limit(1).get();
+      }
+    }
 
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
       const currentClicks = doc.data().clicksCount || 0;
       await doc.ref.update({
         clicksCount: currentClicks + 1,
+        lastClickAt: Timestamp.now(),
       });
+      console.log(`[Analytics] Successfully recorded push click for log ${doc.id} (new total: ${currentClicks + 1})`);
       return true;
     }
+
+    console.warn("[Analytics] No push notification log found to associate click with.");
     return false;
   } catch (error) {
     console.error("[Analytics] Error recording push click:", error);
@@ -109,9 +150,8 @@ export async function recordPushClick(pushType = "daily_reset", pushDate?: strin
 export async function recordPageView(event: PageViewEvent): Promise<boolean> {
   try {
     const email = event.userEmail?.trim().toLowerCase();
-    if (email === ADMIN_EMAIL) {
-      return false; // Exclude admin visits
-    }
+    const isAdminTest = email === ADMIN_EMAIL;
+
     if (event.path && event.path.startsWith("/admin")) {
       return false; // Exclude visits to admin dashboard
     }
@@ -131,6 +171,7 @@ export async function recordPageView(event: PageViewEvent): Promise<boolean> {
       userId: event.userId || null,
       userEmail: email || null,
       isPro: Boolean(event.isPro),
+      isAdminTest,
       timestamp: Timestamp.now(),
       dateStr,
     });
@@ -269,7 +310,31 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
     pageViewsSnapshot.docs.forEach((doc) => {
       const data = doc.data();
       const email = data.userEmail?.trim().toLowerCase();
-      if (email === ADMIN_EMAIL) return;
+      const isAdminTest = Boolean(data.isAdminTest || email === ADMIN_EMAIL);
+      const cleanPath = (data.path || "/").split("?")[0];
+      const dev = (data.device || "desktop").toLowerCase();
+      const plat = data.platform || (dev.includes("mob") ? "mobile_web" : "desktop_web");
+
+      // Keep recent 30 visits in the activity feed (including owner tests tagged as such)
+      if (recentVisits.length < 30) {
+        const visitTime = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+        recentVisits.push({
+          id: doc.id,
+          path: cleanPath,
+          device: data.device || "desktop",
+          platform: plat,
+          isNativeApp: Boolean(data.isNativeApp || plat === "android_app" || plat === "ios_app"),
+          browser: data.browser || "unknown",
+          os: data.os || "unknown",
+          isPro: Boolean(data.isPro),
+          userEmail: isAdminTest ? `${ADMIN_EMAIL} (Owner Test)` : (data.userEmail || null),
+          isAdminTest,
+          timestamp: visitTime.toISOString(),
+        });
+      }
+
+      // Strictly exclude owner testing visits from aggregate traffic statistics & KPIs
+      if (isAdminTest) return;
 
       totalViews++;
       const dateStr = data.dateStr || (data.timestamp?.toDate ? data.timestamp.toDate().toISOString().split("T")[0] : todayStr);
@@ -291,17 +356,14 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       }
 
       // Paths
-      const cleanPath = (data.path || "/").split("?")[0];
       pathCounts[cleanPath] = (pathCounts[cleanPath] || 0) + 1;
 
       // Devices
-      const dev = (data.device || "desktop").toLowerCase();
       if (dev.includes("mob")) deviceCounts.mobile = (deviceCounts.mobile || 0) + 1;
       else if (dev.includes("tab")) deviceCounts.tablet = (deviceCounts.tablet || 0) + 1;
       else deviceCounts.desktop = (deviceCounts.desktop || 0) + 1;
 
       // Platforms (Google Play App vs Mobile Web vs Desktop Web)
-      const plat = data.platform || (dev.includes("mob") ? "mobile_web" : "desktop_web");
       if (platformCounts[plat] !== undefined) {
         platformCounts[plat]++;
       } else {
@@ -315,23 +377,6 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       // Browsers
       const browser = data.browser || "Chrome";
       browserCounts[browser] = (browserCounts[browser] || 0) + 1;
-
-      // Keep recent 25 visits
-      if (recentVisits.length < 25) {
-        const visitTime = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
-        recentVisits.push({
-          id: doc.id,
-          path: cleanPath,
-          device: data.device || "desktop",
-          platform: plat,
-          isNativeApp: Boolean(data.isNativeApp || plat === "android_app" || plat === "ios_app"),
-          browser: data.browser || "unknown",
-          os: data.os || "unknown",
-          isPro: Boolean(data.isPro),
-          userEmail: data.userEmail || null,
-          timestamp: visitTime.toISOString(),
-        });
-      }
     });
 
     // Format top paths
@@ -409,6 +454,7 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
         content: data.content,
         targetDevicesCount: targets,
         targetUsersCount: data.targetUsersCount || 0,
+        recipientUsers: data.recipientUsers || [],
         status: data.status,
         sentAt: sentTime.toISOString(),
         dateStr: data.dateStr,
