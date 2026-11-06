@@ -80,6 +80,30 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
+  // Real-time live background sync every 4 seconds
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchStats(daysRange, undefined, true);
+      }
+    }, 4000);
+
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchStats(daysRange, undefined, true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [isAuthenticated, daysRange]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -171,11 +195,11 @@ export default function AdminDashboardPage() {
     setStatsData(null);
   };
 
-  const fetchStats = async (days = daysRange, tokenOverride?: string) => {
+  const fetchStats = async (days = daysRange, tokenOverride?: string, isSilent = false) => {
     const token = tokenOverride || sessionStorage.getItem('gg33_admin_token');
     if (!token) return;
 
-    setLoading(true);
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch(`/api/admin/stats?days=${days}`, {
         headers: {
@@ -197,7 +221,7 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error('Error fetching admin stats:', err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
@@ -426,9 +450,15 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           {lastRefreshed && (
-            <div className="flex items-center gap-1.5 text-zinc-500">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Last updated: {lastRefreshed}</span>
+            <div className="flex items-center gap-2 text-zinc-400 font-mono">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Live Sync (4s)
+              </span>
+              <div className="flex items-center gap-1.5 text-zinc-500 text-xs font-sans">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Updated: {lastRefreshed}</span>
+              </div>
             </div>
           )}
         </div>
