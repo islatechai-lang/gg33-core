@@ -1212,13 +1212,13 @@ export default function Explore() {
               <Card
                 key={item.id}
                 variant="frosted"
-                className={`hover:border-amber-500/30 transition-all cursor-pointer group relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[185px] rounded-2xl ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
+                className={`content-auto hover:border-amber-500/30 transition-all cursor-pointer group relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[185px] rounded-2xl ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
                   }`}
                 onClick={() => handleCardClick(item.id)}
                 data-testid={`card-explore-${item.id}`}
               >
                 {!isPro && (
-                  <div className="absolute inset-0 bg-gray-1/60 backdrop-blur-[1px] rounded-2xl z-10 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/70 rounded-2xl z-10 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-a3 flex items-center justify-center">
                         <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-11" />
@@ -1266,130 +1266,170 @@ export default function Explore() {
         </div>
       </main>
 
-      <TrendingEnergiesDialog
-        open={activeFeature === 'trending'}
-        onClose={() => setActiveFeature(null)}
-        profileData={effectiveProfile}
-      />
+      {activeFeature === 'trending' && (
+        <TrendingEnergiesDialog
+          open={true}
+          onClose={() => setActiveFeature(null)}
+          profileData={effectiveProfile}
+        />
+      )}
 
-      <BestDaysDialog
-        open={activeFeature === 'best-days'}
-        onClose={handleCloseDialog}
-        birthDate={birthDate}
-      />
+      {activeFeature === 'best-days' && (
+        <BestDaysDialog
+          open={true}
+          onClose={handleCloseDialog}
+          birthDate={birthDate}
+        />
+      )}
 
-      <CelebrityMatchesDialog
-        open={activeFeature === 'celebrity'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-        energySignature={energySignature}
-      />
+      {activeFeature === 'celebrity' && (
+        <CelebrityMatchesDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+          energySignature={energySignature}
+        />
+      )}
 
-      <TravelDestinationsDialog
-        open={activeFeature === 'travel'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-        element={element}
-        birthYear={birthDate ? new Date(birthDate).getFullYear() : null}
-      />
+      {activeFeature === 'travel' && (
+        <TravelDestinationsDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+          element={element}
+          birthYear={birthDate ? new Date(birthDate).getFullYear() : null}
+        />
+      )}
 
-      <RelationshipPatternsDialog
-        open={activeFeature === 'relationship'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'relationship' && (
+        <RelationshipPatternsDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <CareerAlignmentDialog
-        open={activeFeature === 'career'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'career' && (
+        <CareerAlignmentDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <YearlyForecastDialog
-        open={activeFeature === 'yearly-forecast'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'yearly-forecast' && (
+        <YearlyForecastDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <MonthlyForecastDialog
-        open={activeFeature === 'monthly-forecast'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'monthly-forecast' && (
+        <MonthlyForecastDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <HomePickerDialog
-        open={activeFeature === 'home-picker'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'home-picker' && (
+        <HomePickerDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <CarsDialog
-        open={activeFeature === 'cars'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'cars' && (
+        <CarsDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <LuckyNumberDialog
-        open={activeFeature === 'lucky-number'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-        birthDate={birthDate}
-      />
+      {activeFeature === 'lucky-number' && (
+        <LuckyNumberDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+          birthDate={birthDate}
+        />
+      )}
 
-      <LetterologyDialog
-        open={activeFeature === 'letterology'}
-        onClose={handleCloseDialog}
-        profileData={effectiveProfile}
-      />
+      {activeFeature === 'letterology' && (
+        <LetterologyDialog
+          open={true}
+          onClose={handleCloseDialog}
+          profileData={effectiveProfile}
+        />
+      )}
 
-      <MatrixNumbersDialog
-        open={activeFeature === 'matrix-numbers'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-        birthDate={birthDate}
-      />
+      {activeFeature === 'matrix-numbers' && (
+        <MatrixNumbersDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+          birthDate={birthDate}
+        />
+      )}
 
-      <CueCardsDialog
-        open={activeFeature === 'cue-cards'}
-        onClose={handleCloseDialog}
-      />
+      {activeFeature === 'cue-cards' && (
+        <CueCardsDialog
+          open={true}
+          onClose={handleCloseDialog}
+        />
+      )}
 
-      <DreamInterpreterDialog
-        open={activeFeature === 'dream-interpreter'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'dream-interpreter' && (
+        <DreamInterpreterDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <EnergyInsightsDialog
-        open={activeFeature === 'energy-insights'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-        energySignature={energySignature}
-      />
+      {activeFeature === 'energy-insights' && (
+        <EnergyInsightsDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+          energySignature={energySignature}
+        />
+      )}
 
-      <ColorologyDialog
-        open={activeFeature === 'colorology'}
-        onClose={handleCloseDialog}
-        lifePathNumber={lifePathNumber}
-      />
+      {activeFeature === 'colorology' && (
+        <ColorologyDialog
+          open={true}
+          onClose={handleCloseDialog}
+          lifePathNumber={lifePathNumber}
+        />
+      )}
 
-      <VedicAstrologyDialog
-        open={activeFeature === 'vedic-astrology'}
-        onClose={handleCloseDialog}
-        birthDate={birthDate}
-      />
+      {activeFeature === 'vedic-astrology' && (
+        <VedicAstrologyDialog
+          open={true}
+          onClose={handleCloseDialog}
+          birthDate={birthDate}
+        />
+      )}
 
-      <AllAboutYouDialog
-        open={activeFeature === 'all-about-you'}
-        onClose={handleCloseDialog}
-        profileData={effectiveProfile}
-      />
+      {activeFeature === 'all-about-you' && (
+        <AllAboutYouDialog
+          open={true}
+          onClose={handleCloseDialog}
+          profileData={effectiveProfile}
+        />
+      )}
 
-      <SaturnInsightsDialog
-        open={activeFeature === 'saturn-insights'}
-        onClose={handleCloseDialog}
-        birthDate={birthDate}
-      />
+      {activeFeature === 'saturn-insights' && (
+        <SaturnInsightsDialog
+          open={true}
+          onClose={handleCloseDialog}
+          birthDate={birthDate}
+        />
+      )}
 
       {showProfilePrompt && (
         <ProfileRequiredPrompt onClose={() => setShowProfilePrompt(false)} />

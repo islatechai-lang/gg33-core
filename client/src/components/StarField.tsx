@@ -15,49 +15,69 @@ export function StarField() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
     };
 
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas, { passive: true });
 
     const stars: Star[] = [];
-    const numStars = 150;
+    const isMobile = width < 768;
+    const numStars = isMobile ? 40 : 75;
 
     for (let i = 0; i < numStars; i++) {
       stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.5 + 0.2,
-        speed: Math.random() * 0.5 + 0.1,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 1.8 + 0.5,
+        opacity: Math.random() * 0.4 + 0.2,
+        speed: Math.random() * 0.4 + 0.1,
       });
     }
 
     let animationId: number;
+    let lastDrawTime = 0;
+    const fpsInterval = 1000 / 30; // Cap to 30 FPS for silky battery-saving background
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const animate = (currentTime: number) => {
+      animationId = requestAnimationFrame(animate);
 
-      stars.forEach((star) => {
-        star.opacity += Math.sin(Date.now() * star.speed * 0.001) * 0.01;
-        star.opacity = Math.max(0.1, Math.min(0.7, star.opacity));
+      if (document.hidden) return;
 
+      const elapsed = currentTime - lastDrawTime;
+      if (elapsed < fpsInterval) return;
+
+      lastDrawTime = currentTime - (elapsed % fpsInterval);
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#faf0dc';
+
+      const t = currentTime * 0.001;
+
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
+        star.opacity += Math.sin(t * star.speed) * 0.015;
+        if (star.opacity < 0.1) star.opacity = 0.1;
+        else if (star.opacity > 0.65) star.opacity = 0.65;
+
+        ctx.globalAlpha = star.opacity;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(250, 240, 220, ${star.opacity})`;
         ctx.fill();
-      });
-
-      animationId = requestAnimationFrame(animate);
+      }
     };
 
-    animate();
+    animationId = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
@@ -68,8 +88,8 @@ export function StarField() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
+      className="fixed inset-0 pointer-events-none z-0 will-change-transform"
+      style={{ opacity: 0.55 }}
     />
   );
 }

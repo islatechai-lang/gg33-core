@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { WhopElements, Checkout, CheckoutElement } from '@whop/elements-react';
 import { loadWhop } from '@whop/elements';
-import { Loader2 } from 'lucide-react';
+import { PaymentLoadingSpinner } from '@/components/PaymentLoadingSpinner';
 
 interface Props {
   planId: string;
@@ -20,12 +20,7 @@ export default function WhopElementsCheckout({ planId, onComplete }: Props) {
   }, []);
 
   if (!elements) {
-    return (
-      <div className="h-96 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-        <p className="text-sm font-medium text-zinc-400">Loading secure checkout...</p>
-      </div>
-    );
+    return <PaymentLoadingSpinner text="Loading secure checkout..." />;
   }
 
   return (
@@ -44,12 +39,7 @@ export default function WhopElementsCheckout({ planId, onComplete }: Props) {
           const paymentId = completion?.paymentId || completion?.sessionId || 'whop_checkout_success';
           onComplete?.(paymentId);
         }}
-        fallback={
-          <div className="h-96 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-            <p className="text-sm font-medium text-zinc-400">Loading payment form...</p>
-          </div>
-        }
+        fallback={<PaymentLoadingSpinner text="Loading payment form..." />}
       >
         <CheckoutElement />
       </Checkout>
