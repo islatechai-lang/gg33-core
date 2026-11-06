@@ -82,6 +82,18 @@ if (typeof window !== "undefined") {
           body: JSON.stringify({ pushType, pushDate }),
         }).catch((e) => console.warn("[Push Click Track Failed]:", e));
       }
+
+      // Smooth in-app navigation without opening external browser
+      const internalTarget = addData.targetUrl || addData.url;
+      if (internalTarget && typeof window !== "undefined") {
+        try {
+          const parsed = new URL(internalTarget, window.location.origin);
+          const localPath = parsed.pathname + parsed.search;
+          if (localPath && window.location.pathname + window.location.search !== localPath) {
+            window.location.href = localPath;
+          }
+        } catch {}
+      }
     } catch (e) {
       console.warn("[Push Open Handler Error]:", e);
     }
