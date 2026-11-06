@@ -78,6 +78,8 @@ export async function sendOneSignalNotification(
     url: targetUrl,
     web_url: targetUrl,
     app_url: targetUrl,
+    priority: 10,
+    android_visibility: 1,
     data: {
       targetUrl: targetUrl,
       url: targetUrl,
@@ -101,7 +103,7 @@ export async function sendOneSignalNotification(
 
     try {
       console.log("[OneSignal] Broadcasting push to ALL installed devices via Total Subscriptions...");
-      const response = await fetch("https://api.onesignal.com/notifications", {
+      const response = await fetch("https://onesignal.com/api/v1/notifications", {
         method: "POST",
         headers: {
           "Authorization": `Basic ${restApiKey}`,
@@ -129,7 +131,7 @@ export async function sendOneSignalNotification(
 
     try {
       console.log(`[OneSignal] Sending push via external_id to ${validExternalIds.length} user(s)...`);
-      const response = await fetch("https://api.onesignal.com/notifications", {
+      const response = await fetch("https://onesignal.com/api/v1/notifications", {
         method: "POST",
         headers: {
           "Authorization": `Basic ${restApiKey}`,
@@ -156,7 +158,7 @@ export async function sendOneSignalNotification(
 
     try {
       console.log(`[OneSignal] Sending push via subscription_id to ${validSubscriptionIds.length} device(s)...`);
-      const response = await fetch("https://api.onesignal.com/notifications", {
+      const response = await fetch("https://onesignal.com/api/v1/notifications", {
         method: "POST",
         headers: {
           "Authorization": `Basic ${restApiKey}`,
