@@ -152,6 +152,11 @@ export async function recordPageView(event: PageViewEvent): Promise<boolean> {
     const email = event.userEmail?.trim().toLowerCase();
     const isAdminTest = email === ADMIN_EMAIL;
 
+    // Strictly NEVER record owner visits to Firestore!
+    if (isAdminTest || email === ADMIN_EMAIL) {
+      return false;
+    }
+
     if (event.path && event.path.startsWith("/admin")) {
       return false; // Exclude visits to admin dashboard
     }
@@ -217,6 +222,9 @@ export async function recordUpgradeIntent(event: UpgradeIntentEvent): Promise<bo
  */
 export async function getAdminAnalyticsStats(daysRange = 30) {
   try {
+    // Asynchronously ensure any legacy owner records in Firestore are wiped out
+    purgeOwnerRecords().catch(() => {});
+
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -311,11 +319,18 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
       const data = doc.data();
       const email = data.userEmail?.trim().toLowerCase();
       const isAdminTest = Boolean(data.isAdminTest || email === ADMIN_EMAIL);
+
+      // Strictly purge and exclude any owner records from Live Activity Stream and all statistics
+      if (isAdminTest || email === ADMIN_EMAIL) {
+        doc.ref.delete().catch(() => {});
+        return;
+      }
+
       const cleanPath = (data.path || "/").split("?")[0];
       const dev = (data.device || "desktop").toLowerCase();
       const plat = data.platform || (dev.includes("mob") ? "mobile_web" : "desktop_web");
 
-      // Keep recent 30 visits in the activity feed (including owner tests tagged as such)
+      // Keep recent 30 visits of ACTUAL users in the activity feed
       if (recentVisits.length < 30) {
         const visitTime = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
         recentVisits.push({
@@ -327,14 +342,11 @@ export async function getAdminAnalyticsStats(daysRange = 30) {
           browser: data.browser || "unknown",
           os: data.os || "unknown",
           isPro: Boolean(data.isPro),
-          userEmail: isAdminTest ? `${ADMIN_EMAIL} (Owner Test)` : (data.userEmail || null),
-          isAdminTest,
+          userEmail: data.userEmail || null,
+          isAdminTest: false,
           timestamp: visitTime.toISOString(),
         });
       }
-
-      // Strictly exclude owner testing visits from aggregate traffic statistics & KPIs
-      if (isAdminTest) return;
 
       totalViews++;
       const dateStr = data.dateStr || (data.timestamp?.toDate ? data.timestamp.toDate().toISOString().split("T")[0] : todayStr);
@@ -548,4 +560,47 @@ export async function resetAnalyticsData(): Promise<{ deletedPageViews: number; 
   }
 
   return { deletedPageViews, deletedUpgradeIntents, deletedPushLogs };
+}
+
+/**
+ * Permanently purges all existing owner records (princederder44@gmail.com or isAdminTest)
+ * from page_views and upgrade_intents collections in Firestore.
+ */
+export async function purgeOwnerRecords(): Promise<number> {
+  let deletedCount = 0;
+  try {
+    const [snap1, snap2] = await Promise.all([
+      db.collection("page_views").where("isAdminTest", "==", true).get(),
+      db.collection("page_views").where("userEmail", "==", ADMIN_EMAIL).get(),
+    ]);
+
+    const docMap = new Map<string, any>();
+    snap1.docs.forEach((d) => docMap.set(d.id, d));
+    snap2.docs.forEach((d) => docMap.set(d.id, d));
+
+    const docs = Array.from(docMap.values());
+    const batchSize = 300;
+    for (let i = 0; i < docs.length; i += batchSize) {
+      const batch = db.batch();
+      const chunk = docs.slice(i, i + batchSize);
+      chunk.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      deletedCount += chunk.length;
+    }
+
+    const upgradeSnap = await db.collection("upgrade_intents").where("email", "==", ADMIN_EMAIL).get();
+    if (!upgradeSnap.empty) {
+      const batch = db.batch();
+      upgradeSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      deletedCount += upgradeSnap.size;
+    }
+
+    if (deletedCount > 0) {
+      console.log(`[Analytics] Successfully purged ${deletedCount} existing owner records from Firestore.`);
+    }
+  } catch (error) {
+    console.error("[Analytics] Error purging owner records:", error);
+  }
+  return deletedCount;
 }

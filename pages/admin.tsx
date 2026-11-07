@@ -835,11 +835,7 @@ export default function AdminDashboardPage() {
                           )}
                         </td>
                         <td className="py-2.5 px-4">
-                          {visit.isAdminTest ? (
-                            <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-bold inline-flex items-center gap-1">
-                              👑 Owner Test
-                            </span>
-                          ) : visit.isPro ? (
+                          {visit.isPro ? (
                             <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold">
                               PRO USER
                             </span>
@@ -901,11 +897,7 @@ export default function AdminDashboardPage() {
                         </span>
                       )}
 
-                      {visit.isAdminTest ? (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-bold inline-flex items-center gap-1">
-                          👑 Owner
-                        </span>
-                      ) : visit.isPro ? (
+                      {visit.isPro ? (
                         <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold inline-flex items-center gap-1">
                           <Crown className="w-2.5 h-2.5" /> PRO
                         </span>

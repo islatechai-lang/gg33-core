@@ -3536,12 +3536,13 @@ export async function registerRoutes(
     }
   }
 
-  // Analytics page view tracking (excludes princederder44@gmail.com from aggregate totals)
+  // Analytics page view tracking (strictly excludes princederder44@gmail.com)
   app.post("/api/analytics/track", async (req, res) => {
     try {
       const { path, referrer, sessionId, device, platform, isNativeApp, browser, os, userId, userEmail, isPro, isNewSession } = req.body || {};
 
-      if (req.headers["x-admin-exclude"] === "true") {
+      const email = userEmail?.trim().toLowerCase();
+      if (email === ADMIN_EMAIL || req.headers["x-admin-exclude"] === "true") {
         return res.json({ success: true, ignored: true });
       }
 
@@ -3622,6 +3623,23 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("[Admin Stats API Error]:", error);
       res.status(500).json({ error: error?.message || "Failed to load admin stats" });
+    }
+  });
+
+  // Admin purge owner records endpoint (protected by admin token)
+  app.post("/api/admin/purge-owner", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || (req.headers["x-admin-key"] as string);
+      if (!isAuthorizedAdmin(authHeader)) {
+        return res.status(401).json({ error: "Unauthorized. Admin access required." });
+      }
+
+      const { purgeOwnerRecords } = await import("./analytics");
+      const deleted = await purgeOwnerRecords();
+      res.json({ success: true, message: `Purged ${deleted} owner records`, deleted });
+    } catch (error: any) {
+      console.error("[Admin Purge Owner Error]:", error);
+      res.status(500).json({ error: error?.message || "Failed to purge owner records" });
     }
   });
 

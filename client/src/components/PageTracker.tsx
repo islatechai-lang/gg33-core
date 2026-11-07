@@ -160,8 +160,18 @@ export function PageTracker() {
         }
       } catch {}
 
-      // Exclude admin dashboard views from page visit tracking
+      // Exclude admin dashboard views and owner visits from page visit tracking
       if (path.startsWith('/admin')) {
+        return;
+      }
+
+      // Strictly NEVER track owner visits
+      if (dbUser?.email && dbUser.email.trim().toLowerCase() === ADMIN_EMAIL) {
+        return;
+      }
+
+      // Strictly NEVER track if admin session token exists
+      if (sessionStorage.getItem('gg33_admin_token')) {
         return;
       }
 
