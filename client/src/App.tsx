@@ -21,6 +21,7 @@ import Signup from "@/pages/signup";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import DeleteAccountPage from "@/pages/delete-account";
+import MorePage from "@/pages/more";
 import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 
 function Router() {
@@ -69,6 +70,9 @@ function Router() {
       </Route>
       <Route path="/birth-chart">
         {!user ? <Redirect to="/login" /> : <BirthChartPage />}
+      </Route>
+      <Route path="/more">
+        {!user ? <Redirect to="/login" /> : <MorePage />}
       </Route>
       <Route path="/course/:courseId">
         {() => !user ? <Redirect to="/login" /> : <Course />}

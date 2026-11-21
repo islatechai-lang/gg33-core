@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Sparkles, Brain, Target, Calendar, Star, Zap, Hash, Sun, TrendingUp, ChevronRight, Lock, Crown, Pencil, Clock, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { displayUTCDate } from '@shared/dateUtils';
+import { cn } from '@/lib/utils';
 
 interface WhopUserData {
   profilePictureUrl: string | null;
@@ -41,24 +42,23 @@ interface NumberCardProps {
   label: string;
   type: string;
   icon: typeof Star;
-  iconColor: string;
-  bgColor: string;
+  colorClass: string;
   onClick: () => void;
 }
 
-function NumberCard({ number, label, type, icon: Icon, iconColor, bgColor, onClick }: NumberCardProps) {
+function NumberCard({ number, label, type, icon: Icon, colorClass, onClick }: NumberCardProps) {
   return (
     <button
       onClick={onClick}
-      className="text-center p-2.5 sm:p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/40 cursor-pointer transition-all duration-200 group relative active:scale-95 shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.4)]"
+      className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/70 border border-white/[0.07] hover:border-amber-400/40 cursor-pointer transition-all duration-200 group relative active:scale-95 shadow-sm"
       data-testid={`button-${type}-number`}
     >
-      <div className={`w-8.5 h-8.5 sm:w-10 sm:h-10 mx-auto mb-2 rounded-xl ${bgColor} flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-200`}>
-        <Icon className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${iconColor}`} />
+      <div className={cn("w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 mb-1.5 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm group-hover:scale-105", colorClass)}>
+        <Icon className="w-4 h-4" />
       </div>
-      <p className="text-4 sm:text-5 font-black text-zinc-100 tracking-tight">{number}</p>
-      <p className="text-[10px] sm:text-xs text-zinc-400 mt-1 font-medium truncate">{label}</p>
-      <ChevronRight className="w-3 h-3 text-zinc-400 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <p className="text-base sm:text-lg font-black text-white tracking-tight">{number}</p>
+      <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium truncate max-w-full">{label}</p>
+      <ChevronRight className="w-3 h-3 text-zinc-500 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   );
 }
@@ -213,25 +213,24 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
             </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4 sm:p-5 relative backdrop-blur-xl">
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="rounded-2xl bg-zinc-900/40 border border-white/[0.08] p-4 sm:p-5 relative backdrop-blur-md">
+              <div className="flex items-center gap-2 mb-3.5 flex-wrap">
                 <Hash className="w-4 h-4 text-violet-400" />
-                <p className="text-2 font-bold text-zinc-300 uppercase tracking-wider">Core Numbers</p>
+                <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Core Numbers</p>
                 {!isPro && (
-                  <span className="ml-auto flex items-center gap-1 text-0 text-amber-400 font-bold">
+                  <span className="ml-auto flex items-center gap-1 text-[11px] text-amber-400 font-bold">
                     <Lock className="w-3 h-3" />
                     Pro
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
                 <NumberCard
                   number={fullProfile.lifePathNumber}
                   label="Life Path"
                   type="lifepath"
                   icon={Star}
-                  iconColor="text-amber-9"
-                  bgColor="bg-amber-a3"
+                  colorClass="bg-amber-500/15 border border-amber-500/30 text-amber-400"
                   onClick={() => setLocation(`/number/lifepath/${fullProfile.lifePathNumber}`)}
                 />
                 <NumberCard
@@ -239,8 +238,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Attitude"
                   type="attitude"
                   icon={Zap}
-                  iconColor="text-green-9"
-                  bgColor="bg-green-a3"
+                  colorClass="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
                   onClick={() => setLocation(`/number/attitude/${fullProfile.attitudeNumber}`)}
                 />
                 <NumberCard
@@ -248,8 +246,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Generation"
                   type="generation"
                   icon={TrendingUp}
-                  iconColor="text-blue-9"
-                  bgColor="bg-blue-a3"
+                  colorClass="bg-blue-500/15 border border-blue-500/30 text-blue-400"
                   onClick={() => setLocation(`/number/generation/${fullProfile.generationNumber}`)}
                 />
                 <NumberCard
@@ -257,32 +254,30 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Day of Birth"
                   type="dayofbirth"
                   icon={Sun}
-                  iconColor="text-orange-9"
-                  bgColor="bg-orange-a3"
+                  colorClass="bg-orange-500/15 border border-orange-500/30 text-orange-400"
                   onClick={() => setLocation(`/number/dayofbirth/${fullProfile.dayOfBirthNumber}`)}
                 />
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4 sm:p-5 relative backdrop-blur-xl">
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="rounded-2xl bg-zinc-900/40 border border-white/[0.08] p-4 sm:p-5 relative backdrop-blur-md">
+              <div className="flex items-center gap-2 mb-3.5 flex-wrap">
                 <Sparkles className="w-4 h-4 text-pink-400" />
-                <p className="text-2 font-bold text-zinc-300 uppercase tracking-wider">Name Numbers</p>
+                <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Name Numbers</p>
                 {!isPro && (
-                  <span className="ml-auto flex items-center gap-1 text-0 text-amber-400 font-bold">
+                  <span className="ml-auto flex items-center gap-1 text-[11px] text-amber-400 font-bold">
                     <Lock className="w-3 h-3" />
                     Pro
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
                 <NumberCard
                   number={fullProfile.expressionNumber}
                   label="Expression"
                   type="expression"
                   icon={Heart}
-                  iconColor="text-pink-9"
-                  bgColor="bg-pink-a3"
+                  colorClass="bg-rose-500/15 border border-rose-500/30 text-rose-400"
                   onClick={() => setLocation(`/number/expression/${fullProfile.expressionNumber}`)}
                 />
                 <NumberCard
@@ -290,8 +285,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Soul Urge"
                   type="soulurge"
                   icon={Sparkles}
-                  iconColor="text-violet-9"
-                  bgColor="bg-violet-a3"
+                  colorClass="bg-purple-500/15 border border-purple-500/30 text-purple-400"
                   onClick={() => setLocation(`/number/soulurge/${fullProfile.soulUrgeNumber}`)}
                 />
                 <NumberCard
@@ -299,8 +293,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Personality"
                   type="personality"
                   icon={Brain}
-                  iconColor="text-cyan-9"
-                  bgColor="bg-cyan-a3"
+                  colorClass="bg-cyan-500/15 border border-cyan-500/30 text-cyan-400"
                   onClick={() => setLocation(`/number/personality/${fullProfile.personalityNumber}`)}
                 />
                 <NumberCard
@@ -308,8 +301,7 @@ export function ProfileOverview({ profile, whopUser, isPro = false }: ProfileOve
                   label="Maturity"
                   type="maturity"
                   icon={Target}
-                  iconColor="text-teal-9"
-                  bgColor="bg-teal-a3"
+                  colorClass="bg-teal-500/15 border border-teal-500/30 text-teal-400"
                   onClick={() => setLocation(`/number/maturity/${fullProfile.maturityNumber}`)}
                 />
               </div>

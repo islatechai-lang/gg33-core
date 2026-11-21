@@ -87,23 +87,18 @@ export function StarField() {
 
   return (
     <>
-      {/* Ambient Cosmic Aura Glows (Apple visionOS / liquid glass backdrop) */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div 
-          className="absolute -top-[15%] left-[5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-500/15 via-amber-600/8 to-transparent blur-[130px] transform-gpu will-change-transform"
-        />
-        <div 
-          className="absolute top-[35%] -right-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-bl from-purple-600/10 via-indigo-600/6 to-transparent blur-[140px] transform-gpu will-change-transform"
-        />
-        <div 
-          className="absolute -bottom-[10%] left-[25%] w-[650px] h-[650px] rounded-full bg-gradient-to-t from-amber-500/10 via-teal-500/5 to-transparent blur-[150px] transform-gpu will-change-transform"
-        />
-      </div>
+      {/* Lightweight hardware-accelerated ambient cosmic glow (zero filter:blur overhead) */}
+      <div 
+        className="fixed inset-0 pointer-events-none -z-10"
+        style={{
+          background: 'radial-gradient(ellipse 70% 45% at 50% -10%, rgba(245, 158, 11, 0.08), transparent 70%), radial-gradient(ellipse 50% 40% at 90% 85%, rgba(139, 92, 246, 0.05), transparent 70%)',
+        }}
+      />
 
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 pointer-events-none z-0 will-change-transform"
-        style={{ opacity: 0.55 }}
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{ opacity: 0.5 }}
       />
     </>
   );
