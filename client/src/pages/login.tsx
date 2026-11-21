@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { auth, googleProvider } from "../lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail } from "firebase/auth";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import { 
+  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  sendPasswordResetEmail 
+} from "firebase/auth";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { useToast } from "../hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
-import { Loader2, KeyRound, Mail } from "lucide-react";
+import { 
+  Loader2, 
+  KeyRound, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  ArrowLeft, 
+  Sparkles,
+  ArrowRight
+} from "lucide-react";
 import { StarField } from "../components/StarField";
 import { LegalModal } from "../components/LegalModal";
 import {
@@ -24,6 +38,7 @@ export default function Login() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -64,7 +79,7 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       toast({
         title: "Welcome back!",
         description: "Successfully logged in.",
@@ -96,10 +111,8 @@ export default function Login() {
       const isMobileWebView = /wv|Android|iPhone|iPad|iPod|Median|GoNative/i.test(userAgent);
 
       if (isMobileWebView) {
-        // Use redirect auth for WebViews to avoid stuck popups
         await signInWithRedirect(auth, googleProvider);
       } else {
-        // Use popup for desktop web browsers
         const result = await signInWithPopup(auth, googleProvider);
         const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
         toast({
@@ -115,7 +128,6 @@ export default function Login() {
       if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
         return;
       }
-      // If popup is blocked by browser/WebView, fallback to redirect automatically
       if (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-allowed") {
         try {
           await signInWithRedirect(auth, googleProvider);
@@ -166,45 +178,102 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden px-4 py-8">
-      {/* Background Starfield effect */}
-      <div className="absolute inset-0 z-0 opacity-40">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-black overflow-x-hidden px-4 py-8 sm:py-12 selection:bg-amber-400 selection:text-black">
+      {/* Background Starfield */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
         <StarField />
       </div>
 
-      {/* Decorative premium radial gradients */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[radial-gradient(circle_at_center,rgba(212,163,62,0.15)_0%,transparent_70%)] blur-3xl z-0 pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(212,163,62,0.1)_0%,transparent_70%)] blur-3xl z-0 pointer-events-none" />
+      {/* Atmospheric Ambient Glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] bg-gradient-to-tr from-amber-500/15 via-amber-400/8 to-transparent rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-gradient-to-br from-amber-600/10 to-transparent rounded-full blur-[90px] pointer-events-none z-0" />
 
-      <Card className="w-full max-w-md bg-zinc-950/70 border-zinc-800/80 backdrop-blur-xl shadow-[0_0_50px_rgba(212,163,62,0.05)] relative z-10">
-        <CardHeader className="space-y-2 text-center pb-6">
-          <div className="flex justify-center mb-2">
-            <span className="text-3xl font-extrabold tracking-widest bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(212,163,62,0.3)]">
-              GG33 CORE
-            </span>
+      {/* Top Floating Bar */}
+      <header className="fixed top-0 inset-x-0 z-30 p-4 sm:p-6 flex items-center justify-between pointer-events-auto max-w-5xl mx-auto w-full">
+        <Link href="/">
+          <button
+            type="button"
+            className="group flex items-center gap-2 px-3.5 py-2 rounded-full bg-zinc-900/70 hover:bg-zinc-800/80 border border-white/[0.08] hover:border-amber-400/30 text-zinc-400 hover:text-white backdrop-blur-xl transition-all duration-200 active:scale-95 shadow-sm cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5 text-zinc-400 group-hover:text-amber-400" />
+            <span className="text-xs font-medium">Home</span>
+          </button>
+        </Link>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/60 border border-white/[0.06] backdrop-blur-xl">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-[11px] font-semibold text-zinc-300 tracking-wider uppercase">GG33 Portal</span>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="w-full max-w-[430px] relative z-10 my-auto pt-14 pb-6">
+        {/* Segmented Auth Switcher */}
+        <div className="mb-4 p-1 rounded-2xl bg-zinc-900/70 border border-white/[0.08] backdrop-blur-xl flex items-center shadow-inner">
+          <div className="flex-1 py-2 text-center rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-300 font-semibold text-xs tracking-wide shadow-sm">
+            Sign In
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">Welcome Back</CardTitle>
-          <CardDescription className="text-zinc-400">
-            Sign in to access your custom numerology & astrology profiles
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleEmailLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading || isGoogleLoading}
-                className="bg-zinc-900/60 border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500"
-              />
+          <Link href="/signup" className="flex-1">
+            <button
+              type="button"
+              className="w-full py-2 text-center rounded-xl text-zinc-400 hover:text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Create Account
+            </button>
+          </Link>
+        </div>
+
+        {/* Glass Card */}
+        <div className="relative rounded-3xl p-6 sm:p-8 bg-zinc-950/75 border border-white/[0.1] backdrop-blur-2xl shadow-[0_25px_70px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(245,158,11,0.06)] overflow-hidden">
+          {/* Top Sheen */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent pointer-events-none" />
+
+          {/* Header Brand */}
+          <div className="flex flex-col items-center text-center space-y-3 pb-6">
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/25 via-amber-400/10 to-transparent border border-amber-400/35 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+                <Sparkles className="w-7 h-7 text-amber-400 animate-pulse" />
+              </div>
+              <div className="absolute -inset-1 rounded-2xl bg-amber-400/15 blur-lg pointer-events-none -z-10" />
             </div>
-            <div className="space-y-2">
+
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black tracking-tight text-white">
+                Welcome Back
+              </h1>
+              <p className="text-xs text-zinc-400 max-w-xs leading-relaxed">
+                Sign in to access your cosmic numerology blueprint and personal astrological profiles.
+              </p>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+                Email Address
+              </label>
+              <div className="relative flex items-center">
+                <Mail className="absolute left-3.5 w-4 h-4 text-zinc-500 pointer-events-none transition-colors" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading || isGoogleLoading}
+                  className="pl-10 h-12 rounded-2xl bg-zinc-900/70 border-white/[0.08] hover:border-white/15 focus:border-amber-400/60 focus:bg-zinc-900/90 text-zinc-100 placeholder:text-zinc-600 text-sm shadow-sm transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
+                <label htmlFor="password" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+                  Password
+                </label>
                 <button
                   type="button"
                   onClick={() => {
@@ -216,128 +285,158 @@ export default function Login() {
                   Forgot password?
                 </button>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading || isGoogleLoading}
-                className="bg-zinc-900/60 border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500"
-              />
+              <div className="relative flex items-center">
+                <Lock className="absolute left-3.5 w-4 h-4 text-zinc-500 pointer-events-none transition-colors" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading || isGoogleLoading}
+                  className="pl-10 pr-11 h-12 rounded-2xl bg-zinc-900/70 border-white/[0.08] hover:border-white/15 focus:border-amber-400/60 focus:bg-zinc-900/90 text-zinc-100 placeholder:text-zinc-600 text-sm shadow-sm transition-all"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 p-1 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
+            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isLoading || isGoogleLoading}
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold transition-all duration-300"
+              className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-black text-sm tracking-wide shadow-[0_4px_25px_rgba(245,158,11,0.3)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing In...</span>
                 </>
               ) : (
-                "Sign In"
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </Button>
           </form>
 
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-zinc-800" />
-            <span className="flex-shrink mx-4 text-zinc-500 text-xs uppercase">Or continue with</span>
-            <div className="flex-grow border-t border-zinc-800" />
+          {/* Divider */}
+          <div className="relative flex py-4 items-center">
+            <div className="flex-grow border-t border-white/[0.08]" />
+            <span className="flex-shrink mx-3 text-zinc-500 text-[11px] font-semibold uppercase tracking-wider">
+              Or continue with
+            </span>
+            <div className="flex-grow border-t border-white/[0.08]" />
           </div>
 
+          {/* Google Sign-in */}
           <Button
             type="button"
             variant="outline"
             onClick={handleGoogleLogin}
             disabled={isLoading || isGoogleLoading}
-            className="w-full border-zinc-800 hover:bg-zinc-900/50 text-zinc-200 bg-transparent flex items-center justify-center gap-3 transition-colors duration-300 h-10"
+            className="w-full h-12 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border-white/[0.08] hover:border-white/20 text-zinc-100 text-sm font-semibold flex items-center justify-center gap-3 transition-all active:scale-[0.98] cursor-pointer shadow-sm"
           >
             {isGoogleLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
-                <span className="text-amber-300 text-sm font-medium">Connecting to Google...</span>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span className="text-amber-300 text-sm font-medium">Connecting...</span>
               </>
             ) : (
               <>
-                <FcGoogle className="h-5 w-5" />
+                <FcGoogle className="w-5 h-5 flex-shrink-0" />
                 <span>Continue with Google</span>
               </>
             )}
           </Button>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 justify-center border-t border-zinc-900/50 py-4">
-          <p className="text-sm text-zinc-400">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-amber-400 hover:text-amber-300 font-medium transition-colors">
-              Sign up
-            </Link>
-          </p>
 
-          <div className="text-[11px] text-zinc-500 text-center leading-relaxed">
-            By signing in, you agree to our{" "}
-            <button
-              type="button"
-              onClick={() => setLegalType('terms')}
-              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
-            >
-              Terms of Service
-            </button>{" "}
-            and{" "}
-            <button
-              type="button"
-              onClick={() => setLegalType('privacy')}
-              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
-            >
-              Privacy Policy
-            </button>
+          {/* Bottom Card Footer */}
+          <div className="mt-6 pt-5 border-t border-white/[0.06] text-center space-y-3">
+            <p className="text-xs text-zinc-400">
+              Don&apos;t have an account?{" "}
+              <Link href="/signup" className="text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-4 transition-colors">
+                Sign up
+              </Link>
+            </p>
+
+            <div className="text-[11px] text-zinc-500 leading-relaxed">
+              By signing in, you agree to our{" "}
+              <button
+                type="button"
+                onClick={() => setLegalType('terms')}
+                className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                Terms of Service
+              </button>{" "}
+              and{" "}
+              <button
+                type="button"
+                onClick={() => setLegalType('privacy')}
+                className="text-zinc-400 hover:text-amber-400 underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+            </div>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
 
       {/* Forgot Password Dialog */}
       <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
-        <DialogContent className="w-[95vw] sm:max-w-md p-0 rounded-2xl border-zinc-800 bg-zinc-950 overflow-hidden text-zinc-100">
-          <div className="p-6 space-y-4">
+        <DialogContent className="w-[94vw] sm:max-w-md p-0 rounded-3xl border border-white/[0.1] bg-zinc-950/95 backdrop-blur-2xl overflow-hidden text-zinc-100 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.9)]">
+          <div className="p-6 sm:p-7 space-y-4">
             <DialogHeader className="space-y-2 text-left">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                  <KeyRound className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-sm">
+                  <KeyRound className="w-5 h-5" />
                 </div>
-                <DialogTitle className="text-lg font-bold text-zinc-100">
-                  Reset Your Password
-                </DialogTitle>
+                <div>
+                  <DialogTitle className="text-lg font-bold text-white">
+                    Reset Your Password
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-zinc-400">
+                    We&apos;ll send a secure password reset link to your email.
+                  </DialogDescription>
+                </div>
               </div>
-              <DialogDescription className="text-xs text-zinc-400">
-                Enter your account email and we'll send you a link to reset your password.
-              </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSendResetEmail} className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <label htmlFor="reset-email" className="text-xs font-medium text-zinc-300">
+            <form onSubmit={handleSendResetEmail} className="space-y-4 pt-1">
+              <div className="space-y-1.5">
+                <label htmlFor="reset-email" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-300">
                   Email Address
                 </label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  disabled={isResetting}
-                  className="bg-zinc-900/60 border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500"
-                />
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3.5 w-4 h-4 text-zinc-500 pointer-events-none" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    disabled={isResetting}
+                    className="pl-10 h-11 rounded-2xl bg-zinc-900/70 border-white/[0.08] focus:border-amber-400/60 text-zinc-100 placeholder:text-zinc-600 text-xs shadow-sm"
+                  />
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2.5 pt-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-zinc-800 text-xs"
+                  className="flex-1 h-10 rounded-xl border-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.06] cursor-pointer"
                   onClick={() => setShowForgotModal(false)}
                   disabled={isResetting}
                 >
@@ -346,7 +445,7 @@ export default function Login() {
                 <Button
                   type="submit"
                   size="sm"
-                  className="flex-1 text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950"
+                  className="flex-1 h-10 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 shadow-md cursor-pointer"
                   disabled={isResetting}
                 >
                   {isResetting ? (
