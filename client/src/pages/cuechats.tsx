@@ -154,17 +154,14 @@ function MarkdownContent({ content, className }: { content: string; className?: 
 
 function CosmicLoadingAnimation() {
   return (
-    <div className="flex gap-3 justify-start" data-testid="message-loading">
-      <div className="w-8 h-8 rounded-md bg-amber-a3 flex items-center justify-center flex-shrink-0">
-        <Bot className="w-4 h-4 text-amber-9" />
+    <div className="flex gap-3 justify-start items-center" data-testid="message-loading">
+      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/25 to-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] flex-shrink-0">
+        <Sparkles className="w-4 h-4 fill-amber-400/30 text-amber-300" />
       </div>
-      <div className="flex items-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-        >
-          <Sparkles className="w-5 h-5 text-amber-9" />
-        </motion.div>
+      <div className="px-4 py-3 rounded-2xl bg-zinc-900/80 border border-white/[0.08] flex items-center gap-1.5 shadow-sm">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" />
       </div>
     </div>
   );
@@ -180,22 +177,22 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
         <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
           msg.error 
             ? 'bg-rose-500/15 border border-rose-500/25 text-rose-400' 
-            : 'bg-gradient-to-br from-amber-500/20 to-amber-500/5 border border-amber-500/30 text-amber-400'
+            : 'bg-gradient-to-tr from-amber-500/25 to-amber-500/10 border border-amber-400/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
         }`}>
           {msg.error ? (
             <AlertCircle className="w-4 h-4 text-rose-400" />
           ) : (
-            <Bot className="w-4 h-4 text-amber-400" />
+            <Sparkles className="w-4 h-4 fill-amber-400/20 text-amber-300" />
           )}
         </div>
       )}
       <div
         className={`max-w-[82%] sm:max-w-[78%] px-4 py-3 sm:py-3.5 rounded-2xl shadow-md ${
           msg.role === 'user'
-            ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-medium rounded-br-sm shadow-amber-500/10'
+            ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-medium rounded-br-xs shadow-amber-500/10'
             : msg.error
-              ? 'bg-rose-950/40 border border-rose-500/30 text-rose-200 rounded-bl-sm backdrop-blur-md'
-              : 'frosted-card rounded-bl-sm border border-white/[0.08] text-zinc-200 backdrop-blur-xl'
+              ? 'bg-rose-950/40 border border-rose-500/30 text-rose-200 rounded-bl-xs backdrop-blur-md'
+              : 'bg-zinc-900/80 border border-white/[0.08] text-zinc-100 rounded-bl-xs backdrop-blur-md'
         }`}
       >
         {msg.image && (
@@ -641,19 +638,16 @@ export default function CueChats() {
       <Navigation />
       
       <main className="pt-0 lg:pt-16 min-h-screen flex flex-col relative w-full bg-transparent" data-testid="page-cuechats">
-        {/* Full-width sticky top bar (top-0 on mobile, top-16 on desktop beneath navbar) */}
-        <div className="sticky top-0 lg:top-16 z-20 w-full border-b border-white/[0.08] bg-zinc-950/85 backdrop-blur-md">
-          <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">
-                <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
+        {/* Seamless Minimalist Floating Top Bar */}
+        <div className="sticky top-0 lg:top-16 z-20 w-full px-3 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-b from-black/80 via-black/30 to-transparent backdrop-blur-xs">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/20 via-amber-400/10 to-transparent border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)] flex-shrink-0">
+                <Sparkles className="w-4 h-4" />
               </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-zinc-100">CoreChat AI</h2>
-                <p className="text-[11px] text-zinc-400 hidden sm:block">
-                  Blueprint-aligned cosmic intelligence
-                </p>
-              </div>
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+                CoreChat <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">AI</span>
+              </h1>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -661,7 +655,7 @@ export default function CueChats() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="border-white/10 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-amber-300 text-xs gap-1.5 h-8 px-2 sm:px-3 rounded-xl backdrop-blur-md"
+                className="border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-amber-300 text-xs gap-1.5 h-8 px-2.5 sm:px-3 rounded-full backdrop-blur-md transition-all active:scale-95 cursor-pointer"
                 data-testid="button-chat-history"
               >
                 <History className="w-3.5 h-3.5 text-amber-400" />
@@ -678,7 +672,7 @@ export default function CueChats() {
                   size="sm"
                   onClick={startNewChat}
                   disabled={isLoading || isInitializing}
-                  className="h-8 px-2 sm:px-3 text-xs"
+                  className="h-8 px-3 rounded-full text-xs shadow-md font-semibold active:scale-95 cursor-pointer"
                   data-testid="button-new-chat"
                 >
                   {isInitializing ? (
@@ -690,7 +684,7 @@ export default function CueChats() {
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                       </motion.div>
-                      Loading...
+                      <span>Loading...</span>
                     </>
                   ) : (
                     <>
@@ -715,27 +709,31 @@ export default function CueChats() {
           ) : (
             <>
               {!hasMessages && (
-                <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center py-6 px-4 space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-                    <Bot className="w-6 h-6" />
+                <div className="h-full min-h-[360px] flex flex-col items-center justify-center text-center py-8 px-4 space-y-5">
+                  <div className="relative">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-amber-400/10 to-transparent border border-amber-400/35 flex items-center justify-center text-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.25)]">
+                      <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400 animate-pulse" />
+                    </div>
+                    <div className="absolute -inset-1 rounded-3xl bg-amber-400/10 blur-xl pointer-events-none -z-10" />
                   </div>
-                  <div className="space-y-1 max-w-md">
-                    <h3 className="text-sm font-bold text-zinc-100">
-                      Ask me anything about yourself
-                    </h3>
-                    <p className="text-xs text-zinc-400">
-                      I know your full Western birth chart, planetary houses, aspects, and numerology blueprint.
+
+                  <div className="space-y-1.5 max-w-md">
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      How can I guide you today?
+                    </h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-sm mx-auto">
+                      Attuned to your Life Path, planetary houses, and cosmic numerology blueprint.
                     </p>
                   </div>
 
                   {/* Quick Starter Question Chips */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg pt-2 text-left">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-lg pt-2 text-left">
                     {[
                       "What energy should I focus on today?",
                       "How can I align my career with my natural strengths?",
                       "What does my energy say about my relationship dynamics?",
                       "What are my greatest gifts and hidden blind spots?",
-                      "What major cycle or lessons am I navigating right now?",
+                      "What major cosmic cycles am I navigating right now?",
                     ].map((promptText, idx) => (
                       <button
                         key={idx}
@@ -744,10 +742,10 @@ export default function CueChats() {
                           setInputValue(promptText);
                           inputRef.current?.focus();
                         }}
-                        className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-amber-400/30 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group active:scale-[0.98]"
+                        className="p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-white/[0.08] hover:border-amber-400/40 text-xs text-zinc-200 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group active:scale-[0.98] shadow-sm"
                       >
                         <span className="truncate pr-2">{promptText}</span>
-                        <Sparkles className="w-3 h-3 text-zinc-600 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
+                        <Sparkles className="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
                       </button>
                     ))}
                   </div>
