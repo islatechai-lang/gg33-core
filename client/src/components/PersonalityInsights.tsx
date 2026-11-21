@@ -84,17 +84,17 @@ export function PersonalityInsights({ profile }: PersonalityInsightsProps) {
   };
 
   return (
-    <Card variant="frosted" className="overflow-hidden relative h-full" data-testid="card-personality">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-a2 via-transparent to-transparent pointer-events-none" />
+    <Card variant="frosted" className="overflow-hidden relative h-full rounded-2xl sm:rounded-3xl border border-white/[0.08]" data-testid="card-personality">
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-purple-500/5 pointer-events-none" />
 
-      <CardContent className="relative p-6 sm:p-8 flex flex-col h-full">
-        <div className="flex items-center gap-4 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gold-gradient flex items-center justify-center flex-shrink-0">
-            <Brain className="w-6 h-6 text-gray-1" />
+      <CardContent className="relative p-5 sm:p-7 flex flex-col h-full">
+        <div className="flex items-center gap-3.5 mb-5">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-zinc-950 flex items-center justify-center shadow-lg shadow-amber-500/20 flex-shrink-0">
+            <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h2 className="text-5 font-semibold">Personality Insights</h2>
-            {isLoading && <p className="text-2 text-gray-10">Generating personalized insights...</p>}
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">Personality Insights</h2>
+            {isLoading && <p className="text-xs text-zinc-400">Generating personalized insights...</p>}
           </div>
         </div>
 
@@ -114,36 +114,44 @@ export function PersonalityInsights({ profile }: PersonalityInsightsProps) {
           </div>
         ) : (
           <>
-            <p className="text-3 text-gray-11 leading-relaxed mb-5" data-testid="text-personality-paragraph">
+            <p className="text-sm sm:text-base text-zinc-300 leading-relaxed mb-6 font-normal" data-testid="text-personality-paragraph">
               {displayData?.overview || fallbackData.overview}
             </p>
 
             <div className="space-y-5 flex-1">
               <div>
-                <h4 className="text-2 font-medium text-gray-10 mb-3 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-9" />
-                  Your Strengths
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  Your Superpowers
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {(displayData?.strengths || fallbackData.strengths || []).slice(0, 5).map((strength, i) => (
-                    <Badge key={i} color="amber" variant="outline" data-testid={`badge-strength-${i}`}>
+                    <span
+                      key={i}
+                      className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 border border-amber-500/25 text-amber-300 shadow-sm transition-all hover:bg-amber-500/15"
+                      data-testid={`badge-strength-${i}`}
+                    >
                       {strength}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
 
               {(displayData?.challenges || fallbackData.challenges) && (displayData?.challenges || fallbackData.challenges).length > 0 && (
                 <div>
-                  <h4 className="text-2 font-medium text-gray-10 mb-3 flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-violet-9" />
-                    Growth Areas
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-3 flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5 text-purple-400" />
+                    Growth Edges
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {(displayData?.challenges || fallbackData.challenges).slice(0, 4).map((challenge, i) => (
-                      <Badge key={i} variant="outline" data-testid={`badge-challenge-${i}`}>
+                      <span
+                        key={i}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 border border-purple-500/25 text-purple-300 shadow-sm transition-all hover:bg-purple-500/15"
+                        data-testid={`badge-challenge-${i}`}
+                      >
                         {challenge}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -151,19 +159,19 @@ export function PersonalityInsights({ profile }: PersonalityInsightsProps) {
 
               {displayData?.spiritualGifts && displayData.spiritualGifts.length > 0 && (
                 <div>
-                  <h4 className="text-2 font-medium text-gray-10 mb-3 flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-blue-9" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-2.5 flex items-center gap-2">
+                    <Palette className="w-3.5 h-3.5 text-teal-400" />
                     Spiritual Gifts
                   </h4>
-                  <p className="text-3 text-gray-11">{displayData.spiritualGifts.join(', ')}</p>
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">{displayData.spiritualGifts.join(' • ')}</p>
                 </div>
               )}
             </div>
 
-            <div className="mt-5 pt-5 border-t border-gray-6">
-              <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-amber-9 flex-shrink-0 mt-0.5" />
-                <p className="text-2 text-gray-11 italic" data-testid="text-life-lesson">
+            <div className="mt-6 pt-4 border-t border-white/[0.08]">
+              <div className="flex items-start gap-3 bg-white/[0.02] p-3.5 rounded-2xl border border-white/[0.06]">
+                <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs sm:text-sm text-zinc-300 italic leading-relaxed" data-testid="text-life-lesson">
                   {displayData?.lifeLesson || `Trust your Life Path ${fullProfile.lifePathNumber} energy to guide you forward.`}
                 </p>
               </div>

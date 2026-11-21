@@ -99,27 +99,27 @@ export function Navigation() {
   return (
     <>
       {/* Top Header Navigation (Always visible on desktop; on mobile, only on Home) */}
-      <nav className={cn("fixed top-0 left-0 right-0 z-50 glass", !isDashboardActive && "hidden lg:block")} data-testid="navigation">
-        <div className="w-full px-4">
-          <div className="flex items-center justify-between h-14 gap-4">
+      <nav className={cn("fixed top-0 left-0 right-0 z-50 bg-zinc-950/70 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.4),inset_0_-1px_0_0_rgba(255,255,255,0.04)]", !isDashboardActive && "hidden lg:block")} data-testid="navigation">
+        <div className="w-full px-4 sm:px-6">
+          <div className="flex items-center justify-between h-15 gap-4">
             {/* Logo Section */}
             <NavLink to="/" className="flex items-center gap-2.5 group flex-shrink-0" data-testid="link-logo">
-              <div className="w-9 h-9 rounded-lg overflow-hidden shadow-md group-hover:shadow-glow transition-shadow">
+              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md group-hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] ring-1 ring-white/10 group-hover:ring-amber-400/40 transition-all duration-300">
                 <img src="/images/logo.png?v=1" alt="GG33" className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col justify-center min-w-0">
-                <span className="text-3 font-semibold gradient-text leading-none">GG33 CORE</span>
+                <span className="text-3 font-extrabold gradient-text leading-none tracking-tight">GG33 CORE</span>
               </div>
             </NavLink>
 
             {/* Desktop Navigation Links */}
-            <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+            <div className="hidden lg:flex items-center gap-1.5 flex-1 justify-center">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className="px-3 py-2 rounded-md text-2 text-gray-11 hover:text-gray-12 hover:bg-gray-a3 transition-colors flex items-center gap-2 whitespace-nowrap"
-                  activeClassName="text-amber-11 bg-amber-a3"
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
+                  activeClassName="text-amber-300 bg-amber-500/15 border border-amber-500/25 shadow-[0_0_15px_rgba(245,158,11,0.15)] font-bold"
                   data-testid={`link-${item.label.toLowerCase().replace(/\s/g, '-')}`}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -141,11 +141,11 @@ export function Navigation() {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2.5 flex-shrink-0">
               {isPro ? (
                 <button
                   onClick={() => setShowManageModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-extrabold text-xs transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-400/25 border border-amber-400/40 text-amber-300 font-black text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)] active:scale-95 cursor-pointer"
                   title="Manage Subscription"
                 >
                   <Crown className="w-3.5 h-3.5 text-amber-400" />
@@ -154,7 +154,7 @@ export function Navigation() {
               ) : (
                 <Button
                   onClick={handleUpgradeClick}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-8 px-3.5 rounded-lg shadow-sm shadow-amber-500/20 cursor-pointer"
+                  className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-black text-xs h-8.5 px-4 rounded-full shadow-[0_4px_16px_rgba(245,158,11,0.3)] hover:shadow-[0_6px_22px_rgba(245,158,11,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
                   data-testid="button-upgrade"
                 >
                   Upgrade to Pro
@@ -164,7 +164,7 @@ export function Navigation() {
               {/* Share Button (Desktop & Mobile) */}
               <button
                 onClick={() => setShowShareModal(true)}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                className="flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-zinc-400 hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
                 title="Share GG33 CORE"
                 aria-label="Share GG33 CORE"
                 data-testid="button-header-share"
@@ -176,7 +176,7 @@ export function Navigation() {
               {user && (
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  className="hidden lg:flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-white/[0.05] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400 transition-all active:scale-90 cursor-pointer"
                   title="Log Out"
                   aria-label="Log Out"
                 >
@@ -190,7 +190,7 @@ export function Navigation() {
 
       {/* Modern 5-Item Bottom Navigation Bar (Mobile & Tablet) */}
       <div
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/75 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-12px_40px_rgba(0,0,0,0.7),inset_0_1px_1px_0_rgba(255,255,255,0.1)] pb-[env(safe-area-inset-bottom,0px)]"
         data-testid="bottom-navigation"
       >
         <div className="grid grid-cols-5 h-16 max-w-lg mx-auto px-1 items-center">
@@ -203,10 +203,13 @@ export function Navigation() {
             )}
             data-testid="bottom-link-home"
           >
-            <Home className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.3px]")} />
+            <Home className={cn("w-5 h-5 transition-transform group-active:scale-90", isDashboardActive && "stroke-[2.4px]")} />
             <span className={cn("text-[10px] tracking-tight", isDashboardActive ? "font-bold text-amber-300" : "font-medium")}>
               Home
             </span>
+            {isDashboardActive && (
+              <span className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B] absolute bottom-0.5" />
+            )}
           </Link>
 
           {/* 2. Explore */}
@@ -219,7 +222,7 @@ export function Navigation() {
             data-testid="bottom-link-explore"
           >
             <div className="relative">
-              <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.3px]")} />
+              <Compass className={cn("w-5 h-5 transition-transform group-active:scale-90", isExploreActive && "stroke-[2.4px]")} />
               <span className="absolute -top-1 -right-3.5 px-1 py-[0.5px] rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-[6.5px] font-black text-white uppercase tracking-tight leading-none shadow-xs ring-1.5 ring-zinc-950 pointer-events-none">
                 HOT
               </span>
@@ -227,6 +230,9 @@ export function Navigation() {
             <span className={cn("text-[10px] tracking-tight", isExploreActive ? "font-bold text-amber-300" : "font-medium")}>
               Explore
             </span>
+            {isExploreActive && (
+              <span className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B] absolute bottom-0.5" />
+            )}
           </Link>
 
           {/* 3. CoreChats (Center Hero Tab) */}
@@ -239,16 +245,19 @@ export function Navigation() {
             data-testid="bottom-link-corechats"
           >
             <div className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center transition-all",
+              "w-8 h-8 rounded-2xl flex items-center justify-center transition-all duration-300",
               isCoreChatsActive
-                ? "bg-amber-500/20 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                : "text-zinc-400 group-hover:text-zinc-200"
+                ? "bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 shadow-[0_4px_16px_rgba(245,158,11,0.4)] scale-105"
+                : "bg-white/[0.06] border border-white/10 text-zinc-400 group-hover:text-zinc-200"
             )}>
-              <MessageCircle className={cn("w-5 h-5 transition-transform group-active:scale-90", isCoreChatsActive && "stroke-[2.3px]")} />
+              <MessageCircle className={cn("w-4.5 h-4.5 transition-transform group-active:scale-90", isCoreChatsActive ? "stroke-[2.5px] text-zinc-950" : "text-zinc-400")} />
             </div>
             <span className={cn("text-[10px] tracking-tight", isCoreChatsActive ? "font-bold text-amber-300" : "font-medium")}>
               CoreChats
             </span>
+            {isCoreChatsActive && (
+              <span className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B] absolute bottom-0.5" />
+            )}
           </Link>
 
           {/* 4. BirthChart */}
@@ -261,7 +270,7 @@ export function Navigation() {
             data-testid="bottom-link-birthchart"
           >
             <div className="relative">
-              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.3px]")} />
+              <Sparkles className={cn("w-5 h-5 transition-transform group-active:scale-90", isBirthChartActive && "stroke-[2.4px]")} />
               <span className="absolute -top-1 -right-3.5 px-1 py-[0.5px] rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-[6.5px] font-black text-white uppercase tracking-tight leading-none shadow-xs ring-1.5 ring-zinc-950 pointer-events-none">
                 NEW
               </span>
@@ -269,6 +278,9 @@ export function Navigation() {
             <span className={cn("text-[10px] tracking-tight", isBirthChartActive ? "font-bold text-amber-300" : "font-medium")}>
               BirthChart
             </span>
+            {isBirthChartActive && (
+              <span className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B] absolute bottom-0.5" />
+            )}
           </Link>
 
           {/* 5. More */}

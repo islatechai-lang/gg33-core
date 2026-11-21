@@ -179,17 +179,17 @@ export function DailyEnergy({ profile, isPro = false }: DailyEnergyProps) {
 
           {!shouldShowRevealed && !isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-a3 to-violet-a3 flex items-center justify-center mb-6">
-                <Sparkles className="w-10 h-10 text-amber-9" />
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/20 to-violet-500/10 border border-amber-500/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(245,158,11,0.2)] animate-pulse">
+                <Sparkles className="w-10 h-10 text-amber-400" />
               </div>
-              <h3 className="text-5 font-semibold text-gray-12 mb-2">Your Reading Awaits</h3>
-              <p className="text-2 text-gray-10 mb-6 max-w-xs">
+              <h3 className="text-5 font-extrabold text-white mb-2 tracking-tight">Your Reading Awaits</h3>
+              <p className="text-2 text-zinc-400 mb-6 max-w-xs font-medium">
                 Discover your personalized energy forecast for today based on your unique numerology profile.
               </p>
               <Button
                 size="lg"
                 onClick={handleRevealEnergy}
-                className="bg-gold-gradient text-gray-1 font-semibold"
+                className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-black rounded-full px-8 shadow-[0_4px_20px_rgba(245,158,11,0.3)] hover:shadow-[0_6px_28px_rgba(245,158,11,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 data-testid="button-reveal-energy"
               >
                 <Sun className="w-5 h-5 mr-2" />
@@ -198,19 +198,19 @@ export function DailyEnergy({ profile, isPro = false }: DailyEnergyProps) {
             </div>
           ) : isLoading ? (
             <div className="space-y-4 flex-1">
-              <Skeleton className="h-7 w-36" />
-              <Skeleton className="h-5 w-full" />
-              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-7 w-36 rounded-xl" />
+              <Skeleton className="h-5 w-full rounded-xl" />
+              <Skeleton className="h-5 w-3/4 rounded-xl" />
               <div className="pt-4 grid grid-cols-2 gap-4">
-                <div>
-                  <Skeleton className="h-5 w-20 mb-3" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full mt-2" />
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                  <Skeleton className="h-5 w-20 rounded-lg mb-3" />
+                  <Skeleton className="h-4 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-full rounded-lg" />
                 </div>
-                <div>
-                  <Skeleton className="h-5 w-20 mb-3" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full mt-2" />
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                  <Skeleton className="h-5 w-20 rounded-lg mb-3" />
+                  <Skeleton className="h-4 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-full rounded-lg" />
                 </div>
               </div>
             </div>
@@ -218,62 +218,62 @@ export function DailyEnergy({ profile, isPro = false }: DailyEnergyProps) {
             <>
               <div className="flex items-center gap-4 mb-5">
                 <div className="flex-1">
-                  <p className="text-2 text-gray-10 mb-1">Today's Theme</p>
-                  <h3 className="text-5 font-semibold gradient-text" data-testid="text-daily-theme">
+                  <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Today's Theme</p>
+                  <h3 className="text-5 font-extrabold gradient-text tracking-tight" data-testid="text-daily-theme">
                     {displayData?.theme || 'Personal Growth'}
                   </h3>
                 </div>
-                <div className="text-center px-5 py-4 rounded-xl bg-gray-a3">
+                <div className="text-center px-4.5 py-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl shadow-inner">
                   <div className="flex items-center justify-center gap-1">
                     <Zap className={`w-5 h-5 ${energyLevel.color}`} />
-                    <span className="text-5 font-bold" data-testid="text-energy-score">{energyScore}</span>
+                    <span className="text-5 font-black text-white" data-testid="text-energy-score">{energyScore}</span>
                   </div>
-                  <p className={`text-1 ${energyLevel.color}`}>{energyLevel.label}</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${energyLevel.color}`}>{energyLevel.label}</p>
                 </div>
               </div>
 
-              <div className="w-full h-2.5 bg-gray-a3 rounded-full overflow-hidden mb-5">
+              <div className="w-full h-2.5 bg-white/[0.06] rounded-full overflow-hidden mb-5 border border-white/5">
                 <div
-                  className={`h-full ${energyLevel.bgColor} rounded-full transition-all duration-500`}
+                  className={`h-full ${energyLevel.bgColor} rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(245,158,11,0.5)]`}
                   style={{ width: `${energyScore}%` }}
                 />
               </div>
 
-              <p className="text-3 text-gray-11 mb-5" data-testid="text-daily-description">
+              <p className="text-sm text-zinc-300 font-medium leading-relaxed mb-5" data-testid="text-daily-description">
                 {displayData?.description || `Your Personal Day ${personalDayNumber} combines with Universal Day ${universalDayNumber} to create unique opportunities for growth and progress today.`}
               </p>
 
               {isPowerDay && (
-                <div className="p-4 rounded-xl bg-green-a3 border border-green-6 mb-5 flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-green-11 flex-shrink-0" />
-                  <p className="text-2 text-green-11 font-medium">Power Day! Your energy is amplified today.</p>
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 mb-5 flex items-center gap-3 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                  <Sparkles className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  <p className="text-xs font-bold text-emerald-300">Power Day! Your energy is amplified today.</p>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-gray-a3">
-                <Target className="w-5 h-5 text-amber-9" />
-                <span className="text-2 text-gray-11">Focus Area: <span className="font-medium text-gray-12">{displayData?.focusArea || 'Personal development'}</span></span>
+              <div className="flex items-center gap-3 mb-5 p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl">
+                <Target className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <span className="text-xs text-zinc-400">Focus Area: <strong className="text-white font-bold">{displayData?.focusArea || 'Personal development'}</strong></span>
               </div>
 
-              <div className="grid grid-cols-2 gap-5 flex-1">
-                <div>
-                  <h4 className="text-2 font-medium text-gray-10 mb-3 flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-9" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 flex-1">
+                <div className="p-3.5 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/20 backdrop-blur-xl">
+                  <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-400" />
                     Do Today
                   </h4>
                   <ul className="space-y-2">
                     {(displayData?.dos || ['Focus on your core priorities', 'Stay grounded in your truth', 'Trust your inner intuition']).map((item, i) => (
-                      <li key={i} className="text-2 text-gray-11 flex items-start gap-2">
-                        <span className="text-green-9 mt-0.5">•</span>
-                        {item}
+                      <li key={i} className="text-xs text-zinc-300 flex items-start gap-2 font-medium">
+                        <span className="text-emerald-400 mt-0.5">•</span>
+                        <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div>
-                  <h4 className="text-2 font-medium text-gray-10 mb-3 flex items-center gap-2">
-                    <X className="w-4 h-4 text-red-9" />
+                <div className="p-3.5 rounded-2xl bg-rose-500/[0.06] border border-rose-500/20 backdrop-blur-xl">
+                  <h4 className="text-xs font-bold text-rose-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <X className="w-4 h-4 text-rose-400" />
                     Avoid Today
                   </h4>
                   <ul className="space-y-2">

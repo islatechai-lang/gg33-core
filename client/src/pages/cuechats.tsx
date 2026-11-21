@@ -177,21 +177,25 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
       data-testid={isExample ? `example-${msg.role}-${index}` : `message-${msg.role}-${index}`}
     >
       {msg.role === 'assistant' && (
-        <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${msg.error ? 'bg-red-500/20' : 'bg-amber-a3'}`}>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+          msg.error 
+            ? 'bg-rose-500/15 border border-rose-500/25 text-rose-400' 
+            : 'bg-gradient-to-br from-amber-500/20 to-amber-500/5 border border-amber-500/30 text-amber-400'
+        }`}>
           {msg.error ? (
-            <AlertCircle className="w-4 h-4 text-red-400" />
+            <AlertCircle className="w-4 h-4 text-rose-400" />
           ) : (
-            <Bot className="w-4 h-4 text-amber-9" />
+            <Bot className="w-4 h-4 text-amber-400" />
           )}
         </div>
       )}
       <div
-        className={`max-w-[80%] p-4 rounded-lg ${
+        className={`max-w-[82%] sm:max-w-[78%] px-4 py-3 sm:py-3.5 rounded-2xl shadow-md ${
           msg.role === 'user'
-            ? 'bg-amber-9 text-gray-1 rounded-tr-sm'
+            ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-medium rounded-br-sm shadow-amber-500/10'
             : msg.error
-              ? 'bg-red-500/10 border border-red-500/20 rounded-tl-sm'
-              : 'bg-gray-a3 rounded-tl-sm'
+              ? 'bg-rose-950/40 border border-rose-500/30 text-rose-200 rounded-bl-sm backdrop-blur-md'
+              : 'frosted-card rounded-bl-sm border border-white/[0.08] text-zinc-200 backdrop-blur-xl'
         }`}
       >
         {msg.image && (
@@ -199,14 +203,14 @@ function ChatBubble({ msg, index, isExample = false }: { msg: ChatMessage; index
             <img
               src={msg.image}
               alt="Uploaded attachment"
-              className="rounded-md max-h-60 max-w-full object-contain bg-black/40 border border-amber-500/20"
+              className="rounded-xl max-h-60 max-w-full object-contain bg-black/40 border border-amber-500/20"
             />
           </div>
         )}
-        <MarkdownContent content={msg.content} className={`text-2 ${msg.error ? 'text-red-400' : ''}`} />
+        <MarkdownContent content={msg.content} className={`text-xs sm:text-sm leading-relaxed ${msg.error ? 'text-rose-300' : ''}`} />
       </div>
       {msg.role === 'user' && (
-        <div className="w-8 h-8 rounded-md bg-gray-a3 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-white/10 flex items-center justify-center flex-shrink-0 text-zinc-300 shadow-sm">
           <User className="w-4 h-4" />
         </div>
       )}
@@ -638,10 +642,10 @@ export default function CueChats() {
       
       <main className="pt-0 lg:pt-16 min-h-screen flex flex-col relative w-full bg-transparent" data-testid="page-cuechats">
         {/* Full-width sticky top bar directly beneath navigation (top-0 on mobile, top-16 on desktop) */}
-        <div className="sticky top-0 lg:top-16 z-20 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+        <div className="sticky top-0 lg:top-16 z-20 w-full border-b border-white/[0.08] bg-zinc-950/75 backdrop-blur-2xl">
           <div className="max-w-4xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">
                 <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
@@ -657,7 +661,7 @@ export default function CueChats() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="border-zinc-700/80 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-amber-300 text-xs gap-1.5 h-8 px-2 sm:px-3"
+                className="border-white/10 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-amber-300 text-xs gap-1.5 h-8 px-2 sm:px-3 rounded-xl backdrop-blur-md"
                 data-testid="button-chat-history"
               >
                 <History className="w-3.5 h-3.5 text-amber-400" />
@@ -740,7 +744,7 @@ export default function CueChats() {
                           setInputValue(promptText);
                           inputRef.current?.focus();
                         }}
-                        className="p-2.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 hover:border-amber-500/40 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group"
+                        className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] hover:border-amber-400/30 text-[11px] text-zinc-300 hover:text-amber-200 transition-all text-left cursor-pointer flex items-center justify-between group active:scale-[0.98]"
                       >
                         <span className="truncate pr-2">{promptText}</span>
                         <Sparkles className="w-3 h-3 text-zinc-600 group-hover:text-amber-400 flex-shrink-0 transition-colors" />
@@ -791,7 +795,7 @@ export default function CueChats() {
         )}
 
         {/* Fixed Bottom Action Bar: Always docked at bottom (on desktop: bottom-0, on mobile: above bottom nav) */}
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/80 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/75 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-12px_40px_rgba(0,0,0,0.7)] pb-[env(safe-area-inset-bottom,0px)]">
           <div className="max-w-4xl mx-auto px-3 py-2.5 sm:px-6 sm:py-3.5">
             {showPreview ? (
               <Button
@@ -799,7 +803,7 @@ export default function CueChats() {
                 size="lg"
                 onClick={startChat}
                 disabled={isInitializing}
-                className="w-full h-12 rounded-xl font-bold text-sm sm:text-base shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-2xl font-bold text-sm sm:text-base shadow-lg cursor-pointer flex items-center justify-center gap-2 shadow-amber-500/20 active:scale-[0.98]"
                 data-testid="button-start-chat"
               >
                 {isInitializing ? (
@@ -826,7 +830,7 @@ export default function CueChats() {
                     <img
                       src={selectedImage.previewUrl}
                       alt="Upload preview"
-                      className="w-14 h-14 object-cover rounded-lg border border-amber-500/50 shadow-md"
+                      className="w-14 h-14 object-cover rounded-xl border border-amber-500/50 shadow-md"
                     />
                     <button
                       type="button"
@@ -853,7 +857,7 @@ export default function CueChats() {
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isLoading}
-                    className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10"
+                    className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10 rounded-xl"
                     title="Attach image or file"
                   >
                     <Paperclip className="w-5 h-5" />
@@ -862,7 +866,7 @@ export default function CueChats() {
                     ref={inputRef}
                     variant="frosted"
                     placeholder="Ask CoreChat anything..."
-                    className="flex-1 bg-zinc-900/80 border-zinc-700/80 focus:border-amber-500/60 text-sm h-11 rounded-xl"
+                    className="flex-1 bg-white/[0.04] border-white/10 focus:border-amber-400/50 text-sm h-11 rounded-2xl placeholder:text-zinc-500 text-zinc-100 shadow-inner"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -874,7 +878,7 @@ export default function CueChats() {
                     size="icon" 
                     onClick={sendMessage}
                     disabled={isLoading || (!inputValue.trim() && !selectedImage)}
-                    className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
+                    className="h-11 w-11 rounded-2xl flex-shrink-0 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
                     data-testid="button-send-message"
                   >
                     {isLoading ? (

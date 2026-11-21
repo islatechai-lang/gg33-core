@@ -1182,49 +1182,56 @@ export default function Explore() {
 
       <main className="pt-4 sm:pt-6 lg:pt-20 pb-20 lg:pb-12 px-4 min-h-screen" data-testid="page-explore">
         <div className="container mx-auto max-w-6xl space-y-8">
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-              <span className="gradient-text">Explore</span> Your Energy
+          <div className="text-center space-y-1.5">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-zinc-100">
+              <span className="gradient-text">Explore</span> Cosmic Dimensions
             </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
+              Unlock personalized astrological forecasts, numerology tools, and esoteric wisdom.
+            </p>
           </div>
 
           {profileLoaded && !hasProfile && (
-            <Card variant="frosted" className="border-amber-a4">
-              <CardContent className="py-6">
+            <Card variant="frosted" className="border-amber-500/30 rounded-2xl sm:rounded-3xl shadow-lg bg-amber-500/[0.03]">
+              <CardContent className="py-5 sm:py-6">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-9" />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="w-5 h-5 text-amber-400" />
+                    </div>
                     <div>
-                      <div className="font-medium">Create your profile for personalized features</div>
-                      <div className="text-sm text-gray-11">Unlock all 20 explore features with your birth date</div>
+                      <div className="font-bold text-white text-sm sm:text-base">Create your profile for personalized features</div>
+                      <div className="text-xs sm:text-sm text-zinc-400">Unlock all 20 explore features with your cosmic birth date</div>
                     </div>
                   </div>
                   <Link href="/">
-                    <Button data-testid="button-create-profile-banner">Create Profile</Button>
+                    <Button variant="gold" className="rounded-xl shadow-lg shadow-amber-500/20" data-testid="button-create-profile-banner">Create Profile</Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
             {explorations.map((item) => (
               <Card
                 key={item.id}
                 variant="frosted"
-                className={`content-auto hover:border-amber-500/30 transition-all cursor-pointer group relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[185px] rounded-2xl ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
+                className={`content-auto hover:border-amber-400/40 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(245,158,11,0.12)] transition-all duration-300 cursor-pointer group relative flex flex-col justify-between p-3.5 sm:p-5 min-h-[145px] sm:min-h-[190px] rounded-2xl sm:rounded-3xl border border-white/[0.08] active:scale-[0.98] overflow-hidden ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
                   }`}
                 onClick={() => handleCardClick(item.id)}
                 data-testid={`card-explore-${item.id}`}
               >
+                <div className="absolute -inset-full bg-gradient-to-r from-transparent via-amber-400/[0.03] to-transparent rotate-45 group-hover:via-amber-400/[0.07] transition-all duration-700 pointer-events-none" />
+
                 {!isPro && (
-                  <div className="absolute inset-0 bg-black/70 rounded-2xl z-10 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-a3 flex items-center justify-center">
-                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-11" />
+                  <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-[6px] rounded-2xl sm:rounded-3xl z-10 flex items-center justify-center border border-white/[0.05] transition-all">
+                    <div className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-zinc-900/70 backdrop-blur-md border border-white/10 shadow-xl">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                       </div>
-                      <Badge variant="secondary" size="sm" className="text-[9px] sm:text-xs">
-                        <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+                      <Badge variant="secondary" size="sm" className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] sm:text-xs font-semibold">
+                        <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 text-amber-400" />
                         Pro
                       </Badge>
                     </div>
@@ -1232,16 +1239,16 @@ export default function Explore() {
                 )}
                 <div>
                   <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-amber-a3 flex items-center justify-center group-hover:bg-amber-a4 transition-colors flex-shrink-0">
-                      <item.icon className="w-4 h-4 sm:w-6 sm:h-6 text-amber-9" />
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 border border-amber-500/20 flex items-center justify-center group-hover:border-amber-400/40 group-hover:scale-105 transition-all flex-shrink-0 shadow-inner">
+                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-1">
-                        <Badge variant="outline" className="bg-amber-a2 text-amber-11 border-amber-a4 px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider">
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-300 border-amber-500/25 px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider">
                           {item.tag}
                         </Badge>
                         {(item as any).isNew && (
-                          <Badge className="bg-amber-9 text-white border-none px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] font-black uppercase tracking-tighter">
+                          <Badge className="bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-black border-none px-1.5 py-0 h-4 sm:h-5 text-[8px] sm:text-[10px] uppercase tracking-tighter shadow-sm">
                             New
                           </Badge>
                         )}
@@ -1253,11 +1260,11 @@ export default function Explore() {
                       )}
                     </div>
                   </div>
-                  <h3 className="text-xs sm:text-base font-bold text-zinc-100 mt-2 sm:mt-3 leading-snug line-clamp-1">
+                  <h3 className="text-xs sm:text-base font-bold text-zinc-100 group-hover:text-amber-200 transition-colors mt-2 sm:mt-3 leading-snug line-clamp-1">
                     {item.title}
                   </h3>
                 </div>
-                <p className="text-[11px] sm:text-xs text-zinc-400 leading-snug line-clamp-2 mt-1 sm:mt-2">
+                <p className="text-[11px] sm:text-xs text-zinc-400 group-hover:text-zinc-300 leading-snug line-clamp-2 mt-1 sm:mt-2 transition-colors">
                   {item.description}
                 </p>
               </Card>

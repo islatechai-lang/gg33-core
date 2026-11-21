@@ -86,10 +86,25 @@ export function StarField() {
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 will-change-transform"
-      style={{ opacity: 0.55 }}
-    />
+    <>
+      {/* Ambient Cosmic Aura Glows (Apple visionOS / liquid glass backdrop) */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div 
+          className="absolute -top-[15%] left-[5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-500/15 via-amber-600/8 to-transparent blur-[130px] transform-gpu will-change-transform"
+        />
+        <div 
+          className="absolute top-[35%] -right-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-bl from-purple-600/10 via-indigo-600/6 to-transparent blur-[140px] transform-gpu will-change-transform"
+        />
+        <div 
+          className="absolute -bottom-[10%] left-[25%] w-[650px] h-[650px] rounded-full bg-gradient-to-t from-amber-500/10 via-teal-500/5 to-transparent blur-[150px] transform-gpu will-change-transform"
+        />
+      </div>
+
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none z-0 will-change-transform"
+        style={{ opacity: 0.55 }}
+      />
+    </>
   );
 }
