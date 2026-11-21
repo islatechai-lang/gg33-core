@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { ManageSubscriptionModal } from '@/components/ManageSubscriptionModal';
 import { ShareModal } from '@/components/ShareModal';
+import { SupportModal } from '@/components/SupportModal';
 import {
   Crown,
   Database,
@@ -23,8 +24,8 @@ import {
   Sparkles,
   User,
   ExternalLink,
-  ShieldAlert,
   Zap,
+  LifeBuoy,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -51,6 +52,7 @@ export default function MorePage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const { data: membership } = useQuery<MembershipInfo>({
@@ -60,8 +62,6 @@ export default function MorePage() {
   });
 
   const isPro = dbUser?.isPro ?? membership?.hasMembership ?? false;
-  const userEmail = (user?.email || dbUser?.email || '').trim().toLowerCase();
-  const isAdmin = userEmail === 'princederder44@gmail.com' || (dbUser as any)?.role === 'admin';
 
   return (
     <>
@@ -100,9 +100,6 @@ export default function MorePage() {
                   )}
                 </div>
                 <p className="text-xs text-zinc-400 truncate mt-0.5">{user?.email}</p>
-                {dbUser?.odisId && (
-                  <p className="text-[11px] text-zinc-500 font-mono mt-1">ID: {dbUser.odisId.slice(0, 14)}...</p>
-                )}
               </div>
             </div>
 
@@ -239,23 +236,23 @@ export default function MorePage() {
                 <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
               </button>
 
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="flex items-center justify-between p-4 hover:bg-white/[0.04] transition-colors group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform flex-shrink-0">
-                      <ShieldAlert className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white group-hover:text-purple-200 transition-colors">Admin Dashboard</p>
-                      <p className="text-xs text-zinc-400">User management, broadcast notifications & metrics</p>
-                    </div>
+              {/* Help & Support */}
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(true)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/[0.04] transition-colors group text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                    <LifeBuoy className="w-5 h-5" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-                </Link>
-              )}
+                  <div>
+                    <p className="text-sm font-bold text-white group-hover:text-blue-200 transition-colors">Help & Support</p>
+                    <p className="text-xs text-zinc-400">Report a bug, suggest features, or contact the creator</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </button>
 
               <Link
                 href="/privacy"
@@ -348,6 +345,7 @@ export default function MorePage() {
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
       <ManageSubscriptionModal open={showManageModal} onOpenChange={setShowManageModal} />
       <ShareModal open={showShareModal} onOpenChange={setShowShareModal} />
+      <SupportModal open={showSupportModal} onOpenChange={setShowSupportModal} />
     </>
   );
 }

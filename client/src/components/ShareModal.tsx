@@ -17,20 +17,18 @@ import {
   Mail,
   Smartphone,
   ExternalLink,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ShareModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Optional custom URL/text override if needed for specific pages
   customUrl?: string;
   customText?: string;
 }
 
-// Default app share URL — ready to swap with Play Store link once live!
-export const APP_SHARE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://gg33-core.vercel.app';
+export const APP_SHARE_URL = 'https://play.google.com/store/apps/details?id=co.median.android.lpqdwby';
 export const APP_SHARE_TITLE = 'GG33 CORE — Numerology & Astrology Birth Chart';
 export const APP_SHARE_TEXT = 'Discover your authentic numerology blueprint, daily energy alignment, and Western astrology birth chart with GG33 CORE! 🔢✨';
 
@@ -47,11 +45,10 @@ export function ShareModal({ open, onOpenChange, customUrl, customText }: ShareM
       setCopied(true);
       toast({
         title: 'Link Copied! 📋',
-        description: 'Share link has been copied to your clipboard.',
+        description: 'Play Store link copied to your clipboard.',
       });
       setTimeout(() => setCopied(false), 2500);
-    } catch (err) {
-      console.error('Failed to copy link:', err);
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Copy Failed',
@@ -69,9 +66,8 @@ export function ShareModal({ open, onOpenChange, customUrl, customText }: ShareM
           url: shareUrl,
         });
         onOpenChange(false);
-      } catch (err) {
-        // User cancelled or share failed, fallback remains open
-        console.log('Share dismissed or not completed');
+      } catch {
+        // User dismissed
       }
     }
   };
@@ -80,37 +76,37 @@ export function ShareModal({ open, onOpenChange, customUrl, customText }: ShareM
     {
       name: 'WhatsApp',
       icon: MessageCircle,
-      color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20',
+      color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20',
       href: `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
     },
     {
       name: 'Telegram',
       icon: Send,
-      color: 'bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20',
+      color: 'bg-sky-500/10 text-sky-400 border-sky-500/25 hover:bg-sky-500/20',
       href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
     },
     {
       name: 'X (Twitter)',
       icon: ExternalLink,
-      color: 'bg-zinc-800/80 text-zinc-200 border-zinc-700 hover:bg-zinc-800',
+      color: 'bg-white/[0.05] text-zinc-200 border-white/10 hover:bg-white/[0.1]',
       href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
     },
     {
       name: 'Facebook',
       icon: Facebook,
-      color: 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20',
+      color: 'bg-blue-500/10 text-blue-400 border-blue-500/25 hover:bg-blue-500/20',
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
     },
     {
       name: 'SMS',
       icon: Smartphone,
-      color: 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20',
+      color: 'bg-amber-500/10 text-amber-400 border-amber-500/25 hover:bg-amber-500/20',
       href: `sms:?body=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
     },
     {
       name: 'Email',
       icon: Mail,
-      color: 'bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/20',
+      color: 'bg-purple-500/10 text-purple-400 border-purple-500/25 hover:bg-purple-500/20',
       href: `mailto:?subject=${encodeURIComponent(APP_SHARE_TITLE)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
     },
   ];
@@ -119,63 +115,91 @@ export function ShareModal({ open, onOpenChange, customUrl, customText }: ShareM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-md p-0 rounded-2xl border-zinc-800 bg-zinc-950 overflow-hidden text-zinc-100 shadow-2xl">
-        <div className="p-6 space-y-5">
+      <DialogContent className="w-[95vw] sm:max-w-md p-0 rounded-3xl border-white/10 bg-zinc-950/95 backdrop-blur-2xl text-zinc-100 shadow-2xl overflow-hidden">
+        <div className="p-5 sm:p-6 space-y-4">
           {/* Header */}
-          <DialogHeader className="space-y-1.5 text-left">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <Share2 className="w-4 h-4" />
+          <DialogHeader className="space-y-1 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-amber-500/5 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm flex-shrink-0">
+                <Share2 className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-zinc-100 flex items-center gap-1.5">
+                <DialogTitle className="text-lg font-bold text-white flex items-center gap-1.5">
                   Share GG33 CORE
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 </DialogTitle>
                 <DialogDescription className="text-xs text-zinc-400">
-                  Share esoteric numerology & birth charts with friends
+                  Invite friends to discover their cosmic blueprint on Google Play
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          {/* Social Quick-Share Grid */}
-          <div className="grid grid-cols-3 gap-2.5">
-            {socialLinks.map((social) => {
-              const Icon = social.icon;
-              return (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onOpenChange(false)}
-                  className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border transition-all cursor-pointer ${social.color}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-[11px] font-semibold">{social.name}</span>
-                </a>
-              );
-            })}
+          {/* Play Store Download Badge Card */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-white/[0.03] to-white/[0.03] border border-amber-500/25">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center flex-shrink-0">
+                <img src="/images/logo.png?v=1" alt="GG33" className="w-6 h-6 object-cover rounded-md" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white truncate">GG33 CORE on Google Play</p>
+                <p className="text-[11px] text-amber-400 font-medium">Free Android App Available</p>
+              </div>
+            </div>
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs flex items-center gap-1 shadow-sm transition-all flex-shrink-0"
+            >
+              <span>View</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
 
-          {/* Native System Share Button (if available on mobile browser) */}
+          {/* Social Quick-Share Grid */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+              Share Via
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => onOpenChange(false)}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-2xl border transition-all cursor-pointer ${social.color}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-[11px] font-semibold">{social.name}</span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Native System Share Button */}
           {hasNativeShare && (
             <Button
+              variant="gold"
               onClick={handleNativeShare}
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs h-10 rounded-xl shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full h-11 rounded-2xl font-bold text-xs sm:text-sm gap-2 shadow-lg shadow-amber-500/20 active:scale-[0.98]"
             >
               <Share2 className="w-4 h-4" />
-              Open Device Share Menu
+              <span>Open Device Share Menu</span>
             </Button>
           )}
 
           {/* Copy Link Input Bar */}
           <div className="space-y-1.5 pt-1">
-            <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-              Or Copy Share Link
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+              Google Play Link
             </label>
-            <div className="flex items-center gap-2 p-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+            <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.04] border border-white/10">
               <input
                 type="text"
                 readOnly
@@ -184,11 +208,12 @@ export function ShareModal({ open, onOpenChange, customUrl, customText }: ShareM
               />
               <Button
                 size="sm"
+                variant="outline"
                 onClick={handleCopyLink}
-                className={`h-8 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-white/10 ${
                   copied
                     ? 'bg-emerald-500 text-zinc-950 hover:bg-emerald-400'
-                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100'
+                    : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200'
                 }`}
               >
                 {copied ? (

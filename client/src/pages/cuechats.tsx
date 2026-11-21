@@ -705,7 +705,7 @@ export default function CueChats() {
         </div>
 
         {/* Message Canvas Area - Full Coverage, directly belonging to page */}
-        <div className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 pb-40 lg:pb-32 space-y-4">
+        <div className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 pb-48 lg:pb-36 space-y-4">
           {showPreview ? (
             <>
               {exampleMessages.map((msg, i) => (
@@ -787,16 +787,16 @@ export default function CueChats() {
 
         {/* Error Banner */}
         {error && (
-          <div className="fixed bottom-[calc(4rem+64px+env(safe-area-inset-bottom,0px))] lg:bottom-[70px] left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
-            <div className="max-w-md w-full px-4 py-2 bg-red-950/95 border border-red-500/40 rounded-xl shadow-xl backdrop-blur-md pointer-events-auto">
+          <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-20 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
+            <div className="max-w-md w-full px-4 py-2 bg-red-950/95 border border-red-500/40 rounded-2xl shadow-xl backdrop-blur-md pointer-events-auto">
               <p className="text-xs text-red-300 text-center" data-testid="text-chat-error">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Fixed Bottom Action Bar: Always docked at bottom (on desktop: bottom-0, on mobile: above bottom nav) */}
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 z-30 bg-zinc-950/75 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-12px_40px_rgba(0,0,0,0.7)] pb-[env(safe-area-inset-bottom,0px)]">
-          <div className="max-w-4xl mx-auto px-3 py-2.5 sm:px-6 sm:py-3.5">
+        {/* Floating Bottom Action Bar: Generous clearance above bottom nav on mobile, floating on desktop */}
+        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-4 left-0 right-0 z-30 px-3 sm:px-6 pointer-events-none">
+          <div className="max-w-3xl mx-auto rounded-3xl bg-zinc-950/90 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.7)] backdrop-blur-xl p-2 sm:p-2.5 pointer-events-auto">
             {showPreview ? (
               <Button
                 variant="gold"
@@ -826,7 +826,7 @@ export default function CueChats() {
             ) : (
               <div>
                 {selectedImage && (
-                  <div className="relative inline-block mb-2">
+                  <div className="relative inline-block mb-2 ml-1">
                     <img
                       src={selectedImage.previewUrl}
                       alt="Upload preview"
@@ -842,7 +842,7 @@ export default function CueChats() {
                     </button>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -857,7 +857,7 @@ export default function CueChats() {
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isLoading}
-                    className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10 rounded-xl"
+                    className="text-zinc-400 hover:text-amber-400 flex-shrink-0 h-10 w-10 rounded-2xl hover:bg-white/[0.05]"
                     title="Attach image or file"
                   >
                     <Paperclip className="w-5 h-5" />
@@ -866,7 +866,7 @@ export default function CueChats() {
                     ref={inputRef}
                     variant="frosted"
                     placeholder="Ask CoreChat anything..."
-                    className="flex-1 bg-white/[0.04] border-white/10 focus:border-amber-400/50 text-sm h-11 rounded-2xl placeholder:text-zinc-500 text-zinc-100 shadow-inner"
+                    className="flex-1 bg-white/[0.05] border-transparent focus:border-amber-400/50 text-sm h-11 rounded-2xl placeholder:text-zinc-500 text-zinc-100 shadow-inner"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
