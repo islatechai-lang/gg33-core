@@ -68,7 +68,7 @@ export default function MorePage() {
       <StarField />
       <Navigation />
 
-      <main className="pt-20 pb-28 lg:pb-16 px-4 min-h-screen" data-testid="page-more">
+      <main className="pt-6 sm:pt-8 lg:pt-20 pb-28 lg:pb-16 px-4 min-h-screen" data-testid="page-more">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* User Profile Summary Card */}
           <Card variant="frosted" className="p-5 sm:p-6 border border-white/[0.08] rounded-3xl relative overflow-hidden">

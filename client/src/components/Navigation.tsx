@@ -86,9 +86,9 @@ export function Navigation() {
 
   return (
     <>
-      {/* Top Header Navigation (Consistent and lightweight across all devices and pages) */}
+      {/* Top Header Navigation (Desktop Only - Mobile is completely clean and immersive with the bottom dock) */}
       <nav
-        className="fixed top-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-white/[0.08] shadow-sm"
+        className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-white/[0.08] shadow-sm"
         data-testid="navigation"
       >
         <div className="w-full px-3.5 sm:px-6">

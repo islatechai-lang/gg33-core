@@ -1180,7 +1180,7 @@ export default function Explore() {
       <StarField />
       <Navigation />
 
-      <main className="pt-18 sm:pt-20 pb-28 lg:pb-16 px-4 min-h-screen" data-testid="page-explore">
+      <main className="pt-5 sm:pt-6 lg:pt-20 pb-28 lg:pb-16 px-4 min-h-screen" data-testid="page-explore">
         <div className="container mx-auto max-w-6xl space-y-8">
           <div className="text-center space-y-1.5">
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-zinc-100">
@@ -1214,19 +1214,17 @@ export default function Explore() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
             {explorations.map((item) => (
-              <Card
+              <div
                 key={item.id}
-                variant="frosted"
-                className={`content-auto hover:border-amber-400/40 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(245,158,11,0.12)] transition-all duration-300 cursor-pointer group relative flex flex-col justify-between p-3.5 sm:p-5 min-h-[145px] sm:min-h-[190px] rounded-2xl sm:rounded-3xl border border-white/[0.08] active:scale-[0.98] overflow-hidden ${profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
-                  }`}
+                className={`relative flex flex-col justify-between p-3.5 sm:p-5 min-h-[145px] sm:min-h-[190px] rounded-2xl sm:rounded-3xl bg-zinc-900/60 hover:bg-zinc-900/90 border border-white/[0.08] hover:border-amber-400/40 hover:-translate-y-0.5 hover:shadow-lg transition-transform duration-200 cursor-pointer group active:scale-[0.98] overflow-hidden ${
+                  profileLoaded && item.requiresProfile && !hasProfile ? 'opacity-60' : ''
+                }`}
                 onClick={() => handleCardClick(item.id)}
                 data-testid={`card-explore-${item.id}`}
               >
-                <div className="absolute -inset-full bg-gradient-to-r from-transparent via-amber-400/[0.03] to-transparent rotate-45 group-hover:via-amber-400/[0.07] transition-all duration-700 pointer-events-none" />
-
                 {!isPro && (
-                  <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-[6px] rounded-2xl sm:rounded-3xl z-10 flex items-center justify-center border border-white/[0.05] transition-all">
-                    <div className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-zinc-900/70 backdrop-blur-md border border-white/10 shadow-xl">
+                  <div className="absolute inset-0 bg-zinc-950/80 rounded-2xl sm:rounded-3xl z-10 flex items-center justify-center border border-white/[0.04]">
+                    <div className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-zinc-900 border border-white/10 shadow-xl">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
                         <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                       </div>
@@ -1239,7 +1237,7 @@ export default function Explore() {
                 )}
                 <div>
                   <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/15 to-amber-500/5 border border-amber-500/20 flex items-center justify-center group-hover:border-amber-400/40 group-hover:scale-105 transition-all flex-shrink-0 shadow-inner">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/20 group-hover:border-amber-400/40 transition-colors flex-shrink-0 shadow-inner">
                       <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -1267,7 +1265,7 @@ export default function Explore() {
                 <p className="text-[11px] sm:text-xs text-zinc-400 group-hover:text-zinc-300 leading-snug line-clamp-2 mt-1 sm:mt-2 transition-colors">
                   {item.description}
                 </p>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
