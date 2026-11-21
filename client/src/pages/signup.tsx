@@ -164,22 +164,24 @@ export default function Signup() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-amber-500/[0.07] rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* Main Card */}
-      <div className="w-full max-w-[400px] relative z-10">
-        <div className="rounded-3xl p-7 sm:p-8 bg-zinc-950/80 border border-white/[0.08] backdrop-blur-xl shadow-2xl">
+      <div className="w-full max-w-[380px] relative z-10">
+        <div className="rounded-3xl p-6 sm:p-7 bg-zinc-950/80 border border-white/[0.08] backdrop-blur-xl shadow-2xl">
           {/* Brand Header */}
-          <div className="flex flex-col items-center text-center space-y-3 pb-6">
+          <div className="flex flex-col items-center text-center space-y-2.5 pb-5">
             <Link href="/" className="inline-block">
-              <div className="w-13 h-13 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-lg flex items-center justify-center bg-zinc-900 active:scale-95 transition-transform cursor-pointer">
+              <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-white/15 shadow-md flex items-center justify-center bg-zinc-900 active:scale-95 transition-transform cursor-pointer">
                 <img
                   src="/images/logo.png?v=1"
                   alt="GG33 Core"
-                  className="w-13 h-13 object-cover"
+                  className="w-10 h-10 object-cover"
+                  width={40}
+                  height={40}
                 />
               </div>
             </Link>
 
             <div className="space-y-1">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              <h1 className="text-xl font-bold tracking-tight text-white">
                 Create an account
               </h1>
               <p className="text-xs text-zinc-400">
