@@ -53,7 +53,7 @@ function NumberCard({ number, label, type, icon: Icon, colorClass, onClick }: Nu
       className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-zinc-900/60 hover:bg-zinc-800/70 border border-white/[0.07] hover:border-amber-400/40 cursor-pointer transition-all duration-200 group relative active:scale-95 shadow-sm"
       data-testid={`button-${type}-number`}
     >
-      <div className={cn("w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 mb-1.5 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm group-hover:scale-105", colorClass)}>
+      <div className={cn("w-8 h-8 sm:w-9 sm:h-9 mb-1.5 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm group-hover:scale-105", colorClass)}>
         <Icon className="w-4 h-4" />
       </div>
       <p className="text-base sm:text-lg font-black text-white tracking-tight">{number}</p>

@@ -92,11 +92,17 @@ export function Navigation() {
         data-testid="navigation"
       >
         <div className="w-full px-3.5 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-15 gap-3">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-3">
             {/* Logo Section */}
             <NavLink to="/" className="flex items-center gap-2.5 group flex-shrink-0" data-testid="link-logo">
-              <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl overflow-hidden shadow-sm ring-1 ring-white/10 group-hover:ring-amber-400/40 transition-all duration-200">
-                <img src="/images/logo.png?v=1" alt="GG33" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden shadow-sm ring-1 ring-white/10 group-hover:ring-amber-400/40 transition-all duration-200 flex-shrink-0 flex items-center justify-center">
+                <img
+                  src="/images/logo.png?v=1"
+                  alt="GG33"
+                  className="w-8 h-8 sm:w-9 sm:h-9 object-cover"
+                  width={36}
+                  height={36}
+                />
               </div>
               <div className="flex flex-col justify-center min-w-0">
                 <span className="text-sm sm:text-base font-extrabold gradient-text leading-none tracking-tight">GG33 CORE</span>
@@ -143,7 +149,7 @@ export function Navigation() {
               {/* Share Button */}
               <button
                 onClick={() => setShowShareModal(true)}
-                className="flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-400 hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-400 hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
                 title="Share GG33 CORE"
                 aria-label="Share GG33 CORE"
                 data-testid="button-header-share"
@@ -164,7 +170,7 @@ export function Navigation() {
               {user && (
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="hidden lg:flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-white/[0.04] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400 transition-all active:scale-90 cursor-pointer"
+                  className="hidden lg:flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.04] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400 transition-all active:scale-90 cursor-pointer"
                   title="Log Out"
                   aria-label="Log Out"
                 >
